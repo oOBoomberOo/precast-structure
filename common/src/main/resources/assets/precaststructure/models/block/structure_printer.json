@@ -1,1 +1,1 @@
-{ "parent": "minecraft:block/cube_all", "textures": { "all": "minecraft:block/crafter_side" } }
+{ "parent": "minecraft:block/cube_all", "textures": { "all": "precaststructure:block/structure_printer" } }
