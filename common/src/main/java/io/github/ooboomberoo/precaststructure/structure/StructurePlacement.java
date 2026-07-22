@@ -1,12 +1,12 @@
 package io.github.ooboomberoo.precaststructure.structure;
 
+import io.github.ooboomberoo.precaststructure.registry.ModBlockTags;
 import java.util.Optional;
 import net.minecraft.core.BlockPos;
 import net.minecraft.tags.BlockTags;
 import net.minecraft.tags.FluidTags;
 import net.minecraft.world.item.context.UseOnContext;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 
 public final class StructurePlacement {
@@ -34,10 +34,7 @@ public final class StructurePlacement {
             || state.canBeReplaced()
             || state.is(BlockTags.LEAVES)
             || state.is(BlockTags.FLOWERS)
-            || state.is(Blocks.SHORT_GRASS)
-            || state.is(Blocks.TALL_GRASS)
-            || state.is(Blocks.FERN)
-            || state.is(Blocks.LARGE_FERN)
+            || state.is(ModBlockTags.STRUCTURE_REPLACEABLE)
             || state.getFluidState().is(FluidTags.WATER);
     }
 

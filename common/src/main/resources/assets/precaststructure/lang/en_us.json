@@ -13,7 +13,7 @@
   "message.precaststructure.invalid_height": "Place a Metal Scaffold pillar on the opposite corner to set the structure height.",
   "message.precaststructure.empty_scan": "The framed volume is empty.",
   "message.precaststructure.scan_complete": "Blueprint created with %s saved blocks.",
-  "message.precaststructure.printer_needs_blueprint": "Hold a Blueprint and use the Structure Printer.",
+  "message.precaststructure.printer_needs_blueprint": "Insert a Blueprint into the Structure Printer.",
   "message.precaststructure.invalid_blueprint": "That blueprint could not be read.",
   "message.precaststructure.missing_materials": "You do not have the required building materials.",
   "message.precaststructure.print_complete": "Pre-cast Structure item created.",
@@ -21,5 +21,11 @@
   "tooltip.precaststructure.empty_blueprint": "No saved structure data.",
   "tooltip.precaststructure.dimensions": "Saved size: %s×%s×%s",
   "tooltip.precaststructure.placeable_structure": "Places a %s×%s×%s structure",
-  "tooltip.precaststructure.ghost_preview": "Shows a ghost preview while held"
+  "tooltip.precaststructure.ghost_preview": "Shows a ghost preview while held",
+  "gui.precaststructure.structure_name": "Structure Name",
+  "gui.precaststructure.scan_structure": "Scan Structure",
+  "gui.precaststructure.printer_blueprint": "Blueprint",
+  "gui.precaststructure.printer_materials": "Materials",
+  "gui.precaststructure.printer_output": "Output",
+  "gui.precaststructure.printer_auto": "Automatically prints when enough materials are loaded"
 }
