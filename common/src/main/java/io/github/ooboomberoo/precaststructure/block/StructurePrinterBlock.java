@@ -13,7 +13,6 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.BaseEntityBlock;
-import net.minecraft.world.level.block.EntityBlock;
 import net.minecraft.world.level.block.RenderShape;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityTicker;
@@ -21,7 +20,7 @@ import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.BlockHitResult;
 
-public class StructurePrinterBlock extends BaseEntityBlock implements EntityBlock {
+public class StructurePrinterBlock extends BaseEntityBlock {
     public StructurePrinterBlock(Properties properties) {
         super(properties);
     }
@@ -58,7 +57,7 @@ public class StructurePrinterBlock extends BaseEntityBlock implements EntityBloc
 
     @Override
     public <T extends BlockEntity> BlockEntityTicker<T> getTicker(Level level, BlockState state, BlockEntityType<T> blockEntityType) {
-        return createTickerHelper(blockEntityType, ModBlockEntityTypes.STRUCTURE_PRINTER.get(), StructurePrinterBlockEntity::serverTick);
+        return level.isClientSide() ? null : createTickerHelper(blockEntityType, ModBlockEntityTypes.STRUCTURE_PRINTER.get(), StructurePrinterBlockEntity::serverTick);
     }
 
     @Override

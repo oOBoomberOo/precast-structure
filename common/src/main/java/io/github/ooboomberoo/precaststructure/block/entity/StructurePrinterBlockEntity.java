@@ -8,6 +8,7 @@ import io.github.ooboomberoo.precaststructure.structure.BlueprintItemData;
 import io.github.ooboomberoo.precaststructure.structure.StructureBlueprint;
 import java.util.Map;
 import java.util.Optional;
+import java.util.stream.IntStream;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.HolderLookup;
@@ -32,7 +33,7 @@ public class StructurePrinterBlockEntity extends BaseContainerBlockEntity implem
     public static final int MATERIAL_SLOT_COUNT = 8;
     public static final int OUTPUT_SLOT = FIRST_MATERIAL_SLOT + MATERIAL_SLOT_COUNT;
     public static final int SLOT_COUNT = OUTPUT_SLOT + 1;
-    private static final int[] INPUT_SLOTS = {0, 1, 2, 3, 4, 5, 6, 7, 8};
+    private static final int[] INPUT_SLOTS = IntStream.range(BLUEPRINT_SLOT, OUTPUT_SLOT).toArray();
     private static final int[] OUTPUT_SLOTS = {OUTPUT_SLOT};
 
     private NonNullList<ItemStack> items = NonNullList.withSize(SLOT_COUNT, ItemStack.EMPTY);
@@ -42,9 +43,6 @@ public class StructurePrinterBlockEntity extends BaseContainerBlockEntity implem
     }
 
     public static void serverTick(Level level, BlockPos pos, BlockState state, StructurePrinterBlockEntity blockEntity) {
-        if (level.isClientSide()) {
-            return;
-        }
         blockEntity.tryPrint();
     }
 

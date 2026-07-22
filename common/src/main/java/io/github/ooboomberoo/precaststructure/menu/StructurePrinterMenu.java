@@ -15,6 +15,12 @@ import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
 
 public class StructurePrinterMenu extends AbstractContainerMenu {
+    private static final int BLUEPRINT_SLOT_X = 26;
+    private static final int INPUT_SLOT_X = 62;
+    private static final int INPUT_SLOT_Y = 22;
+    private static final int OUTPUT_SLOT_X = 134;
+    private static final int OUTPUT_SLOT_Y = 31;
+    private static final int SLOT_SPACING = 18;
     private static final int CONTAINER_SLOT_COUNT = StructurePrinterBlockEntity.SLOT_COUNT;
     private static final int PLAYER_INVENTORY_START = CONTAINER_SLOT_COUNT;
     private static final int PLAYER_INVENTORY_END = PLAYER_INVENTORY_START + 27;
@@ -39,7 +45,7 @@ public class StructurePrinterMenu extends AbstractContainerMenu {
         this.access = access;
         container.startOpen(inventory.player);
 
-        this.addSlot(new Slot(container, StructurePrinterBlockEntity.BLUEPRINT_SLOT, 26, 22) {
+        this.addSlot(new Slot(container, StructurePrinterBlockEntity.BLUEPRINT_SLOT, BLUEPRINT_SLOT_X, INPUT_SLOT_Y) {
             @Override
             public boolean mayPlace(ItemStack stack) {
                 return stack.is(ModItems.BLUEPRINT.get());
@@ -49,11 +55,11 @@ public class StructurePrinterMenu extends AbstractContainerMenu {
         for (int row = 0; row < 2; row++) {
             for (int column = 0; column < 4; column++) {
                 int slot = StructurePrinterBlockEntity.FIRST_MATERIAL_SLOT + row * 4 + column;
-                this.addSlot(new Slot(container, slot, 62 + column * 18, 22 + row * 18));
+                this.addSlot(new Slot(container, slot, INPUT_SLOT_X + column * SLOT_SPACING, INPUT_SLOT_Y + row * SLOT_SPACING));
             }
         }
 
-        this.addSlot(new Slot(container, StructurePrinterBlockEntity.OUTPUT_SLOT, 134, 31) {
+        this.addSlot(new Slot(container, StructurePrinterBlockEntity.OUTPUT_SLOT, OUTPUT_SLOT_X, OUTPUT_SLOT_Y) {
             @Override
             public boolean mayPlace(ItemStack stack) {
                 return false;
