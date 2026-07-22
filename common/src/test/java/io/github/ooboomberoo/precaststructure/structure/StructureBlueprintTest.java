@@ -1,6 +1,7 @@
 package io.github.ooboomberoo.precaststructure.structure;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.List;
@@ -46,6 +47,6 @@ class StructureBlueprintTest {
         assertTrue(StructurePlacement.isReplaceable(Blocks.WATER.defaultBlockState()));
         assertTrue(StructurePlacement.isReplaceable(Blocks.OAK_LEAVES.defaultBlockState()));
         assertTrue(StructurePlacement.isReplaceable(Blocks.SHORT_GRASS.defaultBlockState()));
-        assertTrue(!StructurePlacement.isReplaceable(Blocks.DIRT.defaultBlockState()));
+        assertFalse(StructurePlacement.isReplaceable(Blocks.DIRT.defaultBlockState()));
     }
 }
