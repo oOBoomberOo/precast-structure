@@ -21,7 +21,7 @@ import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 
 public class StructureScannerBlockEntity extends BlockEntity implements ExtendedMenuProvider {
-    private static final int MAX_NAME_LENGTH = 48;
+    public static final int MAX_NAME_LENGTH = 48;
     private String structureName = "";
 
     public StructureScannerBlockEntity(BlockPos pos, BlockState blockState) {

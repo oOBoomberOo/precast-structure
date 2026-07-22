@@ -1,5 +1,6 @@
 package io.github.ooboomberoo.precaststructure.client.screen;
 
+import io.github.ooboomberoo.precaststructure.block.entity.StructureScannerBlockEntity;
 import io.github.ooboomberoo.precaststructure.menu.StructureScannerMenu;
 import io.github.ooboomberoo.precaststructure.network.ModNetworking;
 import net.minecraft.client.gui.GuiGraphics;
@@ -23,7 +24,7 @@ public class StructureScannerScreen extends AbstractContainerScreen<StructureSca
     protected void init() {
         super.init();
         this.nameField = new EditBox(this.font, this.leftPos + 12, this.topPos + 28, 152, 20, Component.translatable("gui.precaststructure.structure_name"));
-        this.nameField.setMaxLength(48);
+        this.nameField.setMaxLength(StructureScannerBlockEntity.MAX_NAME_LENGTH);
         this.nameField.setValue(this.menu.getInitialStructureName());
         this.addRenderableWidget(this.nameField);
         this.addRenderableWidget(Button.builder(Component.translatable("gui.precaststructure.scan_structure"), button -> ModNetworking.sendScannerAction(this.menu.getBlockPos(), this.nameField.getValue())).bounds(this.leftPos + 12, this.topPos + 58, 152, 20).build());

@@ -11,16 +11,15 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 
 public final class ModNetworking {
-    private static final int MAX_NAME_LENGTH = 48;
     public static final ResourceLocation SCANNER_ACTION = ResourceLocation.fromNamespaceAndPath(PrecastStructureMod.MOD_ID, "scanner_action");
 
     private ModNetworking() {
     }
 
     public static void register() {
-        NetworkManager.registerReceiver(NetworkManager.c2s(), SCANNER_ACTION, (buf, context) -> {
+        NetworkManager.registerReceiver(NetworkManager.clientToServer(), SCANNER_ACTION, (buf, context) -> {
             BlockPos pos = buf.readBlockPos();
-            String structureName = buf.readUtf(MAX_NAME_LENGTH);
+            String structureName = buf.readUtf(StructureScannerBlockEntity.MAX_NAME_LENGTH);
             context.queue(() -> {
                 if (!(context.getPlayer() instanceof ServerPlayer serverPlayer)) {
                     return;
@@ -40,7 +39,7 @@ public final class ModNetworking {
     public static void sendScannerAction(BlockPos pos, String structureName) {
         FriendlyByteBuf buf = new FriendlyByteBuf(Unpooled.buffer());
         buf.writeBlockPos(pos);
-        buf.writeUtf(structureName, MAX_NAME_LENGTH);
+        buf.writeUtf(structureName, StructureScannerBlockEntity.MAX_NAME_LENGTH);
         NetworkManager.sendToServer(SCANNER_ACTION, buf);
     }
 }
