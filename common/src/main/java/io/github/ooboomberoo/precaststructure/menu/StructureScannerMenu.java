@@ -1,5 +1,6 @@
 package io.github.ooboomberoo.precaststructure.menu;
 
+import io.github.ooboomberoo.precaststructure.block.entity.StructureScannerBlockEntity;
 import io.github.ooboomberoo.precaststructure.registry.ModBlocks;
 import io.github.ooboomberoo.precaststructure.registry.ModMenuTypes;
 import net.minecraft.core.BlockPos;
@@ -16,7 +17,7 @@ public class StructureScannerMenu extends AbstractContainerMenu {
     private final String initialStructureName;
 
     public StructureScannerMenu(int containerId, Inventory inventory, FriendlyByteBuf buf) {
-        this(containerId, inventory, buf.readBlockPos(), buf.readUtf(48));
+        this(containerId, inventory, buf.readBlockPos(), buf.readUtf(StructureScannerBlockEntity.MAX_NAME_LENGTH));
     }
 
     public StructureScannerMenu(int containerId, Inventory inventory, BlockPos blockPos, String initialStructureName) {
