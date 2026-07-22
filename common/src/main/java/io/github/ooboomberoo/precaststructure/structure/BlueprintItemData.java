@@ -7,16 +7,21 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.component.CustomData;
+import org.jetbrains.annotations.Nullable;
 
 public final class BlueprintItemData {
     private BlueprintItemData() {
     }
 
     public static void write(ItemStack stack, StructureBlueprint blueprint) {
+        write(stack, blueprint, null);
+    }
+
+    public static void write(ItemStack stack, StructureBlueprint blueprint, @Nullable Component customName) {
         CompoundTag root = new CompoundTag();
         root.put(StructureBlueprint.ROOT_KEY, blueprint.save());
         stack.set(DataComponents.CUSTOM_DATA, CustomData.of(root));
-        stack.set(DataComponents.CUSTOM_NAME, Component.translatable("item.precaststructure.blueprint.named", blueprint.size().getX(), blueprint.size().getY(), blueprint.size().getZ()));
+        stack.set(DataComponents.CUSTOM_NAME, customName != null ? customName : Component.translatable("item.precaststructure.blueprint.named", blueprint.size().getX(), blueprint.size().getY(), blueprint.size().getZ()));
     }
 
     public static Optional<StructureBlueprint> read(ItemStack stack, HolderLookup.Provider registries) {
