@@ -9,13 +9,15 @@ import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
 
 public final class StructureFrameDetector {
+    private static final int MIN_PLATFORM_SIZE = 3;
+
     private StructureFrameDetector() {
     }
 
     public static ScanResult detect(Level level, BlockPos scannerPos) {
         int width = countRun(level, scannerPos, 1, 0);
         int depth = countRun(level, scannerPos, 0, 1);
-        if (width < 3 || depth < 3) {
+        if (width < MIN_PLATFORM_SIZE || depth < MIN_PLATFORM_SIZE) {
             return ScanResult.error(Component.translatable("message.precaststructure.invalid_platform"));
         }
 

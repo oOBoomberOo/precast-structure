@@ -13,6 +13,8 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.Blocks;
 
 public final class StructureItemRenderer {
+    private static final float ITEM_RENDER_SCALE_FACTOR = 0.85F;
+
     private StructureItemRenderer() {
     }
 
@@ -26,7 +28,7 @@ public final class StructureItemRenderer {
 
         StructureBlueprint blueprint = optional.get();
         float maxSize = Math.max(1.0F, Math.max(Math.max(blueprint.size().getX(), blueprint.size().getY()), blueprint.size().getZ()));
-        float scale = 0.85F / maxSize;
+        float scale = ITEM_RENDER_SCALE_FACTOR / maxSize;
 
         poseStack.pushPose();
         poseStack.translate(0.5F, 0.05F, 0.5F);

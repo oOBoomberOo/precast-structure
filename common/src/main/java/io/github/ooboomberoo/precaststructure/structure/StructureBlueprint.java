@@ -21,6 +21,7 @@ import net.minecraft.world.level.block.state.BlockState;
 
 public record StructureBlueprint(BlockPos size, List<StructureBlockInfo> blocks) {
     public static final String ROOT_KEY = "PrecastStructure";
+    private static final int MAX_STRUCTURE_DIMENSION = 256;
 
     public CompoundTag save() {
         CompoundTag root = new CompoundTag();
@@ -44,7 +45,7 @@ public record StructureBlueprint(BlockPos size, List<StructureBlockInfo> blocks)
         }
 
         CompoundTag sizeTag = root.getCompound("size");
-        BlockPos size = new BlockPos(Mth.clamp(sizeTag.getInt("x"), 0, 256), Mth.clamp(sizeTag.getInt("y"), 0, 256), Mth.clamp(sizeTag.getInt("z"), 0, 256));
+        BlockPos size = new BlockPos(Mth.clamp(sizeTag.getInt("x"), 0, MAX_STRUCTURE_DIMENSION), Mth.clamp(sizeTag.getInt("y"), 0, MAX_STRUCTURE_DIMENSION), Mth.clamp(sizeTag.getInt("z"), 0, MAX_STRUCTURE_DIMENSION));
         ListTag blockList = root.getList("blocks", Tag.TAG_COMPOUND);
         HolderGetter<Block> blockLookup = registries.lookupOrThrow(Registries.BLOCK);
         List<StructureBlockInfo> blocks = new ArrayList<>(blockList.size());
@@ -65,7 +66,7 @@ public record StructureBlueprint(BlockPos size, List<StructureBlockInfo> blocks)
         Map<Item, Integer> requirements = new LinkedHashMap<>();
         for (StructureBlockInfo block : blocks) {
             Item item = block.state().getBlock().asItem();
-            if (item == null || item == net.minecraft.world.item.Items.AIR) {
+            if (item == net.minecraft.world.item.Items.AIR) {
                 continue;
             }
             requirements.merge(item, 1, Integer::sum);
