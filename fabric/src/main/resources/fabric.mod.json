@@ -1,0 +1,25 @@
+{
+  "schemaVersion": 1,
+  "id": "precaststructure",
+  "version": "${version}",
+  "name": "Pre-cast Structure",
+  "description": "Scan framed builds into placeable structure items.",
+  "authors": ["oOBoomberOo"],
+  "license": "MIT",
+  "environment": "*",
+  "entrypoints": {
+    "main": [
+      "io.github.ooboomberoo.precaststructure.fabric.PrecastStructureFabric"
+    ],
+    "client": [
+      "io.github.ooboomberoo.precaststructure.fabric.PrecastStructureFabricClient"
+    ]
+  },
+  "depends": {
+    "fabricloader": ">=0.16.14",
+    "minecraft": "1.21.1",
+    "java": ">=21",
+    "architectury": ">=13.0.8",
+    "fabric-api": "*"
+  }
+}
