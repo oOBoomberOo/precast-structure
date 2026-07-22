@@ -3,6 +3,7 @@ package io.github.ooboomberoo.precaststructure.block.entity;
 import dev.architectury.registry.menu.ExtendedMenuProvider;
 import io.github.ooboomberoo.precaststructure.menu.StructurePrinterMenu;
 import io.github.ooboomberoo.precaststructure.registry.ModBlockEntityTypes;
+import io.github.ooboomberoo.precaststructure.registry.ModGameRules;
 import io.github.ooboomberoo.precaststructure.registry.ModItems;
 import io.github.ooboomberoo.precaststructure.structure.BlueprintItemData;
 import io.github.ooboomberoo.precaststructure.structure.StructureBlueprint;
@@ -21,6 +22,7 @@ import net.minecraft.world.ContainerHelper;
 import net.minecraft.world.WorldlyContainer;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.inventory.AbstractContainerMenu;
+import net.minecraft.world.inventory.ContainerData;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
@@ -33,10 +35,40 @@ public class StructurePrinterBlockEntity extends BaseContainerBlockEntity implem
     public static final int MATERIAL_SLOT_COUNT = 8;
     public static final int OUTPUT_SLOT = FIRST_MATERIAL_SLOT + MATERIAL_SLOT_COUNT;
     public static final int SLOT_COUNT = OUTPUT_SLOT + 1;
+    public static final int DATA_PROGRESS = 0;
+    public static final int DATA_MAX_PROGRESS = 1;
+    public static final int DATA_COUNT = 2;
     private static final int[] INPUT_SLOTS = IntStream.range(BLUEPRINT_SLOT, OUTPUT_SLOT).toArray();
     private static final int[] OUTPUT_SLOTS = {OUTPUT_SLOT};
 
     private NonNullList<ItemStack> items = NonNullList.withSize(SLOT_COUNT, ItemStack.EMPTY);
+    private int printProgress;
+    private int maxPrintProgress = 100;
+    private final ContainerData progressData = new ContainerData() {
+        @Override
+        public int get(int index) {
+            return switch (index) {
+                case DATA_PROGRESS -> printProgress;
+                case DATA_MAX_PROGRESS -> maxPrintProgress;
+                default -> 0;
+            };
+        }
+
+        @Override
+        public void set(int index, int value) {
+            switch (index) {
+                case DATA_PROGRESS -> printProgress = value;
+                case DATA_MAX_PROGRESS -> maxPrintProgress = value;
+                default -> {
+                }
+            }
+        }
+
+        @Override
+        public int getCount() {
+            return DATA_COUNT;
+        }
+    };
 
     public StructurePrinterBlockEntity(BlockPos pos, BlockState blockState) {
         super(ModBlockEntityTypes.STRUCTURE_PRINTER.get(), pos, blockState);
@@ -47,23 +79,34 @@ public class StructurePrinterBlockEntity extends BaseContainerBlockEntity implem
     }
 
     private void tryPrint() {
+        maxPrintProgress = getPrintDelay();
         ItemStack blueprintStack = items.get(BLUEPRINT_SLOT);
         if (!blueprintStack.is(ModItems.BLUEPRINT.get())) {
+            resetProgress();
             return;
         }
 
         Optional<StructureBlueprint> optional = BlueprintItemData.read(blueprintStack, level.registryAccess());
         if (optional.isEmpty()) {
+            resetProgress();
             return;
         }
 
         StructureBlueprint blueprint = optional.get();
         if (!hasMaterials(blueprint.requiredItems())) {
+            resetProgress();
             return;
         }
 
         ItemStack outputStack = items.get(OUTPUT_SLOT);
         if (!outputStack.isEmpty()) {
+            resetProgress();
+            return;
+        }
+
+        if (printProgress < maxPrintProgress) {
+            printProgress++;
+            setChanged();
             return;
         }
 
@@ -71,7 +114,23 @@ public class StructurePrinterBlockEntity extends BaseContainerBlockEntity implem
         ItemStack structureStack = new ItemStack(ModItems.PRECAST_STRUCTURE.get());
         BlueprintItemData.write(structureStack, blueprint, blueprintStack.get(DataComponents.CUSTOM_NAME));
         items.set(OUTPUT_SLOT, structureStack);
+        printProgress = 0;
         setChanged();
+    }
+
+    private int getPrintDelay() {
+        return Math.max(1, level.getGameRules().getInt(ModGameRules.STRUCTURE_PRINTER_DELAY));
+    }
+
+    private void resetProgress() {
+        if (printProgress != 0) {
+            printProgress = 0;
+            setChanged();
+        }
+    }
+
+    public ContainerData getProgressData() {
+        return progressData;
     }
 
     private boolean hasMaterials(Map<Item, Integer> requiredItems) {
@@ -165,6 +224,8 @@ public class StructurePrinterBlockEntity extends BaseContainerBlockEntity implem
     protected void saveAdditional(CompoundTag tag, HolderLookup.Provider registries) {
         super.saveAdditional(tag, registries);
         ContainerHelper.saveAllItems(tag, items, registries);
+        tag.putInt("PrintProgress", printProgress);
+        tag.putInt("MaxPrintProgress", maxPrintProgress);
     }
 
     @Override
@@ -172,5 +233,7 @@ public class StructurePrinterBlockEntity extends BaseContainerBlockEntity implem
         super.loadAdditional(tag, registries);
         items = NonNullList.withSize(SLOT_COUNT, ItemStack.EMPTY);
         ContainerHelper.loadAllItems(tag, items, registries);
+        printProgress = tag.getInt("PrintProgress");
+        maxPrintProgress = Math.max(1, tag.getInt("MaxPrintProgress"));
     }
 }
