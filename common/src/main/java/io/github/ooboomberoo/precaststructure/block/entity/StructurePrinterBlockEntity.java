@@ -44,7 +44,7 @@ public class StructurePrinterBlockEntity extends BaseContainerBlockEntity implem
 
     private NonNullList<ItemStack> items = NonNullList.withSize(SLOT_COUNT, ItemStack.EMPTY);
     private int printProgress;
-    private int maxPrintProgress = 100;
+    private int maxPrintProgress = DEFAULT_PRINT_DELAY;
     private final ContainerData progressData = new ContainerData() {
         @Override
         public int get(int index) {
@@ -123,7 +123,7 @@ public class StructurePrinterBlockEntity extends BaseContainerBlockEntity implem
     }
 
     private int getConfiguredPrintDelay() {
-        return level != null ? Math.max(1, level.getGameRules().getInt(ModGameRules.STRUCTURE_PRINTER_DELAY)) : DEFAULT_PRINT_DELAY;
+        return Math.max(1, level != null ? level.getGameRules().getInt(ModGameRules.STRUCTURE_PRINTER_DELAY) : DEFAULT_PRINT_DELAY);
     }
 
     private void resetProgress() {
