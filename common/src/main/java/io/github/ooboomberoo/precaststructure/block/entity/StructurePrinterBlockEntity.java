@@ -38,6 +38,7 @@ public class StructurePrinterBlockEntity extends BaseContainerBlockEntity implem
     public static final int DATA_PROGRESS = 0;
     public static final int DATA_MAX_PROGRESS = 1;
     public static final int DATA_COUNT = 2;
+    private static final int DEFAULT_PRINT_DELAY = 100;
     private static final int[] INPUT_SLOTS = IntStream.range(BLUEPRINT_SLOT, OUTPUT_SLOT).toArray();
     private static final int[] OUTPUT_SLOTS = {OUTPUT_SLOT};
 
@@ -79,7 +80,6 @@ public class StructurePrinterBlockEntity extends BaseContainerBlockEntity implem
     }
 
     private void tryPrint() {
-        maxPrintProgress = getPrintDelay();
         ItemStack blueprintStack = items.get(BLUEPRINT_SLOT);
         if (!blueprintStack.is(ModItems.BLUEPRINT.get())) {
             resetProgress();
@@ -104,6 +104,10 @@ public class StructurePrinterBlockEntity extends BaseContainerBlockEntity implem
             return;
         }
 
+        if (printProgress == 0) {
+            maxPrintProgress = getConfiguredPrintDelay();
+        }
+
         if (printProgress < maxPrintProgress) {
             printProgress++;
             setChanged();
@@ -118,8 +122,8 @@ public class StructurePrinterBlockEntity extends BaseContainerBlockEntity implem
         setChanged();
     }
 
-    private int getPrintDelay() {
-        return Math.max(1, level.getGameRules().getInt(ModGameRules.STRUCTURE_PRINTER_DELAY));
+    private int getConfiguredPrintDelay() {
+        return level != null ? Math.max(1, level.getGameRules().getInt(ModGameRules.STRUCTURE_PRINTER_DELAY)) : DEFAULT_PRINT_DELAY;
     }
 
     private void resetProgress() {
@@ -234,6 +238,7 @@ public class StructurePrinterBlockEntity extends BaseContainerBlockEntity implem
         items = NonNullList.withSize(SLOT_COUNT, ItemStack.EMPTY);
         ContainerHelper.loadAllItems(tag, items, registries);
         printProgress = tag.getInt("PrintProgress");
-        maxPrintProgress = Math.max(1, tag.getInt("MaxPrintProgress"));
+        int savedMaxPrintProgress = tag.getInt("MaxPrintProgress");
+        maxPrintProgress = savedMaxPrintProgress > 0 ? savedMaxPrintProgress : getConfiguredPrintDelay();
     }
 }
