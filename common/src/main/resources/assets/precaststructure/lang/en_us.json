@@ -27,5 +27,6 @@
   "gui.precaststructure.printer_blueprint": "Blueprint",
   "gui.precaststructure.printer_materials": "Materials",
   "gui.precaststructure.printer_output": "Output",
+  "gui.precaststructure.printer_progress": "Progress",
   "gui.precaststructure.printer_auto": "Automatically prints when enough materials are loaded"
 }

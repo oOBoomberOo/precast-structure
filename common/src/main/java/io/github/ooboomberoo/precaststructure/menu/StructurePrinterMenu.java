@@ -10,7 +10,9 @@ import net.minecraft.world.SimpleContainer;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
+import net.minecraft.world.inventory.ContainerData;
 import net.minecraft.world.inventory.ContainerLevelAccess;
+import net.minecraft.world.inventory.SimpleContainerData;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
 
@@ -29,21 +31,25 @@ public class StructurePrinterMenu extends AbstractContainerMenu {
 
     private final Container container;
     private final ContainerLevelAccess access;
+    private final ContainerData progressData;
 
     public StructurePrinterMenu(int containerId, Inventory inventory, FriendlyByteBuf buf) {
-        this(containerId, inventory, new SimpleContainer(CONTAINER_SLOT_COUNT), ContainerLevelAccess.create(inventory.player.level(), buf.readBlockPos()));
+        this(containerId, inventory, new SimpleContainer(CONTAINER_SLOT_COUNT), new SimpleContainerData(StructurePrinterBlockEntity.DATA_COUNT), ContainerLevelAccess.create(inventory.player.level(), buf.readBlockPos()));
     }
 
     public StructurePrinterMenu(int containerId, Inventory inventory, StructurePrinterBlockEntity blockEntity) {
-        this(containerId, inventory, blockEntity, ContainerLevelAccess.create(blockEntity.getLevel(), blockEntity.getBlockPos()));
+        this(containerId, inventory, blockEntity, blockEntity.getProgressData(), ContainerLevelAccess.create(blockEntity.getLevel(), blockEntity.getBlockPos()));
     }
 
-    private StructurePrinterMenu(int containerId, Inventory inventory, Container container, ContainerLevelAccess access) {
+    private StructurePrinterMenu(int containerId, Inventory inventory, Container container, ContainerData progressData, ContainerLevelAccess access) {
         super(ModMenuTypes.STRUCTURE_PRINTER.get(), containerId);
         checkContainerSize(container, CONTAINER_SLOT_COUNT);
+        checkContainerDataCount(progressData, StructurePrinterBlockEntity.DATA_COUNT);
         this.container = container;
+        this.progressData = progressData;
         this.access = access;
         container.startOpen(inventory.player);
+        this.addDataSlots(progressData);
 
         this.addSlot(new Slot(container, StructurePrinterBlockEntity.BLUEPRINT_SLOT, BLUEPRINT_SLOT_X, INPUT_SLOT_Y) {
             @Override
@@ -124,5 +130,21 @@ public class StructurePrinterMenu extends AbstractContainerMenu {
     public void removed(Player player) {
         super.removed(player);
         container.stopOpen(player);
+    }
+
+    public int getProgress() {
+        return progressData.get(StructurePrinterBlockEntity.DATA_PROGRESS);
+    }
+
+    public int getMaxProgress() {
+        return progressData.get(StructurePrinterBlockEntity.DATA_MAX_PROGRESS);
+    }
+
+    public int getScaledProgress(int width) {
+        int maxProgress = getMaxProgress();
+        if (maxProgress <= 0 || getProgress() <= 0) {
+            return 0;
+        }
+        return Math.min(width, getProgress() * width / maxProgress);
     }
 }
