@@ -3,9 +3,15 @@
   "id": "precast_structure",
   "version": "${version}",
   "name": "Pre-cast Structure",
-  "description": "Scan framed builds into placeable structure items.",
+  "description": "Scan framed builds into blueprints, print them into pre-cast structure items, and place the structure with a hologram deploy preview.",
   "authors": ["oOBoomberOo"],
+  "contact": {
+    "homepage": "https://github.com/oOBoomberOo/precast-structure",
+    "sources": "https://github.com/oOBoomberOo/precast-structure",
+    "issues": "https://github.com/oOBoomberOo/precast-structure/issues"
+  },
   "license": "MIT",
+  "icon": "assets/precast_structure/icon.png",
   "environment": "*",
   "entrypoints": {
     "main": [

@@ -50,6 +50,11 @@ dependencies {
 
 processResources {
     inputs.property "version", project.version
+    // Mod Menu resolves icons from this mod jar; common resources are a separate classpath entry in loom runs.
+    from(project(":common").file("src/main/resources/assets/precast_structure")) {
+        include "icon.png"
+        into "assets/precast_structure"
+    }
 
     filesMatching("fabric.mod.json") {
         expand "version": project.version

@@ -46,6 +46,11 @@ dependencies {
 
 processResources {
     inputs.property "version", project.version
+    // Mods list logo is loaded from this mod jar; common is a separate classpath entry in loom runs.
+    from(project(":common").file("src/main/resources/assets/precast_structure")) {
+        include "icon.png"
+        into "assets/precast_structure"
+    }
 
     filesMatching("META-INF/neoforge.mods.toml") {
         expand "version": project.version
