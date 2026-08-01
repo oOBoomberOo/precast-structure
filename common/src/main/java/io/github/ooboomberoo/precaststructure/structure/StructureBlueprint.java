@@ -73,4 +73,20 @@ public record StructureBlueprint(BlockPos size, List<StructureBlockInfo> blocks)
         }
         return requirements;
     }
+
+    /** One input slot per unique item; splits into multiple slots when amount exceeds max stack size. */
+    public List<MaterialRequirement> materialSlotRequirements() {
+        List<MaterialRequirement> slots = new ArrayList<>();
+        for (Map.Entry<Item, Integer> entry : requiredItems().entrySet()) {
+            Item item = entry.getKey();
+            int remaining = entry.getValue();
+            int maxStack = Math.max(1, item.getDefaultMaxStackSize());
+            while (remaining > 0) {
+                int amount = Math.min(remaining, maxStack);
+                slots.add(new MaterialRequirement(item, amount));
+                remaining -= amount;
+            }
+        }
+        return slots;
+    }
 }

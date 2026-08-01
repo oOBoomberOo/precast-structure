@@ -6,7 +6,8 @@ import io.github.ooboomberoo.precaststructure.block.entity.StructureScannerBlock
 import io.github.ooboomberoo.precaststructure.menu.StructureScannerMenu;
 import io.netty.buffer.Unpooled;
 import net.minecraft.core.BlockPos;
-import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.core.RegistryAccess;
+import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 
@@ -37,7 +38,7 @@ public final class ModNetworking {
     }
 
     public static void sendScannerAction(BlockPos pos, String structureName) {
-        FriendlyByteBuf buf = new FriendlyByteBuf(Unpooled.buffer());
+        RegistryFriendlyByteBuf buf = new RegistryFriendlyByteBuf(Unpooled.buffer(), RegistryAccess.EMPTY);
         buf.writeBlockPos(pos);
         buf.writeUtf(structureName, StructureScannerBlockEntity.MAX_NAME_LENGTH);
         NetworkManager.sendToServer(SCANNER_ACTION, buf);

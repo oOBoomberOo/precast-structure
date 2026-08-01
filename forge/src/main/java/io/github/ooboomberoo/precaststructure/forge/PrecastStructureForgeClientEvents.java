@@ -3,12 +3,12 @@ package io.github.ooboomberoo.precaststructure.forge;
 import io.github.ooboomberoo.precaststructure.PrecastStructureMod;
 import io.github.ooboomberoo.precaststructure.client.StructureGhostRenderer;
 import net.minecraft.client.Minecraft;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.client.event.RenderLevelStageEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.neoforge.client.event.RenderLevelStageEvent;
 
-@Mod.EventBusSubscriber(modid = PrecastStructureMod.MOD_ID, value = Dist.CLIENT)
+@EventBusSubscriber(modid = PrecastStructureMod.MOD_ID, value = Dist.CLIENT)
 public final class PrecastStructureForgeClientEvents {
     private PrecastStructureForgeClientEvents() {
     }

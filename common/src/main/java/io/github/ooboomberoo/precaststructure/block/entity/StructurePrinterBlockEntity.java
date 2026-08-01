@@ -6,8 +6,9 @@ import io.github.ooboomberoo.precaststructure.registry.ModBlockEntityTypes;
 import io.github.ooboomberoo.precaststructure.registry.ModGameRules;
 import io.github.ooboomberoo.precaststructure.registry.ModItems;
 import io.github.ooboomberoo.precaststructure.structure.BlueprintItemData;
+import io.github.ooboomberoo.precaststructure.structure.MaterialRequirement;
 import io.github.ooboomberoo.precaststructure.structure.StructureBlueprint;
-import java.util.Map;
+import java.util.List;
 import java.util.Optional;
 import java.util.stream.IntStream;
 import net.minecraft.core.BlockPos;
@@ -23,16 +24,16 @@ import net.minecraft.world.WorldlyContainer;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.inventory.ContainerData;
-import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BaseContainerBlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
+import org.jetbrains.annotations.Nullable;
 
 public class StructurePrinterBlockEntity extends BaseContainerBlockEntity implements WorldlyContainer, ExtendedMenuProvider {
     public static final int BLUEPRINT_SLOT = 0;
     public static final int FIRST_MATERIAL_SLOT = 1;
-    public static final int MATERIAL_SLOT_COUNT = 8;
+    public static final int MATERIAL_SLOT_COUNT = 28;
     public static final int OUTPUT_SLOT = FIRST_MATERIAL_SLOT + MATERIAL_SLOT_COUNT;
     public static final int SLOT_COUNT = OUTPUT_SLOT + 1;
     public static final int DATA_PROGRESS = 0;
@@ -79,6 +80,25 @@ public class StructurePrinterBlockEntity extends BaseContainerBlockEntity implem
         blockEntity.tryPrint();
     }
 
+    public List<MaterialRequirement> getMaterialRequirements() {
+        ItemStack blueprintStack = items.get(BLUEPRINT_SLOT);
+        if (!blueprintStack.is(ModItems.BLUEPRINT.get()) || level == null) {
+            return List.of();
+        }
+        return BlueprintItemData.read(blueprintStack, level.registryAccess())
+            .map(StructureBlueprint::materialSlotRequirements)
+            .orElse(List.of());
+    }
+
+    @Nullable
+    public MaterialRequirement getMaterialRequirement(int materialIndex) {
+        List<MaterialRequirement> requirements = getMaterialRequirements();
+        if (materialIndex < 0 || materialIndex >= requirements.size() || materialIndex >= MATERIAL_SLOT_COUNT) {
+            return null;
+        }
+        return requirements.get(materialIndex);
+    }
+
     private void tryPrint() {
         ItemStack blueprintStack = items.get(BLUEPRINT_SLOT);
         if (!blueprintStack.is(ModItems.BLUEPRINT.get())) {
@@ -93,13 +113,16 @@ public class StructurePrinterBlockEntity extends BaseContainerBlockEntity implem
         }
 
         StructureBlueprint blueprint = optional.get();
-        if (!hasMaterials(blueprint.requiredItems())) {
+        List<MaterialRequirement> requirements = blueprint.materialSlotRequirements();
+        if (requirements.size() > MATERIAL_SLOT_COUNT || !hasMaterials(requirements)) {
             resetProgress();
             return;
         }
 
+        ItemStack structureStack = new ItemStack(ModItems.PRECAST_STRUCTURE.get());
+        BlueprintItemData.write(structureStack, blueprint, blueprintStack.get(DataComponents.CUSTOM_NAME));
         ItemStack outputStack = items.get(OUTPUT_SLOT);
-        if (!outputStack.isEmpty()) {
+        if (!canAcceptPrintedStructure(outputStack, structureStack)) {
             resetProgress();
             return;
         }
@@ -114,12 +137,21 @@ public class StructurePrinterBlockEntity extends BaseContainerBlockEntity implem
             return;
         }
 
-        consumeMaterials(blueprint.requiredItems());
-        ItemStack structureStack = new ItemStack(ModItems.PRECAST_STRUCTURE.get());
-        BlueprintItemData.write(structureStack, blueprint, blueprintStack.get(DataComponents.CUSTOM_NAME));
-        items.set(OUTPUT_SLOT, structureStack);
+        consumeMaterials(requirements);
+        if (outputStack.isEmpty()) {
+            items.set(OUTPUT_SLOT, structureStack);
+        } else {
+            outputStack.grow(1);
+        }
         printProgress = 0;
         setChanged();
+    }
+
+    private static boolean canAcceptPrintedStructure(ItemStack outputStack, ItemStack structureStack) {
+        if (outputStack.isEmpty()) {
+            return true;
+        }
+        return ItemStack.isSameItemSameComponents(outputStack, structureStack) && outputStack.getCount() < outputStack.getMaxStackSize();
     }
 
     private int getConfiguredPrintDelay() {
@@ -137,36 +169,25 @@ public class StructurePrinterBlockEntity extends BaseContainerBlockEntity implem
         return progressData;
     }
 
-    private boolean hasMaterials(Map<Item, Integer> requiredItems) {
-        for (Map.Entry<Item, Integer> entry : requiredItems.entrySet()) {
-            int remaining = entry.getValue();
-            for (int slot = FIRST_MATERIAL_SLOT; slot < OUTPUT_SLOT && remaining > 0; slot++) {
-                ItemStack stack = items.get(slot);
-                if (stack.is(entry.getKey())) {
-                    remaining -= stack.getCount();
-                }
-            }
-            if (remaining > 0) {
+    private boolean hasMaterials(List<MaterialRequirement> requirements) {
+        for (int i = 0; i < requirements.size(); i++) {
+            MaterialRequirement requirement = requirements.get(i);
+            ItemStack stack = items.get(FIRST_MATERIAL_SLOT + i);
+            if (!stack.is(requirement.item()) || stack.getCount() < requirement.amount()) {
                 return false;
             }
         }
         return true;
     }
 
-    private void consumeMaterials(Map<Item, Integer> requiredItems) {
-        for (Map.Entry<Item, Integer> entry : requiredItems.entrySet()) {
-            int remaining = entry.getValue();
-            for (int slot = FIRST_MATERIAL_SLOT; slot < OUTPUT_SLOT && remaining > 0; slot++) {
-                ItemStack stack = items.get(slot);
-                if (!stack.is(entry.getKey())) {
-                    continue;
-                }
-                int consumed = Math.min(remaining, stack.getCount());
-                stack.shrink(consumed);
-                remaining -= consumed;
-                if (stack.isEmpty()) {
-                    items.set(slot, ItemStack.EMPTY);
-                }
+    private void consumeMaterials(List<MaterialRequirement> requirements) {
+        for (int i = 0; i < requirements.size(); i++) {
+            MaterialRequirement requirement = requirements.get(i);
+            int slot = FIRST_MATERIAL_SLOT + i;
+            ItemStack stack = items.get(slot);
+            stack.shrink(requirement.amount());
+            if (stack.isEmpty()) {
+                items.set(slot, ItemStack.EMPTY);
             }
         }
     }
@@ -179,9 +200,13 @@ public class StructurePrinterBlockEntity extends BaseContainerBlockEntity implem
     @Override
     public boolean canPlaceItemThroughFace(int slot, ItemStack stack, Direction direction) {
         if (slot == BLUEPRINT_SLOT) {
-            return stack.is(ModItems.BLUEPRINT.get());
+            return stack.is(ModItems.BLUEPRINT.get()) && BlueprintItemData.hasStructure(stack);
         }
-        return slot >= FIRST_MATERIAL_SLOT && slot < OUTPUT_SLOT && !stack.is(ModItems.BLUEPRINT.get()) && !stack.is(ModItems.PRECAST_STRUCTURE.get());
+        if (slot < FIRST_MATERIAL_SLOT || slot >= OUTPUT_SLOT) {
+            return false;
+        }
+        MaterialRequirement requirement = getMaterialRequirement(slot - FIRST_MATERIAL_SLOT);
+        return requirement != null && stack.is(requirement.item());
     }
 
     @Override
@@ -196,7 +221,7 @@ public class StructurePrinterBlockEntity extends BaseContainerBlockEntity implem
 
     @Override
     protected Component getDefaultName() {
-        return Component.translatable("block.precaststructure.structure_printer");
+        return Component.translatable("block.precast_structure.structure_printer");
     }
 
     @Override

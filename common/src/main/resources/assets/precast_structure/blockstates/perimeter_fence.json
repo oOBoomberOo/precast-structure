@@ -1,0 +1,9 @@
+{
+  "multipart": [
+    { "apply": { "model": "precast_structure:block/perimeter_fence_post" } },
+    { "when": { "north": "true" }, "apply": { "model": "precast_structure:block/perimeter_fence_side", "uvlock": true } },
+    { "when": { "east": "true" }, "apply": { "model": "precast_structure:block/perimeter_fence_side", "y": 90, "uvlock": true } },
+    { "when": { "south": "true" }, "apply": { "model": "precast_structure:block/perimeter_fence_side", "y": 180, "uvlock": true } },
+    { "when": { "west": "true" }, "apply": { "model": "precast_structure:block/perimeter_fence_side", "y": 270, "uvlock": true } }
+  ]
+}

@@ -3,7 +3,7 @@ package io.github.ooboomberoo.precaststructure.forge;
 import io.github.ooboomberoo.precaststructure.item.PrecastStructureItem;
 import java.util.function.Consumer;
 import net.minecraft.client.renderer.BlockEntityWithoutLevelRenderer;
-import net.minecraftforge.client.extensions.common.IClientItemExtensions;
+import net.neoforged.neoforge.client.extensions.common.IClientItemExtensions;
 
 public final class ForgePrecastStructureItem extends PrecastStructureItem {
     public ForgePrecastStructureItem(Properties properties) {

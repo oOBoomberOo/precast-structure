@@ -21,7 +21,7 @@ public final class BlueprintItemData {
         CompoundTag root = new CompoundTag();
         root.put(StructureBlueprint.ROOT_KEY, blueprint.save());
         stack.set(DataComponents.CUSTOM_DATA, CustomData.of(root));
-        stack.set(DataComponents.CUSTOM_NAME, customName != null ? customName : Component.translatable("item.precaststructure.blueprint.named", blueprint.size().getX(), blueprint.size().getY(), blueprint.size().getZ()));
+        stack.set(DataComponents.CUSTOM_NAME, customName != null ? customName : Component.translatable("item.precast_structure.blueprint.named", blueprint.size().getX(), blueprint.size().getY(), blueprint.size().getZ()));
     }
 
     public static Optional<StructureBlueprint> read(ItemStack stack, HolderLookup.Provider registries) {
@@ -35,5 +35,13 @@ public final class BlueprintItemData {
             return Optional.empty();
         }
         return StructureBlueprint.load(root.getCompound(StructureBlueprint.ROOT_KEY), registries);
+    }
+
+    public static boolean hasStructure(ItemStack stack) {
+        CustomData data = stack.get(DataComponents.CUSTOM_DATA);
+        if (data == null) {
+            return false;
+        }
+        return data.copyTag().contains(StructureBlueprint.ROOT_KEY, net.minecraft.nbt.Tag.TAG_COMPOUND);
     }
 }

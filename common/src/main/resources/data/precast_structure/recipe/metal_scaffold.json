@@ -1,0 +1,21 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "building",
+  "key": {
+    "I": {
+      "item": "minecraft:iron_ingot"
+    },
+    "N": {
+      "item": "minecraft:iron_nugget"
+    }
+  },
+  "pattern": [
+    "N N",
+    " I ",
+    "N N"
+  ],
+  "result": {
+    "count": 4,
+    "id": "precast_structure:metal_scaffold"
+  }
+}
