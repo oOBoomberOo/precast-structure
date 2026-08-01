@@ -1,0 +1,8 @@
+{
+  "variants": {
+    "facing=north": { "model": "precast_structure:block/structure_printer" },
+    "facing=south": { "model": "precast_structure:block/structure_printer", "y": 180 },
+    "facing=west": { "model": "precast_structure:block/structure_printer", "y": 270 },
+    "facing=east": { "model": "precast_structure:block/structure_printer", "y": 90 }
+  }
+}

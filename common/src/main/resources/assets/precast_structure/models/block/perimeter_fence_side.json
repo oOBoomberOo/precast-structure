@@ -1,0 +1,1 @@
+{ "parent": "minecraft:block/fence_side", "textures": { "texture": "precast_structure:block/perimeter_fence" } }

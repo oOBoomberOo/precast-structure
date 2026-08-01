@@ -1,0 +1,13 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    {
+      "item": "precast_structure:blueprint"
+    }
+  ],
+  "result": {
+    "count": 1,
+    "id": "precast_structure:empty_blueprint"
+  }
+}

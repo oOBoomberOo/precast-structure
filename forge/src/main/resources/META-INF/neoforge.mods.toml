@@ -1,0 +1,33 @@
+modLoader="javafml"
+loaderVersion="[1,)"
+license="MIT"
+
+[[mods]]
+modId="precast_structure"
+version="${version}"
+displayName="Pre-cast Structure"
+authors="oOBoomberOo"
+description='''
+Scan framed structures into blueprint and pre-cast structure items.
+'''
+
+[[dependencies.precast_structure]]
+modId="neoforge"
+type="required"
+versionRange="[21.1,)"
+ordering="NONE"
+side="BOTH"
+
+[[dependencies.precast_structure]]
+modId="minecraft"
+type="required"
+versionRange="[1.21.1,1.22)"
+ordering="NONE"
+side="BOTH"
+
+[[dependencies.precast_structure]]
+modId="architectury"
+type="required"
+versionRange="[13.0.8,)"
+ordering="AFTER"
+side="BOTH"

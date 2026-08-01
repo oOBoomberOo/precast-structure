@@ -1,0 +1,12 @@
+{
+  "variants": {
+    "facing=north,ready=false": { "model": "precast_structure:block/structure_scanner_invalid" },
+    "facing=south,ready=false": { "model": "precast_structure:block/structure_scanner_invalid", "y": 180 },
+    "facing=west,ready=false": { "model": "precast_structure:block/structure_scanner_invalid", "y": 270 },
+    "facing=east,ready=false": { "model": "precast_structure:block/structure_scanner_invalid", "y": 90 },
+    "facing=north,ready=true": { "model": "precast_structure:block/structure_scanner" },
+    "facing=south,ready=true": { "model": "precast_structure:block/structure_scanner", "y": 180 },
+    "facing=west,ready=true": { "model": "precast_structure:block/structure_scanner", "y": 270 },
+    "facing=east,ready=true": { "model": "precast_structure:block/structure_scanner", "y": 90 }
+  }
+}
