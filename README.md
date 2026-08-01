@@ -1,30 +1,33 @@
-# precast-structure
+# Pre-cast Structure
 
-Architectury (Fabric + NeoForge) Minecraft 1.21.1 mod that lets players scan a framed build into a blueprint and print it into a placeable pre-cast structure item.
+Build something once, bag it, and drop it somewhere else.
 
-## Crafting
+Pre-cast Structure is a Minecraft mod for **1.21.1** (Fabric and NeoForge). You frame a build, scan it into a blueprint, print that into a portable structure item, then place it with a hologram preview — useful for camps, shops, or anything you keep rebuilding by hand.
 
-| Result | Recipe |
-| --- | --- |
-| Platform Floor ×4 | Iron ingot + smooth stone |
-| Perimeter Fence ×3 | Sticks + yellow dye + black dye |
-| Perimeter Fence Gate | Sticks + yellow dye + black dye |
-| Metal Scaffold ×4 | Iron ingot + iron nuggets |
-| Structure Scanner | Iron + glass pane + lapis + redstone |
-| Structure Printer | Iron + hopper + crafting table + redstone |
-| Empty Blueprint ×2 | Paper + blue dye + lapis |
+## How it works
 
-Craft a filled **Blueprint** + **Empty Blueprint** together to clone it. Craft a filled **Blueprint** alone to clear it back into an Empty Blueprint.
+Frame the volume first:
 
-Blueprints are filled by the scanner (consumes one Empty Blueprint); pre-cast structures come from the printer.
+1. Lay a solid rectangle of **Platform Floor** (3×3 or larger).
+2. Run **Perimeter Fence** (or gates) one block above the platform edge.
+3. Put a **Metal Scaffold** pillar on exactly one corner — that sets the height.
+4. Park a **Structure Scanner** against one side of the platform.
 
-## Minimal gameplay loop
+Build inside the frame, then open the scanner with an **Empty Blueprint** in your inventory. It digitizes the interior and hands you a filled **Blueprint**.
 
-1. Build a filled rectangle of **Platform Floor** blocks (at least 3×3).
-2. Place **Perimeter Fence** blocks one block above the platform border.
-3. Place a vertical **Metal Scaffold** pillar on exactly one platform corner to set the height.
-4. Place a **Structure Scanner** orthogonally adjacent to the platform (any side).
-5. Build your structure inside the framed volume (above the floor, inside the fence ring).
-6. Right-click the scanner while carrying an **Empty Blueprint** to consume it and receive a filled **Blueprint** item.
-7. Put the blueprint in a **Structure Printer** with the required materials to produce a **Pre-cast Structure** item.
-8. Hold the pre-cast item to see a ghost placement preview, then right-click to place the stored structure if the target area only contains replaceable blocks.
+Feed that blueprint into a **Structure Printer** along with the materials the build needs. When it finishes, you get a **Pre-cast Structure** item. Hold it to see a ghost preview; right-click to place (or watch it deploy with the rising hologram if animated deploy is on).
+
+Filled blueprints can be cloned (blueprint + empty blueprint) or cleared back to empty by crafting the filled one alone. Recipes are in JEI/REI.
+
+## Requirements
+
+- Minecraft **1.21.1**
+- [Architectury API](https://modrinth.com/mod/architectury-api)
+- [Cloth Config](https://modrinth.com/mod/cloth-config)
+- Fabric build also needs [Fabric API](https://modrinth.com/mod/fabric-api)
+
+There's a Cloth Config screen for scan/deploy timing, frame size limits, and hologram collision. A matching **1.20.1** line lives on the `version/1.20.x` branch (Fabric + Forge).
+
+## License
+
+MIT — see the license file in the repo.
