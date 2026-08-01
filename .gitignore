@@ -5,3 +5,6 @@ build/
 out/
 run/
 **/run-client2/
+.architectury-transformer/
+**/logs/
+tools/
