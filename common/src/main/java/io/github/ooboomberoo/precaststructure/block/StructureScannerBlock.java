@@ -6,6 +6,7 @@ import io.github.ooboomberoo.precaststructure.block.entity.StructureScannerBlock
 import io.github.ooboomberoo.precaststructure.registry.ModBlockEntityTypes;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
@@ -94,6 +95,10 @@ public class StructureScannerBlock extends BaseEntityBlock {
             return InteractionResult.SUCCESS;
         }
         if (player instanceof ServerPlayer serverPlayer && level.getBlockEntity(pos) instanceof StructureScannerBlockEntity scanner) {
+            if (scanner.isBusy()) {
+                serverPlayer.displayClientMessage(Component.translatable("message.precast_structure.scan_in_progress"), true);
+                return InteractionResult.CONSUME;
+            }
             MenuRegistry.openExtendedMenu(serverPlayer, scanner);
         }
         return InteractionResult.CONSUME;

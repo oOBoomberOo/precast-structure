@@ -8,6 +8,7 @@ import io.github.ooboomberoo.precaststructure.registry.ModGameRules;
 import io.github.ooboomberoo.precaststructure.registry.ModItems;
 import io.github.ooboomberoo.precaststructure.registry.ModMenuTypes;
 import io.github.ooboomberoo.precaststructure.registry.ModRecipeSerializers;
+import io.github.ooboomberoo.precaststructure.registry.ModSounds;
 
 public final class PrecastStructureMod {
     public static final String MOD_ID = "precast_structure";
@@ -17,6 +18,7 @@ public final class PrecastStructureMod {
 
     public static void init() {
         ModGameRules.register();
+        ModSounds.register();
         ModCreativeTabs.register();
         ModBlocks.register();
         ModItems.register();

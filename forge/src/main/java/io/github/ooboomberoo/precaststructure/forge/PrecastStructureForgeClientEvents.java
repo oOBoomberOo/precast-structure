@@ -2,7 +2,7 @@ package io.github.ooboomberoo.precaststructure.forge;
 
 import io.github.ooboomberoo.precaststructure.PrecastStructureMod;
 import io.github.ooboomberoo.precaststructure.client.StructureGhostRenderer;
-import net.minecraft.client.Minecraft;
+import io.github.ooboomberoo.precaststructure.client.StructureScanRenderer;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
@@ -15,9 +15,15 @@ public final class PrecastStructureForgeClientEvents {
 
     @SubscribeEvent
     public static void onRenderLevel(RenderLevelStageEvent event) {
-        if (event.getStage() != RenderLevelStageEvent.Stage.AFTER_TRANSLUCENT_BLOCKS) {
+        if (event.getStage() != RenderLevelStageEvent.Stage.AFTER_ENTITIES) {
             return;
         }
-        StructureGhostRenderer.render(event.getPoseStack(), event.getCamera().getPosition(), Minecraft.getInstance().renderBuffers().bufferSource());
+        // Depth buffer still has opaque/cutout world geometry (fences, etc.).
+        StructureScanRenderer.render(
+            event.getPoseStack(),
+            event.getCamera().getPosition(),
+            event.getPartialTick().getGameTimeDeltaPartialTick(false)
+        );
+        StructureGhostRenderer.render(event.getPoseStack(), event.getCamera().getPosition());
     }
 }

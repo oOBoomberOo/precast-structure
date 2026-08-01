@@ -20,7 +20,7 @@ public final class ModItems {
     public static final RegistrySupplier<Item> STRUCTURE_SCANNER = ITEMS.register("structure_scanner", () -> new BlockItem(ModBlocks.STRUCTURE_SCANNER.get(), new Item.Properties().stacksTo(16).arch$tab(ModCreativeTabs.MAIN)));
     public static final RegistrySupplier<Item> STRUCTURE_PRINTER = ITEMS.register("structure_printer", () -> new BlockItem(ModBlocks.STRUCTURE_PRINTER.get(), new Item.Properties().stacksTo(16).arch$tab(ModCreativeTabs.MAIN)));
     public static final RegistrySupplier<Item> EMPTY_BLUEPRINT = ITEMS.register("empty_blueprint", () -> new EmptyBlueprintItem(new Item.Properties().stacksTo(64).arch$tab(ModCreativeTabs.MAIN)));
-    public static final RegistrySupplier<Item> BLUEPRINT = ITEMS.register("blueprint", () -> new BlueprintItem(new Item.Properties().stacksTo(1).arch$tab(ModCreativeTabs.MAIN)));
+    public static final RegistrySupplier<Item> BLUEPRINT = ITEMS.register("blueprint", () -> new BlueprintItem(new Item.Properties().stacksTo(64).arch$tab(ModCreativeTabs.MAIN)));
     public static final RegistrySupplier<Item> PRECAST_STRUCTURE = ITEMS.register("precast_structure", () -> PlatformItemFactory.createPrecastStructureItem(new Item.Properties().stacksTo(64).arch$tab(ModCreativeTabs.MAIN)));
 
     private ModItems() {

@@ -1,0 +1,12 @@
+{
+  "parent": "minecraft:block/cube",
+  "textures": {
+    "particle": "precast_structure:block/platform_floor_6",
+    "down": "precast_structure:block/platform_floor_6",
+    "up": "precast_structure:block/platform_floor_6",
+    "north": "precast_structure:block/platform_floor_side",
+    "south": "precast_structure:block/platform_floor_side",
+    "east": "precast_structure:block/platform_floor_side",
+    "west": "precast_structure:block/platform_floor_side"
+  }
+}
