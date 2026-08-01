@@ -1,0 +1,85 @@
+name: Release
+
+on:
+  push:
+    tags:
+      # Semantic versions: 1.2.3, v1.2.3, and optional prerelease/build metadata
+      - "[0-9]+.[0-9]+.[0-9]+"
+      - "[0-9]+.[0-9]+.[0-9]+-*"
+      - "v[0-9]+.[0-9]+.[0-9]+"
+      - "v[0-9]+.[0-9]+.[0-9]+-*"
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Semantic version (e.g. 0.1.0 or v0.1.0). Leave empty to use mod_version from gradle.properties."
+        required: false
+        type: string
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Resolve version
+        id: version
+        run: |
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            RAW="${{ inputs.version }}"
+            if [[ -z "$RAW" ]]; then
+              RAW="$(grep -E '^mod_version=' gradle.properties | cut -d= -f2- | tr -d '[:space:]')"
+            fi
+          else
+            RAW="${GITHUB_REF_NAME}"
+          fi
+
+          VERSION="${RAW#v}"
+          if [[ ! "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+([-+].*)?$ ]]; then
+            echo "Resolved '$RAW' is not a semantic version"
+            exit 1
+          fi
+
+          TAG="v${VERSION}"
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "Building release version $VERSION (tag $TAG)"
+
+      - name: Build Fabric and NeoForge jars
+        run: ./gradlew :fabric:remapJar :forge:remapJar --no-daemon --stacktrace -Pmod_version=${{ steps.version.outputs.version }}
+
+      - name: Collect release artifacts
+        run: |
+          VERSION="${{ steps.version.outputs.version }}"
+          mkdir -p release
+          cp "fabric/build/libs/precast-structure-${VERSION}.jar" \
+            "release/precast-structure-${VERSION}-fabric.jar"
+          cp "forge/build/libs/precast-structure-${VERSION}.jar" \
+            "release/precast-structure-${VERSION}-neoforge.jar"
+          ls -la release/
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.version.outputs.tag }}
+          target_commitish: ${{ github.sha }}
+          name: Pre-cast Structure ${{ steps.version.outputs.version }}
+          generate_release_notes: true
+          prerelease: ${{ contains(steps.version.outputs.version, '-') }}
+          files: |
+            release/precast-structure-*-fabric.jar
+            release/precast-structure-*-neoforge.jar
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
