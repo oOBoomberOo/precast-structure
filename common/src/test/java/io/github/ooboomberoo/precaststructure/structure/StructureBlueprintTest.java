@@ -35,7 +35,7 @@ class StructureBlueprintTest {
 
         assertEquals(blueprint.size(), loaded.size());
         assertEquals(blueprint.blocks().size(), loaded.blocks().size());
-        assertEquals(Blocks.STONE, loaded.blocks().getFirst().state().getBlock());
+        assertEquals(Blocks.STONE, loaded.blocks().get(0).state().getBlock());
         assertEquals(Blocks.OAK_PLANKS, loaded.blocks().get(1).state().getBlock());
     }
 

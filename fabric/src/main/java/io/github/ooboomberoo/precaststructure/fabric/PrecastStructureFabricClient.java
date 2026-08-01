@@ -20,7 +20,7 @@ public final class PrecastStructureFabricClient implements ClientModInitializer 
     public void onInitializeClient() {
         PrecastStructureClient.init();
         CoreShaderRegistrationCallback.EVENT.register(context -> context.register(
-            ResourceLocation.fromNamespaceAndPath(PrecastStructureMod.MOD_ID, ModShaders.SCAN_HOLOGRAM),
+            new ResourceLocation(PrecastStructureMod.MOD_ID, ModShaders.SCAN_HOLOGRAM),
             DefaultVertexFormat.BLOCK,
             ModShaders::setScanHologram
         ));
@@ -40,7 +40,7 @@ public final class PrecastStructureFabricClient implements ClientModInitializer 
     }
 
     private static void renderOverlays(WorldRenderContext context) {
-        float partialTick = context.tickCounter().getGameTimeDeltaPartialTick(false);
+        float partialTick = context.tickDelta();
         WorldHologramRender.renderAll(
             context.matrixStack(),
             context.camera().getPosition(),

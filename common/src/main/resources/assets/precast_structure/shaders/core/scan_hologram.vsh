@@ -22,7 +22,7 @@ void main() {
     vec3 pos = Position + ChunkOffset;
     gl_Position = ProjMat * ModelViewMat * vec4(pos, 1.0);
 
-    vertexDistance = fog_distance(pos, FogShape);
+    vertexDistance = fog_distance(ModelViewMat, pos, FogShape);
     // Fully emissive so block detail stays bright regardless of world light.
     vertexColor = Color;
     texCoord0 = UV0;

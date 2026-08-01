@@ -1,5 +1,6 @@
 package io.github.ooboomberoo.precaststructure.item;
 
+import io.github.ooboomberoo.precaststructure.client.ClientRegistryAccess;
 import io.github.ooboomberoo.precaststructure.config.ModConfig;
 import io.github.ooboomberoo.precaststructure.structure.BlueprintItemData;
 import io.github.ooboomberoo.precaststructure.structure.StructureBlueprint;
@@ -10,6 +11,7 @@ import java.util.Optional;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.core.HolderLookup;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.InteractionResult;
@@ -19,6 +21,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.item.context.UseOnContext;
 import net.minecraft.world.level.Level;
+import org.jetbrains.annotations.Nullable;
 
 public class PrecastStructureItem extends Item {
     public PrecastStructureItem(Properties properties) {
@@ -67,8 +70,9 @@ public class PrecastStructureItem extends Item {
     }
 
     @Override
-    public void appendHoverText(ItemStack stack, TooltipContext context, List<Component> tooltipComponents, TooltipFlag tooltipFlag) {
-        Optional<StructureBlueprint> optional = BlueprintItemData.read(stack, context.registries());
+    public void appendHoverText(ItemStack stack, @Nullable Level level, List<Component> tooltipComponents, TooltipFlag tooltipFlag) {
+        HolderLookup.Provider registries = level != null ? level.registryAccess() : ClientRegistryAccess.getLookup();
+        Optional<StructureBlueprint> optional = BlueprintItemData.read(stack, registries);
         if (optional.isPresent()) {
             StructureBlueprint blueprint = optional.get();
             tooltipComponents.add(Component.translatable("tooltip.precast_structure.placeable_structure", blueprint.size().getX(), blueprint.size().getY(), blueprint.size().getZ()).withStyle(ChatFormatting.GOLD));

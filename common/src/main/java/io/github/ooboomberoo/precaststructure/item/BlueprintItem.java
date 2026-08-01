@@ -1,5 +1,6 @@
 package io.github.ooboomberoo.precaststructure.item;
 
+import io.github.ooboomberoo.precaststructure.client.ClientRegistryAccess;
 import io.github.ooboomberoo.precaststructure.structure.BlueprintItemData;
 import io.github.ooboomberoo.precaststructure.structure.StructureBlueprint;
 import java.util.List;
@@ -11,6 +12,8 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.TooltipFlag;
+import net.minecraft.world.level.Level;
+import org.jetbrains.annotations.Nullable;
 
 public class BlueprintItem extends Item {
     private static final int MAX_TOOLTIP_MATERIALS = 12;
@@ -20,8 +23,8 @@ public class BlueprintItem extends Item {
     }
 
     @Override
-    public void appendHoverText(ItemStack stack, TooltipContext context, List<Component> tooltipComponents, TooltipFlag tooltipFlag) {
-        HolderLookup.Provider registries = context.registries();
+    public void appendHoverText(ItemStack stack, @Nullable Level level, List<Component> tooltipComponents, TooltipFlag tooltipFlag) {
+        HolderLookup.Provider registries = level != null ? level.registryAccess() : ClientRegistryAccess.getLookup();
         Optional<StructureBlueprint> optional = BlueprintItemData.read(stack, registries);
         if (optional.isEmpty()) {
             tooltipComponents.add(Component.translatable("tooltip.precast_structure.empty_blueprint").withStyle(ChatFormatting.GRAY));
@@ -38,7 +41,7 @@ public class BlueprintItem extends Item {
                 tooltipComponents.add(Component.translatable("tooltip.precast_structure.more_materials", total - shown).withStyle(ChatFormatting.DARK_GRAY));
                 break;
             }
-            tooltipComponents.add(Component.literal("• " + entry.getValue() + " × ").append(entry.getKey().getDescription()).withStyle(ChatFormatting.GRAY));
+            tooltipComponents.add(Component.literal("• " + entry.getValue() + " × ").append(Component.translatable(entry.getKey().getDescriptionId())).withStyle(ChatFormatting.GRAY));
             shown++;
         }
     }

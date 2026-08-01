@@ -1,11 +1,11 @@
 {
   "parent": "minecraft:recipes/root",
   "criteria": {
-    "has_yellow_dye": {
+    "has_iron": {
       "conditions": {
         "items": [
           {
-            "items": "minecraft:yellow_dye"
+            "items": ["minecraft:iron_ingot"]
           }
         ]
       },
@@ -13,21 +13,21 @@
     },
     "has_the_recipe": {
       "conditions": {
-        "recipe": "precast_structure:perimeter_fence"
+        "recipe": "precast_structure:platform_floor"
       },
       "trigger": "minecraft:recipe_unlocked"
     }
   },
   "requirements": [
     [
-      "has_yellow_dye",
+      "has_iron",
       "has_the_recipe"
     ]
   ],
   "rewards": {
     "recipes": [
-      "precast_structure:perimeter_fence",
-      "precast_structure:perimeter_fence_gate"
+      "precast_structure:platform_floor",
+      "precast_structure:metal_scaffold"
     ]
   }
 }

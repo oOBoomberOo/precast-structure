@@ -6,13 +6,13 @@ import io.github.ooboomberoo.precaststructure.client.ModShaders;
 import io.github.ooboomberoo.precaststructure.client.PrecastStructureClient;
 import net.minecraft.client.renderer.ShaderInstance;
 import net.minecraft.resources.ResourceLocation;
-import net.neoforged.api.distmarker.Dist;
-import net.neoforged.bus.api.SubscribeEvent;
-import net.neoforged.fml.common.EventBusSubscriber;
-import net.neoforged.fml.event.lifecycle.FMLClientSetupEvent;
-import net.neoforged.neoforge.client.event.RegisterShadersEvent;
+import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.client.event.RegisterShadersEvent;
+import net.minecraftforge.eventbus.api.SubscribeEvent;
+import net.minecraftforge.fml.common.Mod;
+import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
 
-@EventBusSubscriber(modid = PrecastStructureMod.MOD_ID, value = Dist.CLIENT, bus = EventBusSubscriber.Bus.MOD)
+@Mod.EventBusSubscriber(modid = PrecastStructureMod.MOD_ID, bus = Mod.EventBusSubscriber.Bus.MOD, value = Dist.CLIENT)
 public final class PrecastStructureForgeClient {
     private PrecastStructureForgeClient() {
     }
@@ -27,7 +27,7 @@ public final class PrecastStructureForgeClient {
         event.registerShader(
             new ShaderInstance(
                 event.getResourceProvider(),
-                ResourceLocation.fromNamespaceAndPath(PrecastStructureMod.MOD_ID, ModShaders.SCAN_HOLOGRAM),
+                new ResourceLocation(PrecastStructureMod.MOD_ID, ModShaders.SCAN_HOLOGRAM),
                 DefaultVertexFormat.BLOCK
             ),
             ModShaders::setScanHologram

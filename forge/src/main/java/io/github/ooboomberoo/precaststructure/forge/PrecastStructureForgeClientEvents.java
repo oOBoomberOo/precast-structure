@@ -3,12 +3,12 @@ package io.github.ooboomberoo.precaststructure.forge;
 import io.github.ooboomberoo.precaststructure.PrecastStructureMod;
 import io.github.ooboomberoo.precaststructure.client.ShaderCompat;
 import io.github.ooboomberoo.precaststructure.client.WorldHologramRender;
-import net.neoforged.api.distmarker.Dist;
-import net.neoforged.bus.api.SubscribeEvent;
-import net.neoforged.fml.common.EventBusSubscriber;
-import net.neoforged.neoforge.client.event.RenderLevelStageEvent;
+import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.client.event.RenderLevelStageEvent;
+import net.minecraftforge.eventbus.api.SubscribeEvent;
+import net.minecraftforge.fml.common.Mod;
 
-@EventBusSubscriber(modid = PrecastStructureMod.MOD_ID, value = Dist.CLIENT)
+@Mod.EventBusSubscriber(modid = PrecastStructureMod.MOD_ID, value = Dist.CLIENT)
 public final class PrecastStructureForgeClientEvents {
     private PrecastStructureForgeClientEvents() {
     }
@@ -23,7 +23,7 @@ public final class PrecastStructureForgeClientEvents {
         if (event.getStage() != expected) {
             return;
         }
-        float partialTick = event.getPartialTick().getGameTimeDeltaPartialTick(false);
+        float partialTick = event.getPartialTick();
         WorldHologramRender.renderAll(
             event.getPoseStack(),
             event.getCamera().getPosition(),

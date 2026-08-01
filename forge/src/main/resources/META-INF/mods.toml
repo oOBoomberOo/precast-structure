@@ -1,5 +1,5 @@
 modLoader="javafml"
-loaderVersion="[1,)"
+loaderVersion="[47,)"
 license="MIT"
 
 [[mods]]
@@ -15,29 +15,29 @@ logoFile="assets/precast_structure/icon.png"
 logoBlur=false
 
 [[dependencies.precast_structure]]
-modId="neoforge"
-type="required"
-versionRange="[21.1,)"
+modId="forge"
+mandatory=true
+versionRange="[47,)"
 ordering="NONE"
 side="BOTH"
 
 [[dependencies.precast_structure]]
 modId="minecraft"
-type="required"
-versionRange="[1.21.1,1.22)"
+mandatory=true
+versionRange="[1.20.1,1.20.2)"
 ordering="NONE"
 side="BOTH"
 
 [[dependencies.precast_structure]]
 modId="architectury"
-type="required"
-versionRange="[13.0.8,)"
+mandatory=true
+versionRange="[9.2.14,)"
 ordering="AFTER"
 side="BOTH"
 
 [[dependencies.precast_structure]]
 modId="cloth_config"
-type="required"
-versionRange="[15,)"
+mandatory=true
+versionRange="[11,)"
 ordering="NONE"
 side="CLIENT"

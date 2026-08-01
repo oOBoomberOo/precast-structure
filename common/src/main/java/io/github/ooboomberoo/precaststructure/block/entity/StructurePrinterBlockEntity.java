@@ -14,12 +14,11 @@ import java.util.Optional;
 import java.util.stream.IntStream;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
-import net.minecraft.core.HolderLookup;
 import net.minecraft.core.NonNullList;
-import net.minecraft.core.component.DataComponents;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
+import net.minecraft.world.Container;
 import net.minecraft.world.ContainerHelper;
 import net.minecraft.world.WorldlyContainer;
 import net.minecraft.world.entity.player.Inventory;
@@ -120,7 +119,8 @@ public class StructurePrinterBlockEntity extends BaseContainerBlockEntity implem
         }
 
         ItemStack structureStack = new ItemStack(ModItems.PRECAST_STRUCTURE.get());
-        BlueprintItemData.write(structureStack, blueprint, blueprintStack.get(DataComponents.CUSTOM_NAME));
+        Component customName = blueprintStack.hasCustomHoverName() ? blueprintStack.getHoverName() : null;
+        BlueprintItemData.write(structureStack, blueprint, customName);
         ItemStack outputStack = items.get(OUTPUT_SLOT);
         if (!canAcceptPrintedStructure(outputStack, structureStack)) {
             resetProgress();
@@ -151,7 +151,7 @@ public class StructurePrinterBlockEntity extends BaseContainerBlockEntity implem
         if (outputStack.isEmpty()) {
             return true;
         }
-        return ItemStack.isSameItemSameComponents(outputStack, structureStack) && outputStack.getCount() < outputStack.getMaxStackSize();
+        return ItemStack.isSameItemSameTags(outputStack, structureStack) && outputStack.getCount() < outputStack.getMaxStackSize();
     }
 
     private int getConfiguredPrintDelay() {
@@ -225,16 +225,6 @@ public class StructurePrinterBlockEntity extends BaseContainerBlockEntity implem
     }
 
     @Override
-    protected NonNullList<ItemStack> getItems() {
-        return items;
-    }
-
-    @Override
-    protected void setItems(NonNullList<ItemStack> items) {
-        this.items = items;
-    }
-
-    @Override
     protected AbstractContainerMenu createMenu(int containerId, Inventory inventory) {
         return new StructurePrinterMenu(containerId, inventory, this);
     }
@@ -245,23 +235,71 @@ public class StructurePrinterBlockEntity extends BaseContainerBlockEntity implem
     }
 
     @Override
+    public boolean isEmpty() {
+        for (ItemStack stack : items) {
+            if (!stack.isEmpty()) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    @Override
+    public ItemStack getItem(int slot) {
+        return items.get(slot);
+    }
+
+    @Override
+    public ItemStack removeItem(int slot, int amount) {
+        ItemStack result = ContainerHelper.removeItem(items, slot, amount);
+        if (!result.isEmpty()) {
+            setChanged();
+        }
+        return result;
+    }
+
+    @Override
+    public ItemStack removeItemNoUpdate(int slot) {
+        return ContainerHelper.takeItem(items, slot);
+    }
+
+    @Override
+    public void setItem(int slot, ItemStack stack) {
+        items.set(slot, stack);
+        if (stack.getCount() > getMaxStackSize()) {
+            stack.setCount(getMaxStackSize());
+        }
+        setChanged();
+    }
+
+    @Override
+    public boolean stillValid(net.minecraft.world.entity.player.Player player) {
+        return Container.stillValidBlockEntity(this, player);
+    }
+
+    @Override
+    public void clearContent() {
+        items.clear();
+    }
+
+    @Override
     public void saveExtraData(FriendlyByteBuf buf) {
         buf.writeBlockPos(worldPosition);
     }
 
     @Override
-    protected void saveAdditional(CompoundTag tag, HolderLookup.Provider registries) {
-        super.saveAdditional(tag, registries);
-        ContainerHelper.saveAllItems(tag, items, registries);
+    protected void saveAdditional(CompoundTag tag) {
+        super.saveAdditional(tag);
+        ContainerHelper.saveAllItems(tag, items);
         tag.putInt("PrintProgress", printProgress);
         tag.putInt("MaxPrintProgress", maxPrintProgress);
     }
 
     @Override
-    protected void loadAdditional(CompoundTag tag, HolderLookup.Provider registries) {
-        super.loadAdditional(tag, registries);
+    public void load(CompoundTag tag) {
+        super.load(tag);
         items = NonNullList.withSize(SLOT_COUNT, ItemStack.EMPTY);
-        ContainerHelper.loadAllItems(tag, items, registries);
+        ContainerHelper.loadAllItems(tag, items);
         printProgress = tag.getInt("PrintProgress");
         int savedMaxPrintProgress = tag.getInt("MaxPrintProgress");
         maxPrintProgress = savedMaxPrintProgress > 0 ? savedMaxPrintProgress : getConfiguredPrintDelay();

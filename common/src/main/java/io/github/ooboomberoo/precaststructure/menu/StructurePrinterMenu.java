@@ -279,7 +279,7 @@ public class StructurePrinterMenu extends AbstractContainerMenu {
                 continue;
             }
             ItemStack existing = container.getItem(StructurePrinterBlockEntity.FIRST_MATERIAL_SLOT + i);
-            if (existing.isEmpty() || (ItemStack.isSameItemSameComponents(existing, stack) && existing.getCount() < existing.getMaxStackSize())) {
+            if (existing.isEmpty() || (ItemStack.isSameItemSameTags(existing, stack) && existing.getCount() < existing.getMaxStackSize())) {
                 return i;
             }
         }

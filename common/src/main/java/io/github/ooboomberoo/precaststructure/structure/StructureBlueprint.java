@@ -85,7 +85,7 @@ public record StructureBlueprint(BlockPos size, List<StructureBlockInfo> blocks)
         for (Map.Entry<Item, Integer> entry : requiredItems().entrySet()) {
             Item item = entry.getKey();
             int remaining = entry.getValue();
-            int maxStack = Math.max(1, item.getDefaultMaxStackSize());
+            int maxStack = Math.max(1, item.getMaxStackSize());
             while (remaining > 0) {
                 int amount = Math.min(remaining, maxStack);
                 slots.add(new MaterialRequirement(item, amount));

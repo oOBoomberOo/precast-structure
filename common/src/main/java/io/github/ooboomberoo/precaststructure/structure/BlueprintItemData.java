@@ -2,11 +2,9 @@ package io.github.ooboomberoo.precaststructure.structure;
 
 import java.util.Optional;
 import net.minecraft.core.HolderLookup;
-import net.minecraft.core.component.DataComponents;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.component.CustomData;
 import org.jetbrains.annotations.Nullable;
 
 public final class BlueprintItemData {
@@ -18,30 +16,28 @@ public final class BlueprintItemData {
     }
 
     public static void write(ItemStack stack, StructureBlueprint blueprint, @Nullable Component customName) {
-        CompoundTag root = new CompoundTag();
+        CompoundTag root = stack.getOrCreateTag();
         root.put(StructureBlueprint.ROOT_KEY, blueprint.save());
-        stack.set(DataComponents.CUSTOM_DATA, CustomData.of(root));
-        stack.set(DataComponents.CUSTOM_NAME, customName != null ? customName : Component.translatable("item.precast_structure.blueprint.named", blueprint.size().getX(), blueprint.size().getY(), blueprint.size().getZ()));
+        stack.setHoverName(customName != null
+            ? customName
+            : Component.translatable(
+                "item.precast_structure.blueprint.named",
+                blueprint.size().getX(),
+                blueprint.size().getY(),
+                blueprint.size().getZ()
+            ));
     }
 
     public static Optional<StructureBlueprint> read(ItemStack stack, HolderLookup.Provider registries) {
-        CustomData data = stack.get(DataComponents.CUSTOM_DATA);
-        if (data == null) {
-            return Optional.empty();
-        }
-
-        CompoundTag root = data.copyTag();
-        if (!root.contains(StructureBlueprint.ROOT_KEY, net.minecraft.nbt.Tag.TAG_COMPOUND)) {
+        CompoundTag root = stack.getTag();
+        if (root == null || !root.contains(StructureBlueprint.ROOT_KEY, net.minecraft.nbt.Tag.TAG_COMPOUND)) {
             return Optional.empty();
         }
         return StructureBlueprint.load(root.getCompound(StructureBlueprint.ROOT_KEY), registries);
     }
 
     public static boolean hasStructure(ItemStack stack) {
-        CustomData data = stack.get(DataComponents.CUSTOM_DATA);
-        if (data == null) {
-            return false;
-        }
-        return data.copyTag().contains(StructureBlueprint.ROOT_KEY, net.minecraft.nbt.Tag.TAG_COMPOUND);
+        CompoundTag root = stack.getTag();
+        return root != null && root.contains(StructureBlueprint.ROOT_KEY, net.minecraft.nbt.Tag.TAG_COMPOUND);
     }
 }

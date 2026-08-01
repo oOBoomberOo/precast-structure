@@ -78,7 +78,10 @@ class RailRotationTest {
             RailShape.ASCENDING_EAST
         }) {
             for (Rotation rotation : Rotation.values()) {
-                RailShape expected = Blocks.RAIL.defaultBlockState().setValue(RailBlock.SHAPE, shape).rotate(rotation).getValue(RailBlock.SHAPE);
+                RailShape expected = StructurePlacement.rotateState(
+                    Blocks.RAIL.defaultBlockState().setValue(RailBlock.SHAPE, shape),
+                    rotation
+                ).getValue(RailBlock.SHAPE);
 
                 assertEquals(
                     expected,

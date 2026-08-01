@@ -153,6 +153,8 @@ public final class StructureDeployment {
             return;
         }
         StructurePlacement.place(level, origin, blueprint, facing);
+        // Ensure temporary collision cubes never linger if a place was skipped.
+        HologramCollision.clearBlueprint(level, origin, blueprint, facing);
         if (level instanceof net.minecraft.server.level.ServerLevel serverLevel) {
             for (StructureBlockInfo block : blueprint.blocks()) {
                 BlockPos worldPos = origin.offset(StructurePlacement.transformOffset(block.offset(), blueprint, facing));

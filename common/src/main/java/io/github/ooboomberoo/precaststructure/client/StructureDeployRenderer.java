@@ -1,7 +1,7 @@
 package io.github.ooboomberoo.precaststructure.client;
 
 import com.mojang.blaze3d.systems.RenderSystem;
-import com.mojang.blaze3d.vertex.ByteBufferBuilder;
+import com.mojang.blaze3d.vertex.BufferBuilder;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import io.github.ooboomberoo.precaststructure.client.StructureHologramRenderer.Part;
@@ -51,8 +51,8 @@ public final class StructureDeployRenderer {
         }
 
         BlockRenderDispatcher dispatcher = minecraft.getBlockRenderer();
-        try (ByteBufferBuilder byteBuffer = new ByteBufferBuilder(768 * 1024)) {
-            MultiBufferSource.BufferSource bufferSource = MultiBufferSource.immediate(byteBuffer);
+        BufferBuilder byteBuffer = new BufferBuilder(768 * 1024);
+        MultiBufferSource.BufferSource bufferSource = MultiBufferSource.immediate(byteBuffer);
 
             RenderSystem.enableDepthTest();
             RenderSystem.depthMask(true);
@@ -104,7 +104,6 @@ public final class StructureDeployRenderer {
                 renderDeployOverlay(poseStack, cameraPosition, bufferSource, level, deployment, partialTick);
             }
             bufferSource.endBatch();
-        }
     }
 
     private static boolean isFinishingCover(Level level, StructureDeployment deployment, float partialTick) {

@@ -5,17 +5,17 @@
     "I": {
       "item": "minecraft:iron_ingot"
     },
-    "N": {
-      "item": "minecraft:iron_nugget"
+    "S": {
+      "item": "minecraft:smooth_stone"
     }
   },
   "pattern": [
-    "N N",
     " I ",
-    "N N"
+    "ISI",
+    " I "
   ],
   "result": {
     "count": 4,
-    "id": "precast_structure:metal_scaffold"
+    "item": "precast_structure:platform_floor"
   }
 }

@@ -1,7 +1,7 @@
 package io.github.ooboomberoo.precaststructure.client;
 
 import com.mojang.blaze3d.systems.RenderSystem;
-import com.mojang.blaze3d.vertex.ByteBufferBuilder;
+import com.mojang.blaze3d.vertex.BufferBuilder;
 import com.mojang.blaze3d.vertex.DefaultVertexFormat;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
@@ -47,8 +47,8 @@ public final class StructureHologramRenderer {
      */
     public static void render(PoseStack poseStack, Vec3 cameraPosition, Iterable<Part> parts, float colorR, float colorG, float colorB) {
         BlockRenderDispatcher dispatcher = Minecraft.getInstance().getBlockRenderer();
-        try (ByteBufferBuilder byteBuffer = new ByteBufferBuilder(768 * 1024)) {
-            MultiBufferSource.BufferSource bufferSource = MultiBufferSource.immediate(byteBuffer);
+        BufferBuilder byteBuffer = new BufferBuilder(768 * 1024);
+        MultiBufferSource.BufferSource bufferSource = MultiBufferSource.immediate(byteBuffer);
 
         RenderSystem.enableDepthTest();
         // Iris path already cyans in HologramStyleVertexConsumer; ColorModulator still handles blocked red.
@@ -72,7 +72,6 @@ public final class StructureHologramRenderer {
 
         RenderSystem.depthMask(true);
         RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
-    }
     }
 
     /**
@@ -168,7 +167,6 @@ public final class StructureHologramRenderer {
             float red,
             float green,
             float blue,
-            float alpha,
             int packedLight,
             int packedOverlay
         ) {
@@ -179,7 +177,6 @@ public final class StructureHologramRenderer {
                 red,
                 green,
                 blue,
-                alpha,
                 new int[]{packedLight, packedLight, packedLight, packedLight},
                 packedOverlay,
                 false
@@ -194,7 +191,6 @@ public final class StructureHologramRenderer {
             float red,
             float green,
             float blue,
-            float alpha,
             int[] lightmap,
             int packedOverlay,
             boolean colorize
@@ -202,11 +198,11 @@ public final class StructureHologramRenderer {
             int[] vertices = quad.getVertices();
             Vec3i normal = quad.getDirection().getNormal();
             Matrix4f matrix = pose.pose();
-            Vector3f transformedNormal = pose.transformNormal(normal.getX(), normal.getY(), normal.getZ(), new Vector3f());
-            int alphaByte = (int) (alpha * 255.0F);
+            Vector3f transformedNormal = pose.normal().transform(new Vector3f(normal.getX(), normal.getY(), normal.getZ()));
+            int alphaByte = 255;
             int vertexCount = vertices.length / 8;
             if (vertexCount != 4) {
-                VertexConsumer.super.putBulkData(pose, quad, brightness, red, green, blue, alpha, lightmap, packedOverlay, colorize);
+                VertexConsumer.super.putBulkData(pose, quad, brightness, red, green, blue, lightmap, packedOverlay, colorize);
                 return;
             }
 
@@ -254,19 +250,18 @@ public final class StructureHologramRenderer {
 
         private void emitTransformed(Matrix4f matrix, ClipVert vert, int packedOverlay, Vector3f normal) {
             Vector3f pos = matrix.transformPosition(vert.x, vert.y, vert.z, new Vector3f());
-            delegate.addVertex(
-                pos.x,
-                pos.y,
-                pos.z,
-                vert.color,
-                vert.u,
-                vert.v,
-                packedOverlay,
-                vert.light,
-                normal.x,
-                normal.y,
-                normal.z
-            );
+            delegate.vertex(pos.x, pos.y, pos.z)
+                .color(
+                    FastColor.ARGB32.red(vert.color),
+                    FastColor.ARGB32.green(vert.color),
+                    FastColor.ARGB32.blue(vert.color),
+                    FastColor.ARGB32.alpha(vert.color)
+                )
+                .uv(vert.u, vert.v)
+                .overlayCoords(packedOverlay)
+                .uv2(vert.light)
+                .normal(normal.x, normal.y, normal.z)
+                .endVertex();
         }
 
         private static int clipQuad(ClipVert[] quad, float clipY, boolean keepBelow, ClipVert[] out, ClipVert[] scratch) {
@@ -309,39 +304,54 @@ public final class StructureHologramRenderer {
         }
 
         @Override
-        public VertexConsumer addVertex(float x, float y, float z) {
-            delegate.addVertex(x, y, z);
+        public VertexConsumer vertex(double x, double y, double z) {
+            delegate.vertex(x, y, z);
             return this;
         }
 
         @Override
-        public VertexConsumer setColor(int red, int green, int blue, int alpha) {
-            delegate.setColor(red, green, blue, alpha);
+        public VertexConsumer color(int red, int green, int blue, int alpha) {
+            delegate.color(red, green, blue, alpha);
             return this;
         }
 
         @Override
-        public VertexConsumer setUv(float u, float v) {
-            delegate.setUv(u, v);
+        public VertexConsumer uv(float u, float v) {
+            delegate.uv(u, v);
             return this;
         }
 
         @Override
-        public VertexConsumer setUv1(int u, int v) {
-            delegate.setUv1(u, v);
+        public VertexConsumer overlayCoords(int u, int v) {
+            delegate.overlayCoords(u, v);
             return this;
         }
 
         @Override
-        public VertexConsumer setUv2(int u, int v) {
-            delegate.setUv2(u, v);
+        public VertexConsumer uv2(int u, int v) {
+            delegate.uv2(u, v);
             return this;
         }
 
         @Override
-        public VertexConsumer setNormal(float x, float y, float z) {
-            delegate.setNormal(x, y, z);
+        public VertexConsumer normal(float x, float y, float z) {
+            delegate.normal(x, y, z);
             return this;
+        }
+
+        @Override
+        public void endVertex() {
+            delegate.endVertex();
+        }
+
+        @Override
+        public void defaultColor(int red, int green, int blue, int alpha) {
+            delegate.defaultColor(red, green, blue, alpha);
+        }
+
+        @Override
+        public void unsetDefaultColor() {
+            delegate.unsetDefaultColor();
         }
 
         private static final class ClipVert {

@@ -1,11 +1,11 @@
 {
   "parent": "minecraft:recipes/root",
   "criteria": {
-    "has_lapis": {
+    "has_paper": {
       "conditions": {
         "items": [
           {
-            "items": "minecraft:lapis_lazuli"
+            "items": ["minecraft:paper"]
           }
         ]
       },
@@ -13,20 +13,22 @@
     },
     "has_the_recipe": {
       "conditions": {
-        "recipe": "precast_structure:structure_scanner"
+        "recipe": "precast_structure:empty_blueprint"
       },
       "trigger": "minecraft:recipe_unlocked"
     }
   },
   "requirements": [
     [
-      "has_lapis",
+      "has_paper",
       "has_the_recipe"
     ]
   ],
   "rewards": {
     "recipes": [
-      "precast_structure:structure_scanner"
+      "precast_structure:empty_blueprint",
+      "precast_structure:blueprint_clear",
+      "precast_structure:blueprint_cloning"
     ]
   }
 }

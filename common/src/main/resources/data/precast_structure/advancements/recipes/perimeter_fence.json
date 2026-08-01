@@ -1,11 +1,11 @@
 {
   "parent": "minecraft:recipes/root",
   "criteria": {
-    "has_paper": {
+    "has_yellow_dye": {
       "conditions": {
         "items": [
           {
-            "items": "minecraft:paper"
+            "items": ["minecraft:yellow_dye"]
           }
         ]
       },
@@ -13,22 +13,21 @@
     },
     "has_the_recipe": {
       "conditions": {
-        "recipe": "precast_structure:empty_blueprint"
+        "recipe": "precast_structure:perimeter_fence"
       },
       "trigger": "minecraft:recipe_unlocked"
     }
   },
   "requirements": [
     [
-      "has_paper",
+      "has_yellow_dye",
       "has_the_recipe"
     ]
   ],
   "rewards": {
     "recipes": [
-      "precast_structure:empty_blueprint",
-      "precast_structure:blueprint_clear",
-      "precast_structure:blueprint_cloning"
+      "precast_structure:perimeter_fence",
+      "precast_structure:perimeter_fence_gate"
     ]
   }
 }

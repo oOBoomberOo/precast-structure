@@ -26,7 +26,6 @@ public final class ModRenderTypes extends RenderType {
         false,
         false,
         CompositeState.builder()
-            .setLightmapState(LIGHTMAP)
             .setShaderState(SCAN_HOLOGRAM_SHADER)
             .setTextureState(BLOCK_SHEET_MIPPED)
             .setTransparencyState(NO_TRANSPARENCY)
@@ -43,7 +42,6 @@ public final class ModRenderTypes extends RenderType {
         false,
         false,
         CompositeState.builder()
-            .setLightmapState(LIGHTMAP)
             .setShaderState(SCAN_HOLOGRAM_SHADER)
             .setTextureState(BLOCK_SHEET_MIPPED)
             .setTransparencyState(TRANSLUCENT_TRANSPARENCY)

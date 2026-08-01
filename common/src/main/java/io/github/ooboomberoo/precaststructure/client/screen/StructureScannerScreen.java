@@ -18,7 +18,7 @@ import net.minecraft.world.level.block.state.BlockState;
 import org.lwjgl.glfw.GLFW;
 
 public class StructureScannerScreen extends AbstractContainerScreen<StructureScannerMenu> {
-    private static final ResourceLocation TEXTURE = ResourceLocation.fromNamespaceAndPath(PrecastStructureMod.MOD_ID, "textures/gui/structure_scanner.png");
+    private static final ResourceLocation TEXTURE = new ResourceLocation(PrecastStructureMod.MOD_ID, "textures/gui/structure_scanner.png");
     private static final int LABEL_COLOR = 0x404040;
     private static final int CHECKMARK_SIZE = 16;
     private static final int CLOSE_SIZE = 12;

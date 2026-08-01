@@ -177,29 +177,70 @@ public final class StructurePlacement {
     }
 
     /**
-     * Vanilla {@code PoweredRailBlock}/{@code DetectorRailBlock#rotate} mishandles flat
-     * {@code NORTH_SOUTH}/{@code EAST_WEST} under {@link Rotation#CLOCKWISE_180} (MC-196102),
-     * turning north-south powered rails east-west while regular rails stay correct.
-     * Delegate straight-rail rotation through {@link RailBlock}, which implements it properly.
+     * Vanilla {@code BaseRailBlock#rotate} mishandles flat {@code NORTH_SOUTH}/{@code EAST_WEST}
+     * under {@link Rotation#CLOCKWISE_180} on several rail types (MC-196102), including on 1.20.1
+     * where even {@link RailBlock} is affected. Apply an explicit correct shape map instead.
      */
     public static BlockState rotateState(BlockState state, Rotation rotation) {
         if (rotation == Rotation.NONE) {
             return state;
         }
-        if (state.getBlock() instanceof BaseRailBlock railBlock && !(state.getBlock() instanceof RailBlock)) {
-            return rotateStraightRail(state, railBlock, rotation);
+        if (state.getBlock() instanceof BaseRailBlock railBlock) {
+            return rotateRail(state, railBlock, rotation);
         }
         return state.rotate(rotation);
     }
 
-    private static BlockState rotateStraightRail(BlockState state, BaseRailBlock railBlock, Rotation rotation) {
+    private static BlockState rotateRail(BlockState state, BaseRailBlock railBlock, Rotation rotation) {
         Property<RailShape> shapeProperty = railBlock.getShapeProperty();
         RailShape shape = state.getValue(shapeProperty);
-        RailShape rotated = Blocks.RAIL.defaultBlockState().setValue(RailBlock.SHAPE, shape).rotate(rotation).getValue(RailBlock.SHAPE);
+        RailShape rotated = rotateRailShape(shape, rotation);
         if (!shapeProperty.getPossibleValues().contains(rotated)) {
             return state;
         }
         return state.setValue(shapeProperty, rotated);
+    }
+
+    private static RailShape rotateRailShape(RailShape shape, Rotation rotation) {
+        return switch (rotation) {
+            case CLOCKWISE_90 -> switch (shape) {
+                case NORTH_SOUTH -> RailShape.EAST_WEST;
+                case EAST_WEST -> RailShape.NORTH_SOUTH;
+                case ASCENDING_EAST -> RailShape.ASCENDING_SOUTH;
+                case ASCENDING_WEST -> RailShape.ASCENDING_NORTH;
+                case ASCENDING_NORTH -> RailShape.ASCENDING_EAST;
+                case ASCENDING_SOUTH -> RailShape.ASCENDING_WEST;
+                case SOUTH_EAST -> RailShape.SOUTH_WEST;
+                case SOUTH_WEST -> RailShape.NORTH_WEST;
+                case NORTH_WEST -> RailShape.NORTH_EAST;
+                case NORTH_EAST -> RailShape.SOUTH_EAST;
+            };
+            case CLOCKWISE_180 -> switch (shape) {
+                case NORTH_SOUTH -> RailShape.NORTH_SOUTH;
+                case EAST_WEST -> RailShape.EAST_WEST;
+                case ASCENDING_EAST -> RailShape.ASCENDING_WEST;
+                case ASCENDING_WEST -> RailShape.ASCENDING_EAST;
+                case ASCENDING_NORTH -> RailShape.ASCENDING_SOUTH;
+                case ASCENDING_SOUTH -> RailShape.ASCENDING_NORTH;
+                case SOUTH_EAST -> RailShape.NORTH_WEST;
+                case SOUTH_WEST -> RailShape.NORTH_EAST;
+                case NORTH_WEST -> RailShape.SOUTH_EAST;
+                case NORTH_EAST -> RailShape.SOUTH_WEST;
+            };
+            case COUNTERCLOCKWISE_90 -> switch (shape) {
+                case NORTH_SOUTH -> RailShape.EAST_WEST;
+                case EAST_WEST -> RailShape.NORTH_SOUTH;
+                case ASCENDING_EAST -> RailShape.ASCENDING_NORTH;
+                case ASCENDING_WEST -> RailShape.ASCENDING_SOUTH;
+                case ASCENDING_NORTH -> RailShape.ASCENDING_WEST;
+                case ASCENDING_SOUTH -> RailShape.ASCENDING_EAST;
+                case SOUTH_EAST -> RailShape.NORTH_EAST;
+                case SOUTH_WEST -> RailShape.SOUTH_EAST;
+                case NORTH_WEST -> RailShape.SOUTH_WEST;
+                case NORTH_EAST -> RailShape.NORTH_WEST;
+            };
+            case NONE -> shape;
+        };
     }
 
     public static Optional<BlockPos> firstBlockedPosition(Level level, BlockPos origin, StructureBlueprint blueprint, Direction facing) {
@@ -238,6 +279,7 @@ public final class StructurePlacement {
     public static boolean isReplaceable(BlockState state) {
         return state.isAir()
             || state.canBeReplaced()
+            || HologramCollision.isCollider(state)
             || state.is(BlockTags.LEAVES)
             || state.is(BlockTags.FLOWERS)
             || state.is(ModBlockTags.STRUCTURE_REPLACEABLE)

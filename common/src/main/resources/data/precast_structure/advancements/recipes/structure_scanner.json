@@ -1,11 +1,11 @@
 {
   "parent": "minecraft:recipes/root",
   "criteria": {
-    "has_iron": {
+    "has_lapis": {
       "conditions": {
         "items": [
           {
-            "items": "minecraft:iron_ingot"
+            "items": ["minecraft:lapis_lazuli"]
           }
         ]
       },
@@ -13,21 +13,20 @@
     },
     "has_the_recipe": {
       "conditions": {
-        "recipe": "precast_structure:platform_floor"
+        "recipe": "precast_structure:structure_scanner"
       },
       "trigger": "minecraft:recipe_unlocked"
     }
   },
   "requirements": [
     [
-      "has_iron",
+      "has_lapis",
       "has_the_recipe"
     ]
   ],
   "rewards": {
     "recipes": [
-      "precast_structure:platform_floor",
-      "precast_structure:metal_scaffold"
+      "precast_structure:structure_scanner"
     ]
   }
 }

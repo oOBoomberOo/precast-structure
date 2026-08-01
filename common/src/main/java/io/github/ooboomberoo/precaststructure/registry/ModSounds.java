@@ -12,11 +12,11 @@ public final class ModSounds {
 
     public static final RegistrySupplier<SoundEvent> SCANNING = SOUNDS.register(
         "scanning",
-        () -> SoundEvent.createVariableRangeEvent(ResourceLocation.fromNamespaceAndPath(PrecastStructureMod.MOD_ID, "scanning"))
+        () -> SoundEvent.createVariableRangeEvent(new ResourceLocation(PrecastStructureMod.MOD_ID, "scanning"))
     );
     public static final RegistrySupplier<SoundEvent> SCAN_COMPLETE = SOUNDS.register(
         "scan_complete",
-        () -> SoundEvent.createVariableRangeEvent(ResourceLocation.fromNamespaceAndPath(PrecastStructureMod.MOD_ID, "scan_complete"))
+        () -> SoundEvent.createVariableRangeEvent(new ResourceLocation(PrecastStructureMod.MOD_ID, "scan_complete"))
     );
 
     private ModSounds() {

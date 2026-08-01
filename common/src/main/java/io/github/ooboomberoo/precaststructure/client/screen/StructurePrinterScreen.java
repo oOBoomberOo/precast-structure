@@ -16,7 +16,7 @@ import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
 
 public class StructurePrinterScreen extends AbstractContainerScreen<StructurePrinterMenu> {
-    private static final ResourceLocation TEXTURE = ResourceLocation.fromNamespaceAndPath(PrecastStructureMod.MOD_ID, "textures/gui/structure_printer.png");
+    private static final ResourceLocation TEXTURE = new ResourceLocation(PrecastStructureMod.MOD_ID, "textures/gui/structure_printer.png");
     private static final int LABEL_COLOR = 0x404040;
     private static final int SLOT_UV_X = 176;
     private static final int SLOT_UV_Y = 32;
@@ -90,6 +90,8 @@ public class StructurePrinterScreen extends AbstractContainerScreen<StructurePri
                 StructurePrinterMenu.PROGRESS_HEIGHT
             );
         }
+
+        renderGhostSlots(guiGraphics);
     }
 
     @Override
@@ -98,45 +100,45 @@ public class StructurePrinterScreen extends AbstractContainerScreen<StructurePri
         guiGraphics.drawString(this.font, this.playerInventoryTitle, 8, this.inventoryLabelY, LABEL_COLOR, false);
     }
 
-    @Override
-    protected void renderSlot(GuiGraphics guiGraphics, Slot slot) {
-        super.renderSlot(guiGraphics, slot);
-        if (slot.hasItem() || !slot.isActive() || slot.x < -1000) {
-            return;
-        }
+    private void renderGhostSlots(GuiGraphics guiGraphics) {
+        for (Slot slot : this.menu.slots) {
+            if (slot.hasItem() || !slot.isActive() || slot.x < -1000) {
+                continue;
+            }
 
-        if (slot.index == StructurePrinterBlockEntity.BLUEPRINT_SLOT) {
-            renderGhostItem(guiGraphics, new ItemStack(ModItems.BLUEPRINT.get()), slot.x, slot.y, null);
-            return;
-        }
+            if (slot.index == StructurePrinterBlockEntity.BLUEPRINT_SLOT) {
+                renderGhostItem(guiGraphics, new ItemStack(ModItems.BLUEPRINT.get()), this.leftPos + slot.x, this.topPos + slot.y, null);
+                continue;
+            }
 
-        if (slot.index == StructurePrinterBlockEntity.OUTPUT_SLOT) {
-            renderGhostItem(guiGraphics, new ItemStack(ModItems.PRECAST_STRUCTURE.get()), slot.x, slot.y, null);
-            return;
-        }
+            if (slot.index == StructurePrinterBlockEntity.OUTPUT_SLOT) {
+                renderGhostItem(guiGraphics, new ItemStack(ModItems.PRECAST_STRUCTURE.get()), this.leftPos + slot.x, this.topPos + slot.y, null);
+                continue;
+            }
 
-        if (slot.index < StructurePrinterBlockEntity.FIRST_MATERIAL_SLOT || slot.index >= StructurePrinterBlockEntity.OUTPUT_SLOT) {
-            return;
-        }
+            if (slot.index < StructurePrinterBlockEntity.FIRST_MATERIAL_SLOT || slot.index >= StructurePrinterBlockEntity.OUTPUT_SLOT) {
+                continue;
+            }
 
-        int materialIndex = slot.index - StructurePrinterBlockEntity.FIRST_MATERIAL_SLOT;
-        MaterialRequirement requirement = this.menu.getMaterialRequirement(materialIndex);
-        if (requirement == null) {
-            return;
-        }
+            int materialIndex = slot.index - StructurePrinterBlockEntity.FIRST_MATERIAL_SLOT;
+            MaterialRequirement requirement = this.menu.getMaterialRequirement(materialIndex);
+            if (requirement == null) {
+                continue;
+            }
 
-        ItemStack ghost = new ItemStack(requirement.item(), Mth.clamp(requirement.amount(), 1, requirement.item().getDefaultMaxStackSize()));
-        renderGhostItem(guiGraphics, ghost, slot.x, slot.y, formatGhostCount(requirement.amount()));
+            ItemStack ghost = new ItemStack(requirement.item(), Mth.clamp(requirement.amount(), 1, requirement.item().getMaxStackSize()));
+            renderGhostItem(guiGraphics, ghost, this.leftPos + slot.x, this.topPos + slot.y, formatGhostCount(requirement.amount()));
+        }
     }
 
     @Override
-    public boolean mouseScrolled(double mouseX, double mouseY, double scrollX, double scrollY) {
+    public boolean mouseScrolled(double mouseX, double mouseY, double delta) {
         if (this.menu.canScroll() && isOverMaterialsArea(mouseX, mouseY)) {
-            int delta = scrollY > 0 ? -1 : 1;
-            this.menu.scroll(delta);
+            int scroll = delta > 0 ? -1 : 1;
+            this.menu.scroll(scroll);
             return true;
         }
-        return super.mouseScrolled(mouseX, mouseY, scrollX, scrollY);
+        return super.mouseScrolled(mouseX, mouseY, delta);
     }
 
     @Override

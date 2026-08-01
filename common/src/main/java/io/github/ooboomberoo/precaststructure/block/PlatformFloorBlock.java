@@ -1,6 +1,5 @@
 package io.github.ooboomberoo.precaststructure.block;
 
-import com.mojang.serialization.MapCodec;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.world.item.context.BlockPlaceContext;
@@ -14,7 +13,6 @@ import net.minecraft.world.level.block.state.properties.BooleanProperty;
 
 /** Platform floor with horizontal connected textures (borders only on open edges). */
 public class PlatformFloorBlock extends StructureFrameBlock {
-    public static final MapCodec<PlatformFloorBlock> CODEC = simpleCodec(PlatformFloorBlock::new);
     public static final BooleanProperty NORTH = BlockStateProperties.NORTH;
     public static final BooleanProperty EAST = BlockStateProperties.EAST;
     public static final BooleanProperty SOUTH = BlockStateProperties.SOUTH;
@@ -32,17 +30,12 @@ public class PlatformFloorBlock extends StructureFrameBlock {
     }
 
     @Override
-    protected MapCodec<? extends Block> codec() {
-        return CODEC;
-    }
-
-    @Override
     public BlockState getStateForPlacement(BlockPlaceContext context) {
         return connectionState(context.getLevel(), context.getClickedPos());
     }
 
     @Override
-    protected void onPlace(BlockState state, Level level, BlockPos pos, BlockState oldState, boolean movedByPiston) {
+    public void onPlace(BlockState state, Level level, BlockPos pos, BlockState oldState, boolean movedByPiston) {
         super.onPlace(state, level, pos, oldState, movedByPiston);
         if (!level.isClientSide() && !oldState.is(this)) {
             refreshConnectionsNear(level, pos);
@@ -50,7 +43,7 @@ public class PlatformFloorBlock extends StructureFrameBlock {
     }
 
     @Override
-    protected BlockState updateShape(
+    public BlockState updateShape(
         BlockState state,
         Direction direction,
         BlockState neighborState,

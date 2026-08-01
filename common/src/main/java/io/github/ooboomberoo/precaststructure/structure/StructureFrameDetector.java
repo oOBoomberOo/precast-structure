@@ -140,7 +140,7 @@ public final class StructureFrameDetector {
     private static Set<BlockPos> floodFillPlatform(Level level, List<BlockPos> seeds) {
         Set<BlockPos> visited = new HashSet<>();
         ArrayDeque<BlockPos> queue = new ArrayDeque<>(seeds);
-        int floorY = seeds.getFirst().getY();
+        int floorY = seeds.get(0).getY();
 
         while (!queue.isEmpty()) {
             BlockPos pos = queue.removeFirst();

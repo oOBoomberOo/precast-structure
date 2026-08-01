@@ -21,7 +21,6 @@ import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
-import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
@@ -425,9 +424,9 @@ public class StructureScannerBlockEntity extends BlockEntity implements Extended
     }
 
     @Override
-    public CompoundTag getUpdateTag(HolderLookup.Provider registries) {
+    public CompoundTag getUpdateTag() {
         CompoundTag tag = new CompoundTag();
-        saveAdditional(tag, registries);
+        saveAdditional(tag);
         return tag;
     }
 
@@ -448,8 +447,8 @@ public class StructureScannerBlockEntity extends BlockEntity implements Extended
     }
 
     @Override
-    protected void saveAdditional(CompoundTag tag, HolderLookup.Provider registries) {
-        super.saveAdditional(tag, registries);
+    protected void saveAdditional(CompoundTag tag) {
+        super.saveAdditional(tag);
         if (!structureName.isBlank()) {
             tag.putString("StructureName", structureName);
         }
@@ -482,8 +481,8 @@ public class StructureScannerBlockEntity extends BlockEntity implements Extended
     }
 
     @Override
-    protected void loadAdditional(CompoundTag tag, HolderLookup.Provider registries) {
-        super.loadAdditional(tag, registries);
+    public void load(CompoundTag tag) {
+        super.load(tag);
         structureName = normalizeStructureName(tag.getString("StructureName"));
         scanning = tag.getBoolean("Scanning");
         if (scanning) {
@@ -494,10 +493,10 @@ public class StructureScannerBlockEntity extends BlockEntity implements Extended
             scanSize = new BlockPos(tag.getInt("ScanSX"), tag.getInt("ScanSY"), tag.getInt("ScanSZ"));
             scanPlayerId = tag.hasUUID("ScanPlayer") ? tag.getUUID("ScanPlayer") : null;
             if (tag.contains("GhostBlueprint", net.minecraft.nbt.Tag.TAG_COMPOUND)) {
-                ghostBlueprint = StructureBlueprint.load(tag.getCompound("GhostBlueprint"), registries).orElse(null);
+                ghostBlueprint = StructureBlueprint.load(tag.getCompound("GhostBlueprint")).orElse(null);
             } else if (tag.contains("PendingBlueprint", net.minecraft.nbt.Tag.TAG_COMPOUND)) {
                 // Backward compatible with older in-progress scans.
-                ghostBlueprint = StructureBlueprint.load(tag.getCompound("PendingBlueprint"), registries).orElse(null);
+                ghostBlueprint = StructureBlueprint.load(tag.getCompound("PendingBlueprint")).orElse(null);
             } else {
                 ghostBlueprint = null;
             }

@@ -13,7 +13,7 @@ public class StructureFrameBlock extends Block {
     }
 
     @Override
-    protected void onPlace(BlockState state, Level level, BlockPos pos, BlockState oldState, boolean movedByPiston) {
+    public void onPlace(BlockState state, Level level, BlockPos pos, BlockState oldState, boolean movedByPiston) {
         super.onPlace(state, level, pos, oldState, movedByPiston);
         if (!oldState.is(state.getBlock())) {
             StructureFrameDetector.notifyScannersNear(level, pos);
@@ -21,7 +21,7 @@ public class StructureFrameBlock extends Block {
     }
 
     @Override
-    protected void onRemove(BlockState state, Level level, BlockPos pos, BlockState newState, boolean movedByPiston) {
+    public void onRemove(BlockState state, Level level, BlockPos pos, BlockState newState, boolean movedByPiston) {
         boolean changed = !state.is(newState.getBlock());
         super.onRemove(state, level, pos, newState, movedByPiston);
         if (changed) {
