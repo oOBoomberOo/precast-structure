@@ -4,6 +4,7 @@
     "minecraft:short_grass",
     "minecraft:tall_grass",
     "minecraft:fern",
-    "minecraft:large_fern"
+    "minecraft:large_fern",
+    "precast_structure:hologram_collider"
   ]
 }

@@ -114,6 +114,13 @@ public final class ModConfigScreen {
             .setSaveConsumer(value -> ModConfig.get().printer.defaultDelayTicks = value)
             .build());
 
+        ConfigCategory hologram = builder.getOrCreateCategory(Component.translatable("config.precast_structure.category.hologram"));
+        hologram.addEntry(entries.startBooleanToggle(Component.translatable("config.precast_structure.hologram.solid_collision"), config.hologram.solidCollision)
+            .setDefaultValue(true)
+            .setTooltip(Component.translatable("config.precast_structure.hologram.solid_collision.tooltip"))
+            .setSaveConsumer(value -> ModConfig.get().hologram.solidCollision = value)
+            .build());
+
         return builder.build();
     }
 }

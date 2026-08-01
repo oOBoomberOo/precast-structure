@@ -48,6 +48,7 @@
   "config.precast_structure.category.frame": "Frame",
   "config.precast_structure.category.blueprint": "Blueprint",
   "config.precast_structure.category.printer": "Printer",
+  "config.precast_structure.category.hologram": "Hologram",
 
   "config.precast_structure.scanning.min_ticks": "Minimum scan ticks",
   "config.precast_structure.scanning.min_ticks.tooltip": "Shortest scan animation length, in ticks (20 ticks = 1 second).",
@@ -76,5 +77,8 @@
   "config.precast_structure.blueprint.max_dimension.tooltip": "Hard clamp applied to blueprint size axes when loading saved data.",
 
   "config.precast_structure.printer.default_delay_ticks": "Default print delay",
-  "config.precast_structure.printer.default_delay_ticks.tooltip": "Fallback print duration in ticks. Worlds still use the precastStructurePrinterDelay gamerule."
+  "config.precast_structure.printer.default_delay_ticks.tooltip": "Fallback print duration in ticks. Worlds still use the precastStructurePrinterDelay gamerule.",
+
+  "config.precast_structure.hologram.solid_collision": "Solid hologram collision",
+  "config.precast_structure.hologram.solid_collision.tooltip": "When enabled, scan and deploy holograms use invisible solid hitboxes so players and entities cannot walk through them."
 }

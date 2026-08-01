@@ -41,6 +41,7 @@ public final class StructureDeploymentManager {
 
     public static StructureDeployment start(ServerLevel level, BlockPos origin, Direction facing, StructureBlueprint blueprint) {
         StructureDeployment deployment = StructureDeployment.create(origin, facing, blueprint, level.getGameTime());
+        HologramCollision.placeForBlueprint(level, origin, blueprint, facing);
         deploymentsFor(level).put(deployment.id(), deployment);
         ModNetworking.sendDeployAdd(level, deployment);
         return deployment;

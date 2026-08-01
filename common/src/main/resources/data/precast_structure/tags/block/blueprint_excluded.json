@@ -21,6 +21,7 @@
     "minecraft:jigsaw",
     "minecraft:command_block",
     "minecraft:chain_command_block",
-    "minecraft:repeating_command_block"
+    "minecraft:repeating_command_block",
+    "precast_structure:hologram_collider"
   ]
 }

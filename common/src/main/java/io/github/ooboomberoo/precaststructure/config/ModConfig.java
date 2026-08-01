@@ -33,6 +33,7 @@ public final class ModConfig {
     public Frame frame = new Frame();
     public Blueprint blueprint = new Blueprint();
     public Printer printer = new Printer();
+    public Hologram hologram = new Hologram();
 
     public static final class Scanning {
         /** Minimum scan animation length in ticks. */
@@ -74,6 +75,11 @@ public final class ModConfig {
          * Live worlds still use the {@code precastStructurePrinterDelay} gamerule.
          */
         public int defaultDelayTicks = 100;
+    }
+
+    public static final class Hologram {
+        /** When true, scan/deploy holograms use invisible solid collision cubes. */
+        public boolean solidCollision = true;
     }
 
     private ModConfig() {
@@ -133,6 +139,9 @@ public final class ModConfig {
         }
         if (printer == null) {
             printer = new Printer();
+        }
+        if (hologram == null) {
+            hologram = new Hologram();
         }
         if (_comment == null || _comment.isBlank()) {
             _comment = "Precast Structure config. Restart the game after editing.";

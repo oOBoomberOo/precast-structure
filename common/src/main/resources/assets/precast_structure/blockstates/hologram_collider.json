@@ -1,0 +1,7 @@
+{
+  "variants": {
+    "": {
+      "model": "precast_structure:block/hologram_collider"
+    }
+  }
+}

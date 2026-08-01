@@ -11,6 +11,7 @@ import io.github.ooboomberoo.precaststructure.registry.ModItems;
 import io.github.ooboomberoo.precaststructure.registry.ModSounds;
 import io.github.ooboomberoo.precaststructure.structure.BlueprintCapture;
 import io.github.ooboomberoo.precaststructure.structure.BlueprintItemData;
+import io.github.ooboomberoo.precaststructure.structure.HologramCollision;
 import io.github.ooboomberoo.precaststructure.structure.StructureBlueprint;
 import io.github.ooboomberoo.precaststructure.structure.StructureFrame;
 import io.github.ooboomberoo.precaststructure.structure.StructureFrameDetector;
@@ -246,6 +247,7 @@ public class StructureScannerBlockEntity extends BlockEntity implements Extended
 
     private void finishScan() {
         if (!(level instanceof ServerLevel serverLevel)) {
+            clearScanColliders();
             resetScanState();
             syncToClient();
             return;
@@ -253,6 +255,7 @@ public class StructureScannerBlockEntity extends BlockEntity implements Extended
 
         StructureBlueprint blueprint = ghostBlueprint;
         UUID playerId = scanPlayerId;
+        clearScanColliders();
         resetScanState();
         syncToClient();
 
@@ -293,14 +296,15 @@ public class StructureScannerBlockEntity extends BlockEntity implements Extended
     private static void clearInterior(Level level, StructureFrame frame) {
         BlockPos origin = frame.interiorOrigin();
         BlockPos size = frame.size();
+        BlockState replacement = HologramCollision.digitizedReplacement();
         for (int y = size.getY() - 1; y >= 0; y--) {
             for (int x = 0; x < size.getX(); x++) {
                 for (int z = 0; z < size.getZ(); z++) {
                     BlockPos pos = origin.offset(x, y, z);
                     BlockState state = level.getBlockState(pos);
-                    if (!ModBlockTags.isBlueprintExcluded(state)) {
+                    if (HologramCollision.isCollider(state) || !ModBlockTags.isBlueprintExcluded(state)) {
                         // Omit UPDATE_KNOWN_SHAPE so perimeter fences/gates update connections.
-                        level.setBlock(pos, Blocks.AIR.defaultBlockState(), CLEAR_FLAGS);
+                        level.setBlock(pos, replacement, CLEAR_FLAGS);
                     }
                 }
             }
@@ -316,6 +320,17 @@ public class StructureScannerBlockEntity extends BlockEntity implements Extended
         ).inflate(0.25);
         for (ItemEntity item : level.getEntitiesOfClass(ItemEntity.class, volume)) {
             item.discard();
+        }
+    }
+
+    private void clearScanColliders() {
+        if (level == null || level.isClientSide()) {
+            return;
+        }
+        if (pendingFrame != null) {
+            HologramCollision.clearFrame(level, pendingFrame);
+        } else if (scanSize.getX() > 0 && scanSize.getY() > 0 && scanSize.getZ() > 0) {
+            HologramCollision.clearFrame(level, new StructureFrame(scanOrigin, scanSize));
         }
     }
 
@@ -374,6 +389,9 @@ public class StructureScannerBlockEntity extends BlockEntity implements Extended
 
     @Override
     public void setRemoved() {
+        if (level != null && !level.isClientSide() && scanning) {
+            clearScanColliders();
+        }
         super.setRemoved();
         CLIENT_ACTIVE_SCANS.remove(worldPosition);
     }
