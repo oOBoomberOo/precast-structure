@@ -3,7 +3,12 @@ name: Release
 on:
   push:
     tags:
-      # Semantic versions: 1.2.3, v1.2.3, and optional prerelease/build metadata
+      # Minecraft-mod versions: 1.21.1-0.1.0 / v1.21.1-0.1.0(-prerelease)
+      - "[0-9]+.[0-9]+.[0-9]+-[0-9]+.[0-9]+.[0-9]+"
+      - "[0-9]+.[0-9]+.[0-9]+-[0-9]+.[0-9]+.[0-9]+-*"
+      - "v[0-9]+.[0-9]+.[0-9]+-[0-9]+.[0-9]+.[0-9]+"
+      - "v[0-9]+.[0-9]+.[0-9]+-[0-9]+.[0-9]+.[0-9]+-*"
+      # Mod-only tags (Minecraft version taken from gradle.properties)
       - "[0-9]+.[0-9]+.[0-9]+"
       - "[0-9]+.[0-9]+.[0-9]+-*"
       - "v[0-9]+.[0-9]+.[0-9]+"
@@ -11,7 +16,7 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: "Semantic version (e.g. 0.1.0 or v0.1.0). Leave empty to use mod_version from gradle.properties."
+        description: "Release version as Minecraft-mod (e.g. 1.21.1-0.1.0) or mod-only (e.g. 0.1.0). Leave empty to use mod_version from gradle.properties."
         required: false
         type: string
 
@@ -47,15 +52,52 @@ jobs:
           fi
 
           VERSION="${RAW#v}"
-          if [[ ! "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+([-+].*)?$ ]]; then
-            echo "Resolved '$RAW' is not a semantic version"
+          MC_FROM_PROPS="$(grep -E '^minecraft_version=' gradle.properties | cut -d= -f2- | tr -d '[:space:]')"
+          PRERELEASE=false
+
+          # Preferred: {minecraft}-{mod} e.g. 1.21.1-0.1.0 or 1.21.1-0.1.0-beta.1
+          if [[ "$VERSION" =~ ^([0-9]+\.[0-9]+\.[0-9]+)-([0-9]+\.[0-9]+\.[0-9]+)(-[0-9A-Za-z.-]+)?(\+[0-9A-Za-z.-]+)?$ ]]; then
+            MINECRAFT="${BASH_REMATCH[1]}"
+            MOD_VERSION="${BASH_REMATCH[2]}${BASH_REMATCH[3]}${BASH_REMATCH[4]}"
+            FULL_VERSION="$VERSION"
+            if [[ -n "${BASH_REMATCH[3]}" ]]; then
+              PRERELEASE=true
+            fi
+          # Fallback: mod-only semver; prepend minecraft_version from gradle.properties
+          elif [[ "$VERSION" =~ ^([0-9]+\.[0-9]+\.[0-9]+)(-[0-9A-Za-z.-]+)?(\+[0-9A-Za-z.-]+)?$ ]]; then
+            if [[ -z "$MC_FROM_PROPS" ]]; then
+              echo "minecraft_version is missing from gradle.properties"
+              exit 1
+            fi
+            MINECRAFT="$MC_FROM_PROPS"
+            MOD_VERSION="$VERSION"
+            FULL_VERSION="${MINECRAFT}-${MOD_VERSION}"
+            if [[ -n "${BASH_REMATCH[2]}" ]]; then
+              PRERELEASE=true
+            fi
+          else
+            echo "Resolved '$RAW' is not a valid release version (expected 1.21.1-0.1.0 or 0.1.0)"
             exit 1
           fi
 
-          TAG="v${VERSION}"
+          if [[ "${{ github.event_name }}" == "push" ]]; then
+            TAG="${GITHUB_REF_NAME}"
+          else
+            TAG="v${FULL_VERSION}"
+          fi
+
           echo "tag=$TAG" >> "$GITHUB_OUTPUT"
-          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
-          echo "Building release version $VERSION (tag $TAG)"
+          echo "version=$FULL_VERSION" >> "$GITHUB_OUTPUT"
+          echo "mod_version=$MOD_VERSION" >> "$GITHUB_OUTPUT"
+          echo "minecraft_version=$MINECRAFT" >> "$GITHUB_OUTPUT"
+          echo "prerelease=$PRERELEASE" >> "$GITHUB_OUTPUT"
+          echo "Building release $FULL_VERSION (tag $TAG, Minecraft $MINECRAFT, mod $MOD_VERSION, prerelease=$PRERELEASE)"
+
+      - name: Sync mod_version from release version
+        run: |
+          VERSION="${{ steps.version.outputs.version }}"
+          sed -i "s/^mod_version=.*/mod_version=${VERSION}/" gradle.properties
+          grep -E '^mod_version=' gradle.properties
 
       - name: Build Fabric and NeoForge jars
         run: ./gradlew :fabric:remapJar :forge:remapJar --no-daemon --stacktrace -Pmod_version=${{ steps.version.outputs.version }}
@@ -77,7 +119,7 @@ jobs:
           target_commitish: ${{ github.sha }}
           name: Pre-cast Structure ${{ steps.version.outputs.version }}
           generate_release_notes: true
-          prerelease: ${{ contains(steps.version.outputs.version, '-') }}
+          prerelease: ${{ steps.version.outputs.prerelease == 'true' }}
           files: |
             release/precast-structure-*-fabric.jar
             release/precast-structure-*-neoforge.jar
