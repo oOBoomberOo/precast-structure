@@ -1,19 +1,27 @@
 package io.github.ooboomberoo.precaststructure.client;
 
 import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.math.Axis;
 import io.github.ooboomberoo.precaststructure.structure.BlueprintItemData;
 import io.github.ooboomberoo.precaststructure.structure.StructureBlueprint;
 import io.github.ooboomberoo.precaststructure.structure.StructureBlockInfo;
 import java.util.Optional;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.block.BlockRenderDispatcher;
+import net.minecraft.core.BlockPos;
 import net.minecraft.world.item.ItemDisplayContext;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.Blocks;
 
 public final class StructureItemRenderer {
-    private static final float ITEM_RENDER_SCALE_FACTOR = 0.85F;
+    private static final float GUI_FIT = 0.9F;
+    private static final float HAND_FIT = 0.85F;
+    private static final float THIRD_PERSON_FIT = 0.55F;
+    private static final float GROUND_FIT = 0.45F;
+    private static final float GUI_PITCH = 30.0F;
+    private static final float GUI_YAW = 225.0F;
 
     private StructureItemRenderer() {
     }
@@ -22,24 +30,129 @@ public final class StructureItemRenderer {
         BlockRenderDispatcher dispatcher = Minecraft.getInstance().getBlockRenderer();
         Optional<StructureBlueprint> optional = BlueprintItemData.read(stack, ClientRegistryAccess.getLookup());
         if (optional.isEmpty()) {
-            dispatcher.renderSingleBlock(Blocks.STRUCTURE_BLOCK.defaultBlockState(), poseStack, bufferSource, light, overlay);
+            dispatcher.renderSingleBlock(Blocks.STRUCTURE_BLOCK.defaultBlockState(), poseStack, bufferSource, LightTexture.FULL_BRIGHT, overlay);
             return;
         }
 
         StructureBlueprint blueprint = optional.get();
-        float maxSize = Math.max(1.0F, Math.max(Math.max(blueprint.size().getX(), blueprint.size().getY()), blueprint.size().getZ()));
-        float scale = ITEM_RENDER_SCALE_FACTOR / maxSize;
+        ContentBox box = ContentBox.of(blueprint);
+        int renderLight = resolveLight(displayContext, light);
 
         poseStack.pushPose();
-        poseStack.translate(0.5F, 0.05F, 0.5F);
-        poseStack.scale(scale, scale, scale);
-        poseStack.translate(-blueprint.size().getX() / 2.0F, 0.0F, -blueprint.size().getZ() / 2.0F);
+        applyDisplayTransform(poseStack, displayContext, box);
+
         for (StructureBlockInfo block : blueprint.blocks()) {
             poseStack.pushPose();
             poseStack.translate(block.offset().getX(), block.offset().getY(), block.offset().getZ());
-            dispatcher.renderSingleBlock(block.state(), poseStack, bufferSource, light, overlay);
+            dispatcher.renderSingleBlock(block.state(), poseStack, bufferSource, renderLight, overlay);
             poseStack.popPose();
         }
         poseStack.popPose();
+    }
+
+    private static void applyDisplayTransform(PoseStack poseStack, ItemDisplayContext context, ContentBox box) {
+        float maxDim = Math.max(1.0F, box.maxDimension());
+
+        switch (context) {
+            case GUI, FIXED -> {
+                float scale = GUI_FIT / maxDim;
+                poseStack.translate(0.5F, 0.5F, 0.0F);
+                poseStack.mulPose(Axis.XP.rotationDegrees(GUI_PITCH));
+                poseStack.mulPose(Axis.YP.rotationDegrees(GUI_YAW));
+                poseStack.scale(scale, scale, scale);
+                poseStack.translate(-box.centerX(), -box.centerY(), -box.centerZ());
+            }
+            case GROUND -> {
+                float scale = GROUND_FIT / maxDim;
+                poseStack.translate(0.5F, 0.05F, 0.5F);
+                poseStack.mulPose(Axis.YP.rotationDegrees(45.0F));
+                poseStack.scale(scale, scale, scale);
+                poseStack.translate(-box.centerX(), -box.minY(), -box.centerZ());
+            }
+            case FIRST_PERSON_LEFT_HAND -> applyFirstPerson(poseStack, box, maxDim, true);
+            case FIRST_PERSON_RIGHT_HAND -> applyFirstPerson(poseStack, box, maxDim, false);
+            case THIRD_PERSON_LEFT_HAND -> applyThirdPerson(poseStack, box, maxDim, true);
+            case THIRD_PERSON_RIGHT_HAND -> applyThirdPerson(poseStack, box, maxDim, false);
+            default -> {
+                float scale = THIRD_PERSON_FIT / maxDim;
+                poseStack.translate(0.5F, 0.35F, 0.5F);
+                poseStack.mulPose(Axis.YP.rotationDegrees(45.0F));
+                poseStack.scale(scale, scale, scale);
+                poseStack.translate(-box.centerX(), -box.minY(), -box.centerZ());
+            }
+        }
+    }
+
+    private static void applyFirstPerson(PoseStack poseStack, ContentBox box, float maxDim, boolean left) {
+        float scale = HAND_FIT / maxDim;
+        // Push into view and angle like a held block, resting on the palm.
+        poseStack.translate(left ? 0.15F : 0.85F, 0.2F, -0.1F);
+        poseStack.mulPose(Axis.YP.rotationDegrees(left ? 75.0F : -75.0F));
+        poseStack.mulPose(Axis.XP.rotationDegrees(12.0F));
+        poseStack.mulPose(Axis.ZP.rotationDegrees(left ? 8.0F : -8.0F));
+        poseStack.scale(scale, scale, scale);
+        poseStack.translate(-box.centerX(), -box.minY(), -box.centerZ());
+    }
+
+    private static void applyThirdPerson(PoseStack poseStack, ContentBox box, float maxDim, boolean left) {
+        float scale = THIRD_PERSON_FIT / maxDim;
+        poseStack.translate(0.5F, 0.3F, 0.5F);
+        poseStack.mulPose(Axis.YP.rotationDegrees(left ? 60.0F : -60.0F));
+        poseStack.mulPose(Axis.XP.rotationDegrees(20.0F));
+        poseStack.scale(scale, scale, scale);
+        poseStack.translate(-box.centerX(), -box.minY(), -box.centerZ());
+    }
+
+    private static int resolveLight(ItemDisplayContext context, int light) {
+        // Hand/GUI need readable textures; face shading still provides depth.
+        if (context == ItemDisplayContext.GUI
+            || context == ItemDisplayContext.FIXED
+            || context.firstPerson()
+            || context == ItemDisplayContext.GROUND) {
+            return LightTexture.FULL_BRIGHT;
+        }
+        return Math.max(light, LightTexture.pack(10, 10));
+    }
+
+    private record ContentBox(int minX, int minY, int minZ, int maxX, int maxY, int maxZ) {
+        static ContentBox of(StructureBlueprint blueprint) {
+            if (blueprint.blocks().isEmpty()) {
+                BlockPos size = blueprint.size();
+                return new ContentBox(0, 0, 0, Math.max(0, size.getX() - 1), Math.max(0, size.getY() - 1), Math.max(0, size.getZ() - 1));
+            }
+
+            int minX = Integer.MAX_VALUE;
+            int minY = Integer.MAX_VALUE;
+            int minZ = Integer.MAX_VALUE;
+            int maxX = Integer.MIN_VALUE;
+            int maxY = Integer.MIN_VALUE;
+            int maxZ = Integer.MIN_VALUE;
+            for (StructureBlockInfo block : blueprint.blocks()) {
+                BlockPos offset = block.offset();
+                minX = Math.min(minX, offset.getX());
+                minY = Math.min(minY, offset.getY());
+                minZ = Math.min(minZ, offset.getZ());
+                maxX = Math.max(maxX, offset.getX());
+                maxY = Math.max(maxY, offset.getY());
+                maxZ = Math.max(maxZ, offset.getZ());
+            }
+            return new ContentBox(minX, minY, minZ, maxX, maxY, maxZ);
+        }
+
+        float centerX() {
+            return (minX + maxX + 1) * 0.5F;
+        }
+
+        float centerY() {
+            return (minY + maxY + 1) * 0.5F;
+        }
+
+        float centerZ() {
+            return (minZ + maxZ + 1) * 0.5F;
+        }
+
+        float maxDimension() {
+            return Math.max(maxX - minX + 1, Math.max(maxY - minY + 1, maxZ - minZ + 1));
+        }
     }
 }

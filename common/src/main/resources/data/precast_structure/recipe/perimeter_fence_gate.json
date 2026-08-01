@@ -1,0 +1,23 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "redstone",
+  "key": {
+    "S": {
+      "item": "minecraft:stick"
+    },
+    "Y": {
+      "item": "minecraft:yellow_dye"
+    },
+    "C": {
+      "item": "minecraft:black_dye"
+    }
+  },
+  "pattern": [
+    "SYS",
+    "SCS"
+  ],
+  "result": {
+    "count": 1,
+    "id": "precast_structure:perimeter_fence_gate"
+  }
+}

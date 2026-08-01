@@ -1,8 +1,10 @@
 package io.github.ooboomberoo.precaststructure.block.entity;
 
 import dev.architectury.registry.menu.ExtendedMenuProvider;
+import io.github.ooboomberoo.precaststructure.block.StructureScannerBlock;
 import io.github.ooboomberoo.precaststructure.menu.StructureScannerMenu;
 import io.github.ooboomberoo.precaststructure.registry.ModBlockEntityTypes;
+import io.github.ooboomberoo.precaststructure.registry.ModBlocks;
 import io.github.ooboomberoo.precaststructure.registry.ModItems;
 import io.github.ooboomberoo.precaststructure.structure.BlueprintCapture;
 import io.github.ooboomberoo.precaststructure.structure.BlueprintItemData;
@@ -17,15 +19,42 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 
 public class StructureScannerBlockEntity extends BlockEntity implements ExtendedMenuProvider {
     public static final int MAX_NAME_LENGTH = 48;
+    private static final int RECHECK_INTERVAL = 10;
     private String structureName = "";
 
     public StructureScannerBlockEntity(BlockPos pos, BlockState blockState) {
         super(ModBlockEntityTypes.STRUCTURE_SCANNER.get(), pos, blockState);
+    }
+
+    public static void serverTick(Level level, BlockPos pos, BlockState state, StructureScannerBlockEntity scanner) {
+        if (level.getGameTime() % RECHECK_INTERVAL == 0) {
+            scanner.recheckReady();
+        }
+    }
+
+    public void recheckReady() {
+        if (level == null || level.isClientSide()) {
+            return;
+        }
+
+        boolean ready = StructureFrameDetector.detect(level, worldPosition).successful();
+        BlockState state = level.getBlockState(worldPosition);
+        if (!state.is(ModBlocks.STRUCTURE_SCANNER.get())) {
+            return;
+        }
+        if (state.getValue(StructureScannerBlock.READY) == ready) {
+            return;
+        }
+
+        // UPDATE_ALL so clients reliably swap red/blue models when the frame breaks far away.
+        level.setBlock(worldPosition, state.setValue(StructureScannerBlock.READY, ready), Block.UPDATE_ALL);
     }
 
     public String getStructureName() {
@@ -48,12 +77,18 @@ public class StructureScannerBlockEntity extends BlockEntity implements Extended
         StructureFrameDetector.ScanResult result = StructureFrameDetector.detect(level, worldPosition);
         if (!result.successful()) {
             player.displayClientMessage(result.error(), true);
+            recheckReady();
             return;
         }
 
         StructureBlueprint blueprint = BlueprintCapture.capture(level, result.frameOptional().orElseThrow());
         if (blueprint.blocks().isEmpty()) {
-            player.displayClientMessage(Component.translatable("message.precaststructure.empty_scan"), true);
+            player.displayClientMessage(Component.translatable("message.precast_structure.empty_scan"), true);
+            return;
+        }
+
+        if (!consumeEmptyBlueprint(player)) {
+            player.displayClientMessage(Component.translatable("message.precast_structure.needs_empty_blueprint"), true);
             return;
         }
 
@@ -62,12 +97,30 @@ public class StructureScannerBlockEntity extends BlockEntity implements Extended
         if (!player.addItem(blueprintStack)) {
             player.drop(blueprintStack, false);
         }
-        player.displayClientMessage(Component.translatable("message.precaststructure.scan_complete", blueprint.blocks().size()), true);
+        player.displayClientMessage(Component.translatable("message.precast_structure.scan_complete", blueprint.blocks().size()), true);
+    }
+
+    private static boolean consumeEmptyBlueprint(ServerPlayer player) {
+        Inventory inventory = player.getInventory();
+        for (int i = 0; i < inventory.getContainerSize(); i++) {
+            ItemStack stack = inventory.getItem(i);
+            if (!stack.is(ModItems.EMPTY_BLUEPRINT.get())) {
+                continue;
+            }
+            if (!player.getAbilities().instabuild) {
+                stack.shrink(1);
+                if (stack.isEmpty()) {
+                    inventory.setItem(i, ItemStack.EMPTY);
+                }
+            }
+            return true;
+        }
+        return false;
     }
 
     @Override
     public Component getDisplayName() {
-        return Component.translatable("block.precaststructure.structure_scanner");
+        return Component.translatable("block.precast_structure.structure_scanner");
     }
 
     @Override

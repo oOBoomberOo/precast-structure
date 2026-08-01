@@ -14,13 +14,18 @@ import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.block.BlockRenderDispatcher;
 import net.minecraft.core.BlockPos;
-import net.minecraft.world.item.context.UseOnContext;
+import net.minecraft.core.Direction;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.context.UseOnContext;
+import net.minecraft.world.level.EmptyBlockGetter;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
+import net.minecraft.world.phys.shapes.VoxelShape;
 
 public final class StructureGhostRenderer {
     private static final int GHOST_ALPHA_PLACEABLE = 110;
@@ -54,21 +59,47 @@ public final class StructureGhostRenderer {
         }
 
         StructureBlueprint blueprint = optional.get();
+        Direction facing = player.getDirection();
         BlockPos origin = StructurePlacement.resolveOrigin(new UseOnContext(player, player.getUsedItemHand(), hitResult));
-        boolean placeable = StructurePlacement.firstBlockedPosition(level, origin, blueprint).isEmpty();
+        boolean placeable = StructurePlacement.firstBlockedPosition(level, origin, blueprint, facing).isEmpty();
         BlockRenderDispatcher dispatcher = minecraft.getBlockRenderer();
 
+        float red = placeable ? PLACEABLE_RED : BLOCKED_RED;
+        float green = placeable ? PLACEABLE_GREEN : BLOCKED_GREEN;
+        float blue = placeable ? PLACEABLE_BLUE : BLOCKED_BLUE;
+        int alpha = placeable ? GHOST_ALPHA_PLACEABLE : GHOST_ALPHA_BLOCKED;
+
         for (StructureBlockInfo block : blueprint.blocks()) {
-            BlockPos blockPos = origin.offset(block.offset());
+            BlockPos blockPos = origin.offset(StructurePlacement.transformOffset(block.offset(), blueprint, facing));
+            BlockState state = StructurePlacement.transformState(block.state(), facing);
+
             poseStack.pushPose();
             poseStack.translate(blockPos.getX() - cameraPosition.x, blockPos.getY() - cameraPosition.y, blockPos.getZ() - cameraPosition.z);
-            MultiBufferSource ghostSource = renderType -> new GhostVertexConsumer(bufferSource.getBuffer(RenderType.translucent()), placeable ? GHOST_ALPHA_PLACEABLE : GHOST_ALPHA_BLOCKED);
-            dispatcher.renderSingleBlock(block.state(), poseStack, ghostSource, 0x00F000F0, net.minecraft.client.renderer.texture.OverlayTexture.NO_OVERLAY);
+            MultiBufferSource ghostSource = renderType -> new GhostVertexConsumer(bufferSource.getBuffer(RenderType.translucent()), alpha);
+            dispatcher.renderSingleBlock(state, poseStack, ghostSource, 0x00F000F0, net.minecraft.client.renderer.texture.OverlayTexture.NO_OVERLAY);
+
             VertexConsumer lines = bufferSource.getBuffer(RenderType.lines());
-            float red = placeable ? PLACEABLE_RED : BLOCKED_RED;
-            float green = placeable ? PLACEABLE_GREEN : BLOCKED_GREEN;
-            float blue = placeable ? PLACEABLE_BLUE : BLOCKED_BLUE;
-            LevelRenderer.renderLineBox(poseStack, lines, 0.0F, 0.0F, 0.0F, 1.0F, 1.0F, 1.0F, red, green, blue, 0.9F);
+            VoxelShape shape = state.getShape(EmptyBlockGetter.INSTANCE, BlockPos.ZERO);
+            if (shape.isEmpty()) {
+                LevelRenderer.renderLineBox(poseStack, lines, 0.0F, 0.0F, 0.0F, 1.0F, 1.0F, 1.0F, red, green, blue, 0.9F);
+            } else {
+                for (AABB aabb : shape.toAabbs()) {
+                    LevelRenderer.renderLineBox(
+                        poseStack,
+                        lines,
+                        (float) aabb.minX,
+                        (float) aabb.minY,
+                        (float) aabb.minZ,
+                        (float) aabb.maxX,
+                        (float) aabb.maxY,
+                        (float) aabb.maxZ,
+                        red,
+                        green,
+                        blue,
+                        0.9F
+                    );
+                }
+            }
             poseStack.popPose();
         }
 

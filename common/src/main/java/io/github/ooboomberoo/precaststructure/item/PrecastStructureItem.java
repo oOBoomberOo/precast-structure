@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Optional;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.player.Player;
@@ -31,23 +32,24 @@ public class PrecastStructureItem extends Item {
 
         StructureBlueprint blueprint = optional.get();
         BlockPos origin = StructurePlacement.resolveOrigin(context);
-        Optional<BlockPos> blocked = StructurePlacement.firstBlockedPosition(level, origin, blueprint);
+        Direction facing = context.getHorizontalDirection();
+        Optional<BlockPos> blocked = StructurePlacement.firstBlockedPosition(level, origin, blueprint, facing);
         if (blocked.isPresent()) {
             Player player = context.getPlayer();
             if (player != null) {
-                player.displayClientMessage(Component.translatable("message.precaststructure.blocked_placement", blocked.get().getX(), blocked.get().getY(), blocked.get().getZ()), true);
+                player.displayClientMessage(Component.translatable("message.precast_structure.blocked_placement", blocked.get().getX(), blocked.get().getY(), blocked.get().getZ()), true);
             }
             return InteractionResult.FAIL;
         }
 
         if (!level.isClientSide()) {
-            StructurePlacement.place(level, origin, blueprint);
+            StructurePlacement.place(level, origin, blueprint, facing);
             Player player = context.getPlayer();
             if (player != null && !player.getAbilities().instabuild) {
                 context.getItemInHand().shrink(1);
             }
         }
-        return InteractionResult.SUCCESS;
+        return InteractionResult.sidedSuccess(level.isClientSide());
     }
 
     @Override
@@ -55,8 +57,8 @@ public class PrecastStructureItem extends Item {
         Optional<StructureBlueprint> optional = BlueprintItemData.read(stack, context.registries());
         if (optional.isPresent()) {
             StructureBlueprint blueprint = optional.get();
-            tooltipComponents.add(Component.translatable("tooltip.precaststructure.placeable_structure", blueprint.size().getX(), blueprint.size().getY(), blueprint.size().getZ()).withStyle(ChatFormatting.GOLD));
-            tooltipComponents.add(Component.translatable("tooltip.precaststructure.ghost_preview").withStyle(ChatFormatting.GRAY));
+            tooltipComponents.add(Component.translatable("tooltip.precast_structure.placeable_structure", blueprint.size().getX(), blueprint.size().getY(), blueprint.size().getZ()).withStyle(ChatFormatting.GOLD));
+            tooltipComponents.add(Component.translatable("tooltip.precast_structure.ghost_preview").withStyle(ChatFormatting.GRAY));
         }
     }
 }
