@@ -4,10 +4,12 @@ import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.ByteBufferBuilder;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
+import io.github.ooboomberoo.precaststructure.block.StructureScannerBlock;
 import io.github.ooboomberoo.precaststructure.block.entity.StructureScannerBlockEntity;
 import io.github.ooboomberoo.precaststructure.client.StructureHologramRenderer.Part;
 import io.github.ooboomberoo.precaststructure.structure.StructureBlueprint;
 import io.github.ooboomberoo.precaststructure.structure.StructureBlockInfo;
+import io.github.ooboomberoo.precaststructure.structure.StructurePlacement;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.LevelRenderer;
 import net.minecraft.client.renderer.MultiBufferSource;
@@ -15,6 +17,7 @@ import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.block.BlockRenderDispatcher;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.util.Mth;
 import net.minecraft.world.level.EmptyBlockGetter;
 import net.minecraft.world.level.Level;
@@ -124,13 +127,15 @@ public final class StructureScanRenderer {
 
         float scanY = scanner.getScanLineY(partialTick);
         BlockPos origin = scanner.getScanOrigin();
+        BlockPos scanSize = scanner.getScanSize();
+        Direction scannerFacing = scanner.getBlockState().getValue(StructureScannerBlock.FACING);
 
         poseStack.pushPose();
         poseStack.translate(-cameraPosition.x, -cameraPosition.y, -cameraPosition.z);
 
         for (StructureBlockInfo block : ghosts.blocks()) {
-            BlockPos worldPos = origin.offset(block.offset());
-            BlockState state = block.state();
+            BlockPos worldPos = StructurePlacement.localToScanWorld(origin, scanSize, scannerFacing, block.offset());
+            BlockState state = StructurePlacement.localToScanWorldState(block.state(), scannerFacing);
             BoundsY bounds = blockBoundsY(state, worldPos);
 
             boolean fullyBelow = bounds.maxY() <= scanY + CLIP_EPSILON;
@@ -160,9 +165,11 @@ public final class StructureScanRenderer {
 
         float scanY = scanner.getScanLineY(partialTick);
         BlockPos origin = scanner.getScanOrigin();
+        BlockPos scanSize = scanner.getScanSize();
+        Direction scannerFacing = scanner.getBlockState().getValue(StructureScannerBlock.FACING);
         for (StructureBlockInfo block : ghosts.blocks()) {
-            BlockPos worldPos = origin.offset(block.offset());
-            BlockState state = block.state();
+            BlockPos worldPos = StructurePlacement.localToScanWorld(origin, scanSize, scannerFacing, block.offset());
+            BlockState state = StructurePlacement.localToScanWorldState(block.state(), scannerFacing);
             BoundsY bounds = blockBoundsY(state, worldPos);
             if (bounds.maxY() <= scanY + CLIP_EPSILON) {
                 continue;

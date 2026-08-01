@@ -36,6 +36,7 @@ public final class StructurePlacement {
 
     /**
      * Local +Z points toward the back of the structure. The front face is at local z = 0.
+     * Capture bakes scanner facing into this local frame (front toward the scanner).
      * Placement facing rotates the structure so it extends away along the player's look direction,
      * with the clicked/origin block at the center of the front face (ground row).
      */
@@ -47,6 +48,81 @@ public final class StructurePlacement {
             case EAST -> Rotation.COUNTERCLOCKWISE_90;
             default -> Rotation.NONE;
         };
+    }
+
+    public static Rotation inverse(Rotation rotation) {
+        return switch (rotation) {
+            case CLOCKWISE_90 -> Rotation.COUNTERCLOCKWISE_90;
+            case COUNTERCLOCKWISE_90 -> Rotation.CLOCKWISE_90;
+            default -> rotation;
+        };
+    }
+
+    /**
+     * World direction the structure extends away from the scanner (into the framed volume).
+     * Scanner {@code FACING} is the front of the block (toward the player when placed), so the
+     * platform/structure sits behind it.
+     */
+    public static Direction scanForward(Direction scannerFacing) {
+        Direction horizontal = scannerFacing.getAxis().isVertical() ? Direction.NORTH : scannerFacing;
+        return horizontal.getOpposite();
+    }
+
+    /** Min corner of an axis-aligned size box after {@code rotation} (used to normalize capture). */
+    public static BlockPos rotatedAabbMinCorner(BlockPos aabbSize, Rotation rotation) {
+        int maxX = Math.max(0, aabbSize.getX() - 1);
+        int maxY = Math.max(0, aabbSize.getY() - 1);
+        int maxZ = Math.max(0, aabbSize.getZ() - 1);
+        int minX = Integer.MAX_VALUE;
+        int minY = Integer.MAX_VALUE;
+        int minZ = Integer.MAX_VALUE;
+        for (int x : new int[]{0, maxX}) {
+            for (int y : new int[]{0, maxY}) {
+                for (int z : new int[]{0, maxZ}) {
+                    BlockPos rotated = rotateOffset(new BlockPos(x, y, z), rotation);
+                    minX = Math.min(minX, rotated.getX());
+                    minY = Math.min(minY, rotated.getY());
+                    minZ = Math.min(minZ, rotated.getZ());
+                }
+            }
+        }
+        return new BlockPos(minX, minY, minZ);
+    }
+
+    public static BlockPos rotatedAabbSize(BlockPos aabbSize, Rotation rotation) {
+        int maxX = Math.max(0, aabbSize.getX() - 1);
+        int maxY = Math.max(0, aabbSize.getY() - 1);
+        int maxZ = Math.max(0, aabbSize.getZ() - 1);
+        BlockPos min = rotatedAabbMinCorner(aabbSize, rotation);
+        int hiX = Integer.MIN_VALUE;
+        int hiY = Integer.MIN_VALUE;
+        int hiZ = Integer.MIN_VALUE;
+        for (int x : new int[]{0, maxX}) {
+            for (int y : new int[]{0, maxY}) {
+                for (int z : new int[]{0, maxZ}) {
+                    BlockPos rotated = rotateOffset(new BlockPos(x, y, z), rotation);
+                    hiX = Math.max(hiX, rotated.getX());
+                    hiY = Math.max(hiY, rotated.getY());
+                    hiZ = Math.max(hiZ, rotated.getZ());
+                }
+            }
+        }
+        return new BlockPos(hiX - min.getX() + 1, hiY - min.getY() + 1, hiZ - min.getZ() + 1);
+    }
+
+    /**
+     * Maps a scanner-local blueprint offset back into the world AABB used during scanning.
+     */
+    public static BlockPos localToScanWorld(BlockPos scanOrigin, BlockPos scanAabbSize, Direction scannerFacing, BlockPos localOffset) {
+        Direction forward = scanForward(scannerFacing);
+        Rotation toWorld = rotationFor(forward);
+        Rotation toLocal = inverse(toWorld);
+        BlockPos minCorner = rotatedAabbMinCorner(scanAabbSize, toLocal);
+        return scanOrigin.offset(rotateOffset(localOffset.offset(minCorner), toWorld));
+    }
+
+    public static BlockState localToScanWorldState(BlockState localState, Direction scannerFacing) {
+        return rotateState(localState, rotationFor(scanForward(scannerFacing)));
     }
 
     public static BlockPos frontCenterLocal(BlockPos size) {

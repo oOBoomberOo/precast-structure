@@ -16,7 +16,8 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.Blocks;
 
 public final class StructureItemRenderer {
-    private static final float GUI_FIT = 0.9F;
+    /** Matches vanilla block item GUI scale for a 1×1×1 cube. */
+    private static final float GUI_FIT = 0.625F;
     private static final float HAND_FIT = 0.85F;
     private static final float THIRD_PERSON_FIT = 0.55F;
     private static final float GROUND_FIT = 0.45F;
@@ -55,7 +56,7 @@ public final class StructureItemRenderer {
 
         switch (context) {
             case GUI, FIXED -> {
-                float scale = GUI_FIT / maxDim;
+                float scale = GUI_FIT / Math.max(1.0F, box.guiProjectedExtent());
                 poseStack.translate(0.5F, 0.5F, 0.0F);
                 poseStack.mulPose(Axis.XP.rotationDegrees(GUI_PITCH));
                 poseStack.mulPose(Axis.YP.rotationDegrees(GUI_YAW));
@@ -153,6 +154,46 @@ public final class StructureItemRenderer {
 
         float maxDimension() {
             return Math.max(maxX - minX + 1, Math.max(maxY - minY + 1, maxZ - minZ + 1));
+        }
+
+        /**
+         * Screen-space extent after the GUI pitch/yaw, so 1×1×1 cubes (and long flats) stay inside the slot.
+         */
+        float guiProjectedExtent() {
+            float cx = centerX();
+            float cy = centerY();
+            float cz = centerZ();
+            float pitch = (float) Math.toRadians(GUI_PITCH);
+            float yaw = (float) Math.toRadians(GUI_YAW);
+            float cosP = (float) Math.cos(pitch);
+            float sinP = (float) Math.sin(pitch);
+            float cosY = (float) Math.cos(yaw);
+            float sinY = (float) Math.sin(yaw);
+
+            float minSx = Float.POSITIVE_INFINITY;
+            float maxSx = Float.NEGATIVE_INFINITY;
+            float minSy = Float.POSITIVE_INFINITY;
+            float maxSy = Float.NEGATIVE_INFINITY;
+            for (int x : new int[]{minX, maxX + 1}) {
+                for (int y : new int[]{minY, maxY + 1}) {
+                    for (int z : new int[]{minZ, maxZ + 1}) {
+                        float lx = x - cx;
+                        float ly = y - cy;
+                        float lz = z - cz;
+                        // Yaw around Y, then pitch around X (same order as PoseStack mulPose calls).
+                        float yx = lx * cosY + lz * sinY;
+                        float yy = ly;
+                        float yz = -lx * sinY + lz * cosY;
+                        float px = yx;
+                        float py = yy * cosP - yz * sinP;
+                        minSx = Math.min(minSx, px);
+                        maxSx = Math.max(maxSx, px);
+                        minSy = Math.min(minSy, py);
+                        maxSy = Math.max(maxSy, py);
+                    }
+                }
+            }
+            return Math.max(maxSx - minSx, maxSy - minSy);
         }
     }
 }

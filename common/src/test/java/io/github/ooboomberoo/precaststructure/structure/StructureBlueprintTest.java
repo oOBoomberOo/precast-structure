@@ -12,6 +12,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.server.Bootstrap;
 import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.Rotation;
 
 class StructureBlueprintTest {
     @BeforeAll
@@ -130,5 +131,55 @@ class StructureBlueprintTest {
         assertEquals(BlockPos.ZERO, StructurePlacement.transformOffset(frontCenter, size, Direction.NORTH));
         assertEquals(new BlockPos(0, 0, -2), StructurePlacement.transformOffset(backCenter, size, Direction.NORTH));
         assertEquals(new BlockPos(0, 0, -1), StructurePlacement.transformOffset(new BlockPos(0, 0, 0), size, Direction.WEST));
+    }
+
+    @Test
+    void scanForwardPointsIntoStructureBehindScanner() {
+        assertEquals(Direction.NORTH, StructurePlacement.scanForward(Direction.SOUTH));
+        assertEquals(Direction.EAST, StructurePlacement.scanForward(Direction.WEST));
+    }
+
+    @Test
+    void localToScanWorldRoundTripsAabbOffsetsForEachScannerFacing() {
+        BlockPos origin = new BlockPos(10, 64, 20);
+        BlockPos aabbSize = new BlockPos(3, 2, 5);
+        for (Direction scannerFacing : new Direction[]{Direction.NORTH, Direction.SOUTH, Direction.WEST, Direction.EAST}) {
+            Direction forward = StructurePlacement.scanForward(scannerFacing);
+            Rotation toLocal = StructurePlacement.inverse(StructurePlacement.rotationFor(forward));
+            BlockPos minCorner = StructurePlacement.rotatedAabbMinCorner(aabbSize, toLocal);
+
+            for (int x = 0; x < aabbSize.getX(); x++) {
+                for (int y = 0; y < aabbSize.getY(); y++) {
+                    for (int z = 0; z < aabbSize.getZ(); z++) {
+                        BlockPos aabbOffset = new BlockPos(x, y, z);
+                        BlockPos local = StructurePlacement.rotateOffset(aabbOffset, toLocal).subtract(minCorner);
+                        BlockPos world = StructurePlacement.localToScanWorld(origin, aabbSize, scannerFacing, local);
+                        assertEquals(origin.offset(aabbOffset), world, "facing=" + scannerFacing + " offset=" + aabbOffset);
+                    }
+                }
+            }
+        }
+    }
+
+    @Test
+    void captureOrientsFrontTowardScannerNotWorldPositiveZ() {
+        // Scanner faces south (front toward +Z); structure sits to the north (forward = NORTH).
+        // A stair facing the scanner (south) must become a local south-facing stair at z=0 front.
+        Direction scannerFacing = Direction.SOUTH;
+        Direction forward = StructurePlacement.scanForward(scannerFacing);
+        assertEquals(Direction.NORTH, forward);
+
+        Rotation toLocal = StructurePlacement.inverse(StructurePlacement.rotationFor(forward));
+        BlockPos aabbSize = new BlockPos(1, 1, 3);
+        BlockPos minCorner = StructurePlacement.rotatedAabbMinCorner(aabbSize, toLocal);
+
+        // World AABB: z=0 is north (back), z=2 is south (front toward scanner).
+        BlockPos frontAabb = new BlockPos(0, 0, 2);
+        BlockPos backAabb = new BlockPos(0, 0, 0);
+        BlockPos frontLocal = StructurePlacement.rotateOffset(frontAabb, toLocal).subtract(minCorner);
+        BlockPos backLocal = StructurePlacement.rotateOffset(backAabb, toLocal).subtract(minCorner);
+
+        assertEquals(0, frontLocal.getZ(), "front toward scanner should be local z=0");
+        assertEquals(2, backLocal.getZ(), "back should be local +Z");
     }
 }

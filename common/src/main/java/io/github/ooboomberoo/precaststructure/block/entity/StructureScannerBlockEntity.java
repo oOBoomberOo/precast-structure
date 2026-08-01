@@ -19,6 +19,7 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.FriendlyByteBuf;
@@ -45,7 +46,7 @@ import org.jetbrains.annotations.Nullable;
 public class StructureScannerBlockEntity extends BlockEntity implements ExtendedMenuProvider {
     public static final int MAX_NAME_LENGTH = 48;
     private static final int RECHECK_INTERVAL = 10;
-    private static final int CLEAR_FLAGS = Block.UPDATE_CLIENTS | Block.UPDATE_KNOWN_SHAPE | Block.UPDATE_SUPPRESS_DROPS;
+    private static final int CLEAR_FLAGS = Block.UPDATE_CLIENTS | Block.UPDATE_SUPPRESS_DROPS;
 
     /** Client-tracked scanners that are currently animating ghost geometry. */
     private static final Map<BlockPos, StructureScannerBlockEntity> CLIENT_ACTIVE_SCANS = new ConcurrentHashMap<>();
@@ -180,7 +181,8 @@ public class StructureScannerBlockEntity extends BlockEntity implements Extended
         }
 
         StructureFrame frame = result.frameOptional().orElseThrow();
-        StructureBlueprint blueprint = BlueprintCapture.capture(level, frame);
+        Direction scannerFacing = getBlockState().getValue(StructureScannerBlock.FACING);
+        StructureBlueprint blueprint = BlueprintCapture.capture(level, frame, scannerFacing);
         if (blueprint.blocks().isEmpty()) {
             player.displayClientMessage(Component.translatable("message.precast_structure.empty_scan"), true);
             return;
@@ -297,6 +299,7 @@ public class StructureScannerBlockEntity extends BlockEntity implements Extended
                     BlockPos pos = origin.offset(x, y, z);
                     BlockState state = level.getBlockState(pos);
                     if (!ModBlockTags.isBlueprintExcluded(state)) {
+                        // Omit UPDATE_KNOWN_SHAPE so perimeter fences/gates update connections.
                         level.setBlock(pos, Blocks.AIR.defaultBlockState(), CLEAR_FLAGS);
                     }
                 }
