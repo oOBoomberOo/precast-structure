@@ -21,6 +21,7 @@ import net.minecraft.world.level.block.SoundType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.Property;
 import net.minecraft.world.level.block.state.properties.RailShape;
+import net.minecraft.world.phys.AABB;
 import org.jetbrains.annotations.Nullable;
 
 public final class StructurePlacement {
@@ -133,6 +134,29 @@ public final class StructurePlacement {
             }
         }
         return Optional.empty();
+    }
+
+    /** Axis-aligned volume occupied by a placement of {@code blueprint} at {@code origin}. */
+    public static AABB placementBounds(BlockPos origin, StructureBlueprint blueprint, Direction facing) {
+        int minX = Integer.MAX_VALUE;
+        int minY = Integer.MAX_VALUE;
+        int minZ = Integer.MAX_VALUE;
+        int maxX = Integer.MIN_VALUE;
+        int maxY = Integer.MIN_VALUE;
+        int maxZ = Integer.MIN_VALUE;
+        for (StructureBlockInfo block : blueprint.blocks()) {
+            BlockPos targetPos = origin.offset(transformOffset(block.offset(), blueprint, facing));
+            minX = Math.min(minX, targetPos.getX());
+            minY = Math.min(minY, targetPos.getY());
+            minZ = Math.min(minZ, targetPos.getZ());
+            maxX = Math.max(maxX, targetPos.getX());
+            maxY = Math.max(maxY, targetPos.getY());
+            maxZ = Math.max(maxZ, targetPos.getZ());
+        }
+        if (blueprint.blocks().isEmpty()) {
+            return new AABB(origin);
+        }
+        return new AABB(minX, minY, minZ, maxX + 1, maxY + 1, maxZ + 1);
     }
 
     public static boolean isReplaceable(BlockState state) {

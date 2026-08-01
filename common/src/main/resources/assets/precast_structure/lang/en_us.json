@@ -25,6 +25,7 @@
   "message.precast_structure.missing_materials": "You do not have the required building materials.",
   "message.precast_structure.print_complete": "Pre-cast Structure item created.",
   "message.precast_structure.blocked_placement": "Structure placement is blocked at %s, %s, %s.",
+  "message.precast_structure.deploy_overlap": "Cannot place a structure inside one that is still deploying.",
   "tooltip.precast_structure.blank_blueprint": "Used by the Structure Scanner to capture a build",
   "tooltip.precast_structure.empty_blueprint": "No saved structure data.",
   "tooltip.precast_structure.dimensions": "Saved size: %s×%s×%s",

@@ -36,6 +36,13 @@ public class PrecastStructureItem extends Item {
         StructureBlueprint blueprint = optional.get();
         BlockPos origin = StructurePlacement.resolveOrigin(context);
         Direction facing = context.getHorizontalDirection();
+        if (StructureDeploymentManager.overlapsActiveDeploy(level, StructurePlacement.placementBounds(origin, blueprint, facing))) {
+            Player player = context.getPlayer();
+            if (player != null) {
+                player.displayClientMessage(Component.translatable("message.precast_structure.deploy_overlap"), true);
+            }
+            return InteractionResult.FAIL;
+        }
         Optional<BlockPos> blocked = StructurePlacement.firstBlockedPosition(level, origin, blueprint, facing);
         if (blocked.isPresent()) {
             Player player = context.getPlayer();

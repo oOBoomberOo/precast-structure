@@ -9,6 +9,20 @@ architectury {
 
 loom {
     accessWidenerPath = project(":common").file("src/main/resources/precast_structure.accesswidener")
+
+    runs {
+        // Default client keeps fabric/run; second instance for LAN / multiplayer checks.
+        client {
+            programArg "--username=Dev1"
+        }
+        client2 {
+            client()
+            configName = "Minecraft Client 2"
+            runDir = "run-client2"
+            programArg "--username=Dev2"
+            ideConfigGenerated = true
+        }
+    }
 }
 
 configurations {

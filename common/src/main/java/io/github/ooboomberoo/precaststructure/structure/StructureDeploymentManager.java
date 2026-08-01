@@ -107,7 +107,26 @@ public final class StructureDeploymentManager {
     }
 
     public static boolean clientOverlaps(AABB region) {
-        for (StructureDeployment deployment : CLIENT.values()) {
+        return anyOverlaps(CLIENT.values(), region);
+    }
+
+    /** True if {@code region} intersects any in-progress deploy in this level (client or server). */
+    public static boolean overlapsActiveDeploy(Level level, AABB region) {
+        if (level.isClientSide()) {
+            return clientOverlaps(region);
+        }
+        if (!(level instanceof ServerLevel serverLevel)) {
+            return false;
+        }
+        Map<UUID, StructureDeployment> deployments = SERVER.get(serverLevel.dimension());
+        if (deployments == null || deployments.isEmpty()) {
+            return false;
+        }
+        return anyOverlaps(deployments.values(), region);
+    }
+
+    private static boolean anyOverlaps(Collection<StructureDeployment> deployments, AABB region) {
+        for (StructureDeployment deployment : deployments) {
             if (deployment.bounds().intersects(region)) {
                 return true;
             }

@@ -16,7 +16,6 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.context.UseOnContext;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
@@ -63,31 +62,18 @@ public final class StructureGhostRenderer {
         BlockPos origin = StructurePlacement.resolveOrigin(new UseOnContext(player, player.getUsedItemHand(), hitResult));
 
         List<Part> parts = new ArrayList<>(blueprint.blocks().size());
-        int minX = Integer.MAX_VALUE;
-        int minY = Integer.MAX_VALUE;
-        int minZ = Integer.MAX_VALUE;
-        int maxX = Integer.MIN_VALUE;
-        int maxY = Integer.MIN_VALUE;
-        int maxZ = Integer.MIN_VALUE;
         for (StructureBlockInfo block : blueprint.blocks()) {
             BlockPos blockPos = origin.offset(StructurePlacement.transformOffset(block.offset(), blueprint, facing));
             BlockState state = StructurePlacement.transformState(block.state(), facing);
             parts.add(Part.of(blockPos, state));
-            minX = Math.min(minX, blockPos.getX());
-            minY = Math.min(minY, blockPos.getY());
-            minZ = Math.min(minZ, blockPos.getZ());
-            maxX = Math.max(maxX, blockPos.getX());
-            maxY = Math.max(maxY, blockPos.getY());
-            maxZ = Math.max(maxZ, blockPos.getZ());
-        }
-        if (!parts.isEmpty()) {
-            AABB previewBounds = new AABB(minX, minY, minZ, maxX + 1, maxY + 1, maxZ + 1);
-            if (StructureDeploymentManager.clientOverlaps(previewBounds)) {
-                return;
-            }
         }
 
-        boolean placeable = StructurePlacement.firstBlockedPosition(level, origin, blueprint, facing).isEmpty();
+        boolean overlapsDeploy = StructureDeploymentManager.overlapsActiveDeploy(
+            level,
+            StructurePlacement.placementBounds(origin, blueprint, facing)
+        );
+        boolean placeable = !overlapsDeploy
+            && StructurePlacement.firstBlockedPosition(level, origin, blueprint, facing).isEmpty();
 
         if (placeable) {
             StructureHologramRenderer.render(poseStack, cameraPosition, parts, PLACEABLE_R, PLACEABLE_G, PLACEABLE_B);
