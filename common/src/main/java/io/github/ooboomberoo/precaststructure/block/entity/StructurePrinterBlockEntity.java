@@ -1,6 +1,7 @@
 package io.github.ooboomberoo.precaststructure.block.entity;
 
 import dev.architectury.registry.menu.ExtendedMenuProvider;
+import io.github.ooboomberoo.precaststructure.config.ModConfig;
 import io.github.ooboomberoo.precaststructure.menu.StructurePrinterMenu;
 import io.github.ooboomberoo.precaststructure.registry.ModBlockEntityTypes;
 import io.github.ooboomberoo.precaststructure.registry.ModGameRules;
@@ -39,13 +40,12 @@ public class StructurePrinterBlockEntity extends BaseContainerBlockEntity implem
     public static final int DATA_PROGRESS = 0;
     public static final int DATA_MAX_PROGRESS = 1;
     public static final int DATA_COUNT = 2;
-    private static final int DEFAULT_PRINT_DELAY = 100;
     private static final int[] INPUT_SLOTS = IntStream.range(BLUEPRINT_SLOT, OUTPUT_SLOT).toArray();
     private static final int[] OUTPUT_SLOTS = {OUTPUT_SLOT};
 
     private NonNullList<ItemStack> items = NonNullList.withSize(SLOT_COUNT, ItemStack.EMPTY);
     private int printProgress;
-    private int maxPrintProgress = DEFAULT_PRINT_DELAY;
+    private int maxPrintProgress = ModConfig.get().printer.defaultDelayTicks;
     private final ContainerData progressData = new ContainerData() {
         @Override
         public int get(int index) {
@@ -155,7 +155,7 @@ public class StructurePrinterBlockEntity extends BaseContainerBlockEntity implem
     }
 
     private int getConfiguredPrintDelay() {
-        return Math.max(1, level != null ? level.getGameRules().getInt(ModGameRules.STRUCTURE_PRINTER_DELAY) : DEFAULT_PRINT_DELAY);
+        return Math.max(1, level != null ? level.getGameRules().getInt(ModGameRules.STRUCTURE_PRINTER_DELAY) : ModConfig.get().printer.defaultDelayTicks);
     }
 
     private void resetProgress() {

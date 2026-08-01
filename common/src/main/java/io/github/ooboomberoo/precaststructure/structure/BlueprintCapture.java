@@ -1,5 +1,6 @@
 package io.github.ooboomberoo.precaststructure.structure;
 
+import io.github.ooboomberoo.precaststructure.registry.ModBlockTags;
 import java.util.ArrayList;
 import java.util.List;
 import net.minecraft.core.BlockPos;
@@ -20,7 +21,7 @@ public final class BlueprintCapture {
                 for (int z = 0; z < size.getZ(); z++) {
                     BlockPos worldPos = origin.offset(x, y, z);
                     BlockState state = level.getBlockState(worldPos);
-                    if (state.isAir()) {
+                    if (ModBlockTags.isBlueprintExcluded(state)) {
                         continue;
                     }
                     blocks.add(new StructureBlockInfo(new BlockPos(x, y, z), state));

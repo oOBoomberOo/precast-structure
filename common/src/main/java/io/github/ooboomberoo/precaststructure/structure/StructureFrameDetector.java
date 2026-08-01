@@ -1,6 +1,7 @@
 package io.github.ooboomberoo.precaststructure.structure;
 
 import io.github.ooboomberoo.precaststructure.block.entity.StructureScannerBlockEntity;
+import io.github.ooboomberoo.precaststructure.config.ModConfig;
 import io.github.ooboomberoo.precaststructure.registry.ModBlocks;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
@@ -16,9 +17,6 @@ import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 
 public final class StructureFrameDetector {
-    static final int MIN_PLATFORM_SIZE = 3;
-    static final int MAX_PLATFORM_SIZE = 64;
-
     private static final Direction[] HORIZONTAL = {
         Direction.NORTH, Direction.SOUTH, Direction.WEST, Direction.EAST
     };
@@ -101,11 +99,12 @@ public final class StructureFrameDetector {
 
         Set<BlockPos> platform = floodFillPlatform(level, seeds);
         PlatformBounds bounds = PlatformBounds.of(platform);
+        ModConfig.Frame frameLimits = ModConfig.get().frame;
         if (bounds == null
-                || bounds.width() < MIN_PLATFORM_SIZE
-                || bounds.depth() < MIN_PLATFORM_SIZE
-                || bounds.width() > MAX_PLATFORM_SIZE
-                || bounds.depth() > MAX_PLATFORM_SIZE) {
+                || bounds.width() < frameLimits.minPlatformSize
+                || bounds.depth() < frameLimits.minPlatformSize
+                || bounds.width() > frameLimits.maxPlatformSize
+                || bounds.depth() > frameLimits.maxPlatformSize) {
             return ScanResult.error(Component.translatable("message.precast_structure.invalid_platform"));
         }
 
@@ -148,7 +147,7 @@ public final class StructureFrameDetector {
             if (!visited.add(pos.immutable())) {
                 continue;
             }
-            if (visited.size() > MAX_PLATFORM_SIZE * MAX_PLATFORM_SIZE) {
+            if (visited.size() > ModConfig.get().frame.maxPlatformSize * ModConfig.get().frame.maxPlatformSize) {
                 break;
             }
             for (Direction direction : HORIZONTAL) {
@@ -215,12 +214,10 @@ public final class StructureFrameDetector {
     }
 
     private static int countPillar(Level level, BlockPos pillarBase) {
+        int maxHeight = ModConfig.get().frame.maxPlatformSize;
         int height = 0;
-        while (level.getBlockState(pillarBase.above(height + 1)).is(ModBlocks.METAL_SCAFFOLD.get())) {
+        while (height < maxHeight && level.getBlockState(pillarBase.above(height + 1)).is(ModBlocks.METAL_SCAFFOLD.get())) {
             height++;
-            if (height > MAX_PLATFORM_SIZE) {
-                break;
-            }
         }
         return height;
     }

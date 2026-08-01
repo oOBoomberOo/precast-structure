@@ -2,9 +2,11 @@ package io.github.ooboomberoo.precaststructure.block.entity;
 
 import dev.architectury.registry.menu.ExtendedMenuProvider;
 import io.github.ooboomberoo.precaststructure.block.StructureScannerBlock;
+import io.github.ooboomberoo.precaststructure.config.ModConfig;
 import io.github.ooboomberoo.precaststructure.menu.StructureScannerMenu;
 import io.github.ooboomberoo.precaststructure.registry.ModBlockEntityTypes;
 import io.github.ooboomberoo.precaststructure.registry.ModBlocks;
+import io.github.ooboomberoo.precaststructure.registry.ModBlockTags;
 import io.github.ooboomberoo.precaststructure.registry.ModItems;
 import io.github.ooboomberoo.precaststructure.registry.ModSounds;
 import io.github.ooboomberoo.precaststructure.structure.BlueprintCapture;
@@ -43,9 +45,6 @@ import org.jetbrains.annotations.Nullable;
 public class StructureScannerBlockEntity extends BlockEntity implements ExtendedMenuProvider {
     public static final int MAX_NAME_LENGTH = 48;
     private static final int RECHECK_INTERVAL = 10;
-    private static final int SOUND_INTERVAL = 5;
-    private static final int MIN_SCAN_TICKS = 80;
-    private static final int TICKS_PER_HEIGHT = 16;
     private static final int CLEAR_FLAGS = Block.UPDATE_CLIENTS | Block.UPDATE_KNOWN_SHAPE | Block.UPDATE_SUPPRESS_DROPS;
 
     /** Client-tracked scanners that are currently animating ghost geometry. */
@@ -191,6 +190,10 @@ public class StructureScannerBlockEntity extends BlockEntity implements Extended
             player.displayClientMessage(Component.translatable("message.precast_structure.needs_empty_blueprint"), true);
             return;
         }
+        if (!consumeEmptyBlueprint(player)) {
+            player.displayClientMessage(Component.translatable("message.precast_structure.needs_empty_blueprint"), true);
+            return;
+        }
 
         // Digitize immediately: real blocks become client-rendered ghosts for the scan pass.
         clearInterior(level, frame);
@@ -200,7 +203,7 @@ public class StructureScannerBlockEntity extends BlockEntity implements Extended
         scanPlayerId = player.getUUID();
         scanOrigin = frame.interiorOrigin();
         scanSize = frame.size();
-        scanDuration = Math.max(MIN_SCAN_TICKS, scanSize.getY() * TICKS_PER_HEIGHT);
+        scanDuration = Math.max(ModConfig.get().scanning.minTicks, scanSize.getY() * ModConfig.get().scanning.ticksPerHeight);
         scanProgress = 0;
         scanStartGameTime = level.getGameTime();
         scanning = true;
@@ -224,7 +227,7 @@ public class StructureScannerBlockEntity extends BlockEntity implements Extended
         }
 
         scanProgress++;
-        if (level.getGameTime() % SOUND_INTERVAL == 0) {
+        if (level.getGameTime() % ModConfig.get().scanning.soundIntervalTicks == 0) {
             level.playSound(null, worldPosition, ModSounds.SCANNING.get(), SoundSource.BLOCKS, 0.7F, 1.35F);
         }
 
@@ -264,12 +267,6 @@ public class StructureScannerBlockEntity extends BlockEntity implements Extended
             return;
         }
 
-        if (!consumeEmptyBlueprint(player)) {
-            player.displayClientMessage(Component.translatable("message.precast_structure.needs_empty_blueprint"), true);
-            recheckReady();
-            return;
-        }
-
         ItemStack blueprintStack = createBlueprintStack(blueprint);
         if (!player.addItem(blueprintStack)) {
             player.drop(blueprintStack, false);
@@ -298,7 +295,8 @@ public class StructureScannerBlockEntity extends BlockEntity implements Extended
             for (int x = 0; x < size.getX(); x++) {
                 for (int z = 0; z < size.getZ(); z++) {
                     BlockPos pos = origin.offset(x, y, z);
-                    if (!level.getBlockState(pos).isAir()) {
+                    BlockState state = level.getBlockState(pos);
+                    if (!ModBlockTags.isBlueprintExcluded(state)) {
                         level.setBlock(pos, Blocks.AIR.defaultBlockState(), CLEAR_FLAGS);
                     }
                 }

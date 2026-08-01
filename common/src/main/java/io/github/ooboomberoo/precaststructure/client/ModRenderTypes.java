@@ -8,13 +8,16 @@ import net.minecraft.client.renderer.RenderType;
  * Custom render layers for scan hologram ghosts.
  * Extends {@link RenderType} so protected render-state shards are accessible.
  *
- * <p>Holograms use a depth prepass then a color pass so translucent blending cannot
- * reveal farther hologram faces that were drawn earlier.
+ * <p>Without a shader pack, holograms use a depth prepass then a translucent color pass so
+ * blending cannot reveal farther hologram faces that were drawn earlier.
+ *
+ * <p>When Iris/Oculus has a shader pack enabled, custom core shaders cannot participate in
+ * Iris gbuffers (geometry would vanish). The Iris path uses {@link RenderType#translucentMovingBlock()}
+ * (BLOCK format, Iris-remapped) plus {@link HologramStyleVertexConsumer}, drawn after deferred.
  */
 public final class ModRenderTypes extends RenderType {
     private static final ShaderStateShard SCAN_HOLOGRAM_SHADER = new ShaderStateShard(ModShaders::getScanHologram);
 
-    /** Writes nearest hologram depth only (order-independent occlusion). */
     private static final RenderType SCAN_HOLOGRAM_DEPTH = create(
         "precast_structure_scan_hologram_depth",
         DefaultVertexFormat.BLOCK,
@@ -32,7 +35,6 @@ public final class ModRenderTypes extends RenderType {
             .createCompositeState(false)
     );
 
-    /** Colors only the nearest surface established by {@link #SCAN_HOLOGRAM_DEPTH}. */
     private static final RenderType SCAN_HOLOGRAM = create(
         "precast_structure_scan_hologram",
         DefaultVertexFormat.BLOCK,
@@ -60,6 +62,12 @@ public final class ModRenderTypes extends RenderType {
     }
 
     public static RenderType scanHologram() {
-        return SCAN_HOLOGRAM;
+        // translucentMovingBlock is the vanilla ghost-block layer Iris remaps correctly.
+        return ModShaders.useCustomHologramShader() ? SCAN_HOLOGRAM : translucentMovingBlock();
+    }
+
+    /** Depth prepass is only valid with the custom core shader (non-Iris) path. */
+    public static boolean useHologramDepthPrepass() {
+        return ModShaders.useCustomHologramShader();
     }
 }

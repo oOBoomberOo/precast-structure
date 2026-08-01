@@ -21,6 +21,7 @@ import net.minecraft.world.level.block.SoundType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.Property;
 import net.minecraft.world.level.block.state.properties.RailShape;
+import org.jetbrains.annotations.Nullable;
 
 public final class StructurePlacement {
     private StructurePlacement() {
@@ -146,14 +147,39 @@ public final class StructurePlacement {
     public static void place(Level level, BlockPos origin, StructureBlueprint blueprint, Direction facing) {
         Set<SoundEvent> playedSounds = new HashSet<>();
         for (StructureBlockInfo block : blueprint.blocks()) {
-            BlockPos targetPos = origin.offset(transformOffset(block.offset(), blueprint, facing));
-            BlockState state = transformState(block.state(), facing);
-            level.setBlock(targetPos, state, 3);
-            SoundType soundType = state.getSoundType();
-            if (playedSounds.add(soundType.getPlaceSound())) {
-                playPlaceSound(level, targetPos, soundType);
-            }
+            placeOne(level, origin, blueprint, facing, block, playedSounds);
         }
+    }
+
+    /**
+     * Places a single blueprint block. Returns {@code true} if a block was written.
+     * When {@code playedSounds} is non-null, each distinct place sound plays at most once.
+     */
+    public static boolean placeOne(
+        Level level,
+        BlockPos origin,
+        StructureBlueprint blueprint,
+        Direction facing,
+        StructureBlockInfo block,
+        @Nullable Set<SoundEvent> playedSounds
+    ) {
+        BlockPos targetPos = origin.offset(transformOffset(block.offset(), blueprint, facing));
+        if (!isReplaceable(level.getBlockState(targetPos))) {
+            return false;
+        }
+        BlockState state = transformState(block.state(), facing);
+        level.setBlock(targetPos, state, 3);
+        SoundType soundType = state.getSoundType();
+        if (playedSounds == null) {
+            playPlaceSound(level, targetPos, soundType);
+        } else if (playedSounds.add(soundType.getPlaceSound())) {
+            playPlaceSound(level, targetPos, soundType);
+        }
+        return true;
+    }
+
+    public static boolean placeOne(Level level, BlockPos origin, StructureBlueprint blueprint, Direction facing, StructureBlockInfo block) {
+        return placeOne(level, origin, blueprint, facing, block, null);
     }
 
     private static void playPlaceSound(Level level, BlockPos pos, SoundType soundType) {

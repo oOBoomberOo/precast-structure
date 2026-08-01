@@ -39,5 +39,41 @@
   "gui.precast_structure.printer_output": "Output",
   "gui.precast_structure.printer_progress": "Progress",
   "gui.precast_structure.printer_auto": "Auto-prints when materials are ready",
-  "itemGroup.precast_structure.main": "Pre-cast Structure"
+  "itemGroup.precast_structure.main": "Pre-cast Structure",
+
+  "config.precast_structure.title": "Pre-cast Structure Config",
+  "config.precast_structure.category.scanning": "Scanning",
+  "config.precast_structure.category.deploy": "Deploy",
+  "config.precast_structure.category.frame": "Frame",
+  "config.precast_structure.category.blueprint": "Blueprint",
+  "config.precast_structure.category.printer": "Printer",
+
+  "config.precast_structure.scanning.min_ticks": "Minimum scan ticks",
+  "config.precast_structure.scanning.min_ticks.tooltip": "Shortest scan animation length, in ticks (20 ticks = 1 second).",
+  "config.precast_structure.scanning.ticks_per_height": "Scan ticks per height",
+  "config.precast_structure.scanning.ticks_per_height.tooltip": "Extra scan duration added for each block of frame height.",
+  "config.precast_structure.scanning.sound_interval": "Scan sound interval",
+  "config.precast_structure.scanning.sound_interval.tooltip": "How often the scanning loop sound plays, in ticks.",
+
+  "config.precast_structure.deploy.animated": "Animated deploy",
+  "config.precast_structure.deploy.animated.tooltip": "If disabled, pre-cast structures place instantly with no rising-plane animation.",
+  "config.precast_structure.deploy.min_ticks": "Minimum deploy ticks",
+  "config.precast_structure.deploy.min_ticks.tooltip": "Shortest deploy animation length, in ticks.",
+  "config.precast_structure.deploy.ticks_per_height": "Deploy ticks per height",
+  "config.precast_structure.deploy.ticks_per_height.tooltip": "Extra deploy duration added for each block of structure height.",
+  "config.precast_structure.deploy.sound_interval": "Deploy sound interval",
+  "config.precast_structure.deploy.sound_interval.tooltip": "How often the deploy loop sound plays, in ticks.",
+  "config.precast_structure.deploy.client_grace_ticks": "Deploy finish grace ticks",
+  "config.precast_structure.deploy.client_grace_ticks.tooltip": "Client ticks to keep the solid ghost cover after placement while lighting updates.",
+
+  "config.precast_structure.frame.min_platform_size": "Minimum platform size",
+  "config.precast_structure.frame.min_platform_size.tooltip": "Minimum platform width and depth (inclusive).",
+  "config.precast_structure.frame.max_platform_size": "Maximum platform size",
+  "config.precast_structure.frame.max_platform_size.tooltip": "Maximum platform width, depth, and scaffold height (inclusive).",
+
+  "config.precast_structure.blueprint.max_dimension": "Maximum blueprint dimension",
+  "config.precast_structure.blueprint.max_dimension.tooltip": "Hard clamp applied to blueprint size axes when loading saved data.",
+
+  "config.precast_structure.printer.default_delay_ticks": "Default print delay",
+  "config.precast_structure.printer.default_delay_ticks.tooltip": "Fallback print duration in ticks. Worlds still use the precastStructurePrinterDelay gamerule."
 }

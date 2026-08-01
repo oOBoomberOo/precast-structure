@@ -1,7 +1,9 @@
 package io.github.ooboomberoo.precaststructure.item;
 
+import io.github.ooboomberoo.precaststructure.config.ModConfig;
 import io.github.ooboomberoo.precaststructure.structure.BlueprintItemData;
 import io.github.ooboomberoo.precaststructure.structure.StructureBlueprint;
+import io.github.ooboomberoo.precaststructure.structure.StructureDeploymentManager;
 import io.github.ooboomberoo.precaststructure.structure.StructurePlacement;
 import java.util.List;
 import java.util.Optional;
@@ -9,6 +11,7 @@ import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.network.chat.Component;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
@@ -42,8 +45,12 @@ public class PrecastStructureItem extends Item {
             return InteractionResult.FAIL;
         }
 
-        if (!level.isClientSide()) {
-            StructurePlacement.place(level, origin, blueprint, facing);
+        if (!level.isClientSide() && level instanceof ServerLevel serverLevel) {
+            if (ModConfig.get().deploy.animated) {
+                StructureDeploymentManager.start(serverLevel, origin, facing, blueprint);
+            } else {
+                StructurePlacement.place(serverLevel, origin, blueprint, facing);
+            }
             Player player = context.getPlayer();
             if (player != null && !player.getAbilities().instabuild) {
                 context.getItemInHand().shrink(1);

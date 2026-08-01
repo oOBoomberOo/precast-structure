@@ -31,7 +31,7 @@ import java.nio.IntBuffer;
  * and structure placement preview.
  */
 public final class StructureHologramRenderer {
-    static final float CLIP_EPSILON = 0.001F;
+    public static final float CLIP_EPSILON = 0.001F;
 
     private StructureHologramRenderer() {
     }
@@ -46,27 +46,33 @@ public final class StructureHologramRenderer {
      * Renders hologram parts with depth prepass + color pass into a fresh buffer.
      */
     public static void render(PoseStack poseStack, Vec3 cameraPosition, Iterable<Part> parts, float colorR, float colorG, float colorB) {
-        if (ModShaders.getScanHologram() == null) {
-            return;
-        }
-
         BlockRenderDispatcher dispatcher = Minecraft.getInstance().getBlockRenderer();
-        ByteBufferBuilder byteBuffer = new ByteBufferBuilder(768 * 1024);
-        MultiBufferSource.BufferSource bufferSource = MultiBufferSource.immediate(byteBuffer);
+        try (ByteBufferBuilder byteBuffer = new ByteBufferBuilder(768 * 1024)) {
+            MultiBufferSource.BufferSource bufferSource = MultiBufferSource.immediate(byteBuffer);
 
         RenderSystem.enableDepthTest();
-        RenderSystem.setShaderColor(colorR, colorG, colorB, 1.0F);
+        // Iris path already cyans in HologramStyleVertexConsumer; ColorModulator still handles blocked red.
+        float alpha = ModShaders.useCustomHologramShader() ? 1.0F : 0.9F;
+        RenderSystem.setShaderColor(colorR, colorG, colorB, alpha);
 
-        RenderSystem.depthMask(true);
-        renderPass(poseStack, cameraPosition, bufferSource, dispatcher, parts, true);
-        bufferSource.endBatch();
+        if (ModRenderTypes.useHologramDepthPrepass()) {
+            RenderSystem.depthMask(true);
+            renderPass(poseStack, cameraPosition, bufferSource, dispatcher, parts, true);
+            bufferSource.endBatch();
 
-        RenderSystem.depthMask(false);
-        renderPass(poseStack, cameraPosition, bufferSource, dispatcher, parts, false);
-        bufferSource.endBatch();
+            RenderSystem.depthMask(false);
+            renderPass(poseStack, cameraPosition, bufferSource, dispatcher, parts, false);
+            bufferSource.endBatch();
+        } else {
+            // Single translucent pass: Iris remaps solid depth-only draws into gbuffers.
+            RenderSystem.depthMask(true);
+            renderPass(poseStack, cameraPosition, bufferSource, dispatcher, parts, false);
+            bufferSource.endBatch();
+        }
 
         RenderSystem.depthMask(true);
         RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
+    }
     }
 
     /**
@@ -80,7 +86,15 @@ public final class StructureHologramRenderer {
         Iterable<Part> parts,
         boolean depthPass
     ) {
+        if (depthPass && !ModRenderTypes.useHologramDepthPrepass()) {
+            return;
+        }
         RenderType hologramType = depthPass ? ModRenderTypes.scanHologramDepth() : ModRenderTypes.scanHologram();
+        boolean styleEffects = !depthPass && !ModShaders.useCustomHologramShader();
+        float time = HologramEffectMath.shaderTimeSeconds();
+        float camX = (float) cameraPosition.x;
+        float camY = (float) cameraPosition.y;
+        float camZ = (float) cameraPosition.z;
 
         poseStack.pushPose();
         poseStack.translate(-cameraPosition.x, -cameraPosition.y, -cameraPosition.z);
@@ -88,7 +102,7 @@ public final class StructureHologramRenderer {
         for (Part part : parts) {
             poseStack.pushPose();
             poseStack.translate(part.worldPos().getX(), part.worldPos().getY(), part.worldPos().getZ());
-            renderPart(poseStack, bufferSource, dispatcher, part, hologramType);
+            renderPart(poseStack, bufferSource, dispatcher, part, hologramType, styleEffects, camX, camY, camZ, time);
             poseStack.popPose();
         }
 
@@ -100,16 +114,23 @@ public final class StructureHologramRenderer {
         MultiBufferSource.BufferSource bufferSource,
         BlockRenderDispatcher dispatcher,
         Part part,
-        RenderType hologramType
+        RenderType hologramType,
+        boolean styleEffects,
+        float cameraX,
+        float cameraY,
+        float cameraZ,
+        float time
     ) {
-        MultiBufferSource source;
-        if (part.clipY() == null) {
-            source = renderType -> bufferSource.getBuffer(hologramType);
-        } else {
-            float clipY = part.clipY();
-            boolean keepBelow = part.keepBelow();
-            source = renderType -> new PlaneClipVertexConsumer(bufferSource.getBuffer(hologramType), clipY, keepBelow);
-        }
+        MultiBufferSource source = renderType -> {
+            VertexConsumer buffer = bufferSource.getBuffer(hologramType);
+            if (styleEffects) {
+                buffer = new HologramStyleVertexConsumer(buffer, cameraX, cameraY, cameraZ, time);
+            }
+            if (part.clipY() != null) {
+                buffer = new PlaneClipVertexConsumer(buffer, part.clipY(), part.keepBelow());
+            }
+            return buffer;
+        };
         dispatcher.renderSingleBlock(part.state(), poseStack, source, LightTexture.FULL_BRIGHT, OverlayTexture.NO_OVERLAY);
     }
 

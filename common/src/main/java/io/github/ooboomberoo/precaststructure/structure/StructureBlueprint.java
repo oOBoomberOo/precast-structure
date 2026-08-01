@@ -1,5 +1,6 @@
 package io.github.ooboomberoo.precaststructure.structure;
 
+import io.github.ooboomberoo.precaststructure.config.ModConfig;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -21,7 +22,6 @@ import net.minecraft.world.level.block.state.BlockState;
 
 public record StructureBlueprint(BlockPos size, List<StructureBlockInfo> blocks) {
     public static final String ROOT_KEY = "PrecastStructure";
-    private static final int MAX_STRUCTURE_DIMENSION = 256;
 
     public CompoundTag save() {
         CompoundTag root = new CompoundTag();
@@ -45,7 +45,12 @@ public record StructureBlueprint(BlockPos size, List<StructureBlockInfo> blocks)
         }
 
         CompoundTag sizeTag = root.getCompound("size");
-        BlockPos size = new BlockPos(Mth.clamp(sizeTag.getInt("x"), 0, MAX_STRUCTURE_DIMENSION), Mth.clamp(sizeTag.getInt("y"), 0, MAX_STRUCTURE_DIMENSION), Mth.clamp(sizeTag.getInt("z"), 0, MAX_STRUCTURE_DIMENSION));
+        int maxDimension = ModConfig.get().blueprint.maxDimension;
+        BlockPos size = new BlockPos(
+            Mth.clamp(sizeTag.getInt("x"), 0, maxDimension),
+            Mth.clamp(sizeTag.getInt("y"), 0, maxDimension),
+            Mth.clamp(sizeTag.getInt("z"), 0, maxDimension)
+        );
         ListTag blockList = root.getList("blocks", Tag.TAG_COMPOUND);
         HolderGetter<Block> blockLookup = registries.lookupOrThrow(Registries.BLOCK);
         List<StructureBlockInfo> blocks = new ArrayList<>(blockList.size());

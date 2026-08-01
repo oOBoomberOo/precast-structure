@@ -1,8 +1,8 @@
 package io.github.ooboomberoo.precaststructure.forge;
 
 import io.github.ooboomberoo.precaststructure.PrecastStructureMod;
-import io.github.ooboomberoo.precaststructure.client.StructureGhostRenderer;
-import io.github.ooboomberoo.precaststructure.client.StructureScanRenderer;
+import io.github.ooboomberoo.precaststructure.client.ShaderCompat;
+import io.github.ooboomberoo.precaststructure.client.WorldHologramRender;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
@@ -15,15 +15,19 @@ public final class PrecastStructureForgeClientEvents {
 
     @SubscribeEvent
     public static void onRenderLevel(RenderLevelStageEvent event) {
-        if (event.getStage() != RenderLevelStageEvent.Stage.AFTER_ENTITIES) {
+        boolean late = ShaderCompat.shouldUseLateWorldOverlayPass();
+        // AFTER_TRANSLUCENT_BLOCKS is unreliable with fabulous targets; AFTER_PARTICLES is after deferred.
+        RenderLevelStageEvent.Stage expected = late
+            ? RenderLevelStageEvent.Stage.AFTER_PARTICLES
+            : RenderLevelStageEvent.Stage.AFTER_ENTITIES;
+        if (event.getStage() != expected) {
             return;
         }
-        // Depth buffer still has opaque/cutout world geometry (fences, etc.).
-        StructureScanRenderer.render(
+        float partialTick = event.getPartialTick().getGameTimeDeltaPartialTick(false);
+        WorldHologramRender.renderAll(
             event.getPoseStack(),
             event.getCamera().getPosition(),
-            event.getPartialTick().getGameTimeDeltaPartialTick(false)
+            partialTick
         );
-        StructureGhostRenderer.render(event.getPoseStack(), event.getCamera().getPosition());
     }
 }
