@@ -14,7 +14,7 @@
   "message.precast_structure.invalid_fence": "플랫폼 경계 한 칸 위에 둘레 울타리 또는 울타리 문을 놓으세요(비계 모서리 제외).",
   "message.precast_structure.invalid_height": "구조물 높이를 설정하려면 플랫폼의 모서리 하나에만 금속 비계 기둥을 놓으세요.",
   "message.precast_structure.empty_scan": "테두리로 지정된 공간이 비어 있습니다.",
-  "message.precast_structure.needs_empty_blueprint": "스캔하려면 빈 청사진을 하나 이상 들고 있어야 합니다.",
+  "message.precast_structure.needs_empty_blueprint": "스캔하려면 인벤토리에 빈 청사진이 하나 이상 있어야 합니다.",
   "message.precast_structure.scan_complete": "청사진을 만들었습니다. 블록 %s개를 저장했습니다.",
   "message.precast_structure.printer_needs_blueprint": "구조물 프린터에 청사진을 넣으세요.",
   "message.precast_structure.invalid_blueprint": "해당 청사진을 읽을 수 없습니다.",

@@ -8,7 +8,7 @@ version="${version}"
 displayName="Pre-cast Structure"
 authors="oOBoomberOo"
 description='''
-Scan framed builds into blueprints, print them into pre-cast structure items, and place the structure with a hologram deploy preview.
+Scan framed builds into blueprints, print them into pre-cast structure items, and place the structure with a hologram deploy preview. Optional Create and Sable soft compatibility.
 '''
 displayURL="https://github.com/oOBoomberOo/precast-structure"
 logoFile="assets/precast_structure/icon.png"

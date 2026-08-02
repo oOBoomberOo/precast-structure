@@ -14,7 +14,7 @@
   "message.precast_structure.invalid_fence": "Place Perimeter Fence or Fence Gate blocks one block above the platform border (except the scaffold corner).",
   "message.precast_structure.invalid_height": "Place a Metal Scaffold pillar on exactly one platform corner to set the structure height.",
   "message.precast_structure.empty_scan": "The framed volume is empty.",
-  "message.precast_structure.needs_empty_blueprint": "Hold at least one Empty Blueprint to scan.",
+  "message.precast_structure.needs_empty_blueprint": "Have at least one Empty Blueprint in your inventory to scan.",
   "message.precast_structure.scan_started": "Scanning structure...",
   "message.precast_structure.scan_in_progress": "This scanner is already scanning.",
   "message.precast_structure.scan_complete": "Blueprint created with %s saved blocks.",
