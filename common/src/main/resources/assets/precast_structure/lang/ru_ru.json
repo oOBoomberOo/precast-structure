@@ -20,6 +20,7 @@
   "message.precast_structure.scan_complete": "Чертёж создан: сохранено блоков — %s.",
   "subtitles.precast_structure.scanning": "Сканер гудит",
   "subtitles.precast_structure.scan_complete": "Сканирование завершено",
+  "subtitles.precast_structure.printing": "Принтер жужжит",
   "message.precast_structure.printer_needs_blueprint": "Вставьте чертёж в принтер сооружений.",
   "message.precast_structure.invalid_blueprint": "Не удалось прочитать этот чертёж.",
   "message.precast_structure.missing_materials": "У вас нет необходимых строительных материалов.",
@@ -72,6 +73,8 @@
   "config.precast_structure.blueprint.max_dimension.tooltip": "Жёсткое ограничение осей размера чертежа при загрузке сохранённых данных.",
   "config.precast_structure.printer.default_delay_ticks": "Задержка печати по умолчанию",
   "config.precast_structure.printer.default_delay_ticks.tooltip": "Резервная длительность печати в тиках. Миры по-прежнему используют gamerule precastStructurePrinterDelay.",
+  "config.precast_structure.printer.sound_interval": "Интервал звука печати",
+  "config.precast_structure.printer.sound_interval.tooltip": "Как часто воспроизводится звук цикла печати, в тиках.",
   "config.precast_structure.hologram.solid_collision": "Сплошная коллизия голограммы",
   "config.precast_structure.hologram.solid_collision.tooltip": "Если включено, голограммы сканирования и установки используют невидимые сплошные хитбоксы, чтобы игроки и сущности не могли через них проходить."
 }

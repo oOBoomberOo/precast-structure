@@ -20,6 +20,7 @@
   "message.precast_structure.scan_complete": "Plan créé avec %s blocs enregistrés.",
   "subtitles.precast_structure.scanning": "Le scanner bourdonne",
   "subtitles.precast_structure.scan_complete": "Scan terminé",
+  "subtitles.precast_structure.printing": "L'imprimante ronronne",
   "message.precast_structure.printer_needs_blueprint": "Insérez un plan dans l'imprimante de structure.",
   "message.precast_structure.invalid_blueprint": "Ce plan n'a pas pu être lu.",
   "message.precast_structure.missing_materials": "Vous n'avez pas les matériaux de construction requis.",
@@ -72,6 +73,8 @@
   "config.precast_structure.blueprint.max_dimension.tooltip": "Limite stricte appliquée aux axes de taille du plan lors du chargement des données enregistrées.",
   "config.precast_structure.printer.default_delay_ticks": "Délai d'impression par défaut",
   "config.precast_structure.printer.default_delay_ticks.tooltip": "Durée d'impression de secours en ticks. Les mondes utilisent toujours la gamerule precastStructurePrinterDelay.",
+  "config.precast_structure.printer.sound_interval": "Intervalle du son d'impression",
+  "config.precast_structure.printer.sound_interval.tooltip": "Fréquence de lecture du son de boucle d'impression, en ticks.",
   "config.precast_structure.hologram.solid_collision": "Collision solide de l'hologramme",
   "config.precast_structure.hologram.solid_collision.tooltip": "Lorsque c'est activé, les hologrammes de scan et de déploiement utilisent des hitboxes solides invisibles afin que les joueurs et entités ne puissent pas les traverser."
 }

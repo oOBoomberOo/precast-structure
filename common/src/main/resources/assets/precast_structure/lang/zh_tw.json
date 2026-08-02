@@ -20,6 +20,7 @@
   "message.precast_structure.scan_complete": "藍圖已建立，儲存了 %s 個方塊。",
   "subtitles.precast_structure.scanning": "掃描器嗡嗡作響",
   "subtitles.precast_structure.scan_complete": "掃描完成",
+  "subtitles.precast_structure.printing": "印表機嗡嗡作響",
   "message.precast_structure.printer_needs_blueprint": "請將藍圖放入結構印表機。",
   "message.precast_structure.invalid_blueprint": "無法讀取該藍圖。",
   "message.precast_structure.missing_materials": "你沒有所需的建築材料。",
@@ -72,6 +73,8 @@
   "config.precast_structure.blueprint.max_dimension.tooltip": "載入已儲存資料時對藍圖尺寸各軸施加的硬上限。",
   "config.precast_structure.printer.default_delay_ticks": "預設列印延遲",
   "config.precast_structure.printer.default_delay_ticks.tooltip": "備用列印時長，以刻為單位。世界仍使用遊戲規則 precastStructurePrinterDelay。",
+  "config.precast_structure.printer.sound_interval": "列印音效間隔",
+  "config.precast_structure.printer.sound_interval.tooltip": "列印循環音效的播放間隔，以刻為單位。",
   "config.precast_structure.hologram.solid_collision": "全息固體碰撞",
   "config.precast_structure.hologram.solid_collision.tooltip": "啟用後，掃描與部署全息投影使用不可見的固體碰撞箱，玩家與實體無法穿過。"
 }

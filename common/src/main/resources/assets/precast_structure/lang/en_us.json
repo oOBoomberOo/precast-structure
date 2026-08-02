@@ -20,6 +20,7 @@
   "message.precast_structure.scan_complete": "Blueprint created with %s saved blocks.",
   "subtitles.precast_structure.scanning": "Scanner hums",
   "subtitles.precast_structure.scan_complete": "Scan complete",
+  "subtitles.precast_structure.printing": "Printer whirrs",
   "message.precast_structure.printer_needs_blueprint": "Insert a Blueprint into the Structure Printer.",
   "message.precast_structure.invalid_blueprint": "That blueprint could not be read.",
   "message.precast_structure.missing_materials": "You do not have the required building materials.",
@@ -78,6 +79,8 @@
 
   "config.precast_structure.printer.default_delay_ticks": "Default print delay",
   "config.precast_structure.printer.default_delay_ticks.tooltip": "Fallback print duration in ticks. Worlds still use the precastStructurePrinterDelay gamerule.",
+  "config.precast_structure.printer.sound_interval": "Print sound interval",
+  "config.precast_structure.printer.sound_interval.tooltip": "How often the printing loop sound plays, in ticks.",
 
   "config.precast_structure.hologram.solid_collision": "Solid hologram collision",
   "config.precast_structure.hologram.solid_collision.tooltip": "When enabled, scan and deploy holograms use invisible solid hitboxes so players and entities cannot walk through them."

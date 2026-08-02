@@ -20,6 +20,7 @@
   "message.precast_structure.scan_complete": "Đã tạo bản thiết kế với %s khối đã lưu.",
   "subtitles.precast_structure.scanning": "Máy quét vo ve",
   "subtitles.precast_structure.scan_complete": "Quét xong",
+  "subtitles.precast_structure.printing": "Máy in vo ve",
   "message.precast_structure.printer_needs_blueprint": "Đặt bản thiết kế vào máy in kết cấu.",
   "message.precast_structure.invalid_blueprint": "Không thể đọc bản thiết kế đó.",
   "message.precast_structure.missing_materials": "Bạn không có đủ vật liệu xây dựng cần thiết.",
@@ -72,6 +73,8 @@
   "config.precast_structure.blueprint.max_dimension.tooltip": "Giới hạn cứng áp dụng cho các trục kích thước bản thiết kế khi tải dữ liệu đã lưu.",
   "config.precast_structure.printer.default_delay_ticks": "Độ trễ in mặc định",
   "config.precast_structure.printer.default_delay_ticks.tooltip": "Thời lượng in dự phòng tính bằng tick. Thế giới vẫn dùng gamerule precastStructurePrinterDelay.",
+  "config.precast_structure.printer.sound_interval": "Khoảng cách âm thanh in",
+  "config.precast_structure.printer.sound_interval.tooltip": "Tần suất phát âm thanh vòng in, tính bằng tick.",
   "config.precast_structure.hologram.solid_collision": "Va chạm đặc của hologram",
   "config.precast_structure.hologram.solid_collision.tooltip": "Khi bật, hologram quét và triển khai dùng hitbox đặc vô hình để người chơi và thực thể không thể đi xuyên qua."
 }
