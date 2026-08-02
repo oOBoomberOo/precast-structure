@@ -14,7 +14,7 @@
   "message.precast_structure.invalid_fence": "วางรั้วขอบเขตหรือประตูรั้วสูงขึ้นหนึ่งบล็อกเหนือขอบแพลตฟอร์ม (ยกเว้นมุมที่มีนั่งร้าน)",
   "message.precast_structure.invalid_height": "วางเสานั่งร้านโลหะที่มุมแพลตฟอร์มเพียงมุมเดียวเพื่อกำหนดความสูงของโครงสร้าง",
   "message.precast_structure.empty_scan": "ปริมาตรที่ล้อมกรอบว่างเปล่า",
-  "message.precast_structure.needs_empty_blueprint": "ถือพิมพ์เขียวว่างอย่างน้อยหนึ่งแผ่นเพื่อสแกน",
+  "message.precast_structure.needs_empty_blueprint": "ต้องมีพิมพ์เขียวว่างอย่างน้อยหนึ่งแผ่นในช่องเก็บของเพื่อสแกน",
   "message.precast_structure.scan_started": "กำลังสแกนโครงสร้าง...",
   "message.precast_structure.scan_in_progress": "เครื่องสแกนนี้กำลังสแกนอยู่แล้ว",
   "message.precast_structure.scan_complete": "สร้างพิมพ์เขียวแล้ว บันทึก %s บล็อก",

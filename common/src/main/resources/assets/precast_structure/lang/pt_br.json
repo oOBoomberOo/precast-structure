@@ -14,7 +14,7 @@
   "message.precast_structure.invalid_fence": "Coloque blocos de cerca ou portão perimetral um bloco acima da borda da plataforma (exceto o canto do andaime).",
   "message.precast_structure.invalid_height": "Coloque um pilar de andaime metálico em exatamente um canto da plataforma para definir a altura da estrutura.",
   "message.precast_structure.empty_scan": "O volume delimitado está vazio.",
-  "message.precast_structure.needs_empty_blueprint": "Segure pelo menos uma planta vazia para escanear.",
+  "message.precast_structure.needs_empty_blueprint": "É preciso ter pelo menos uma planta vazia no inventário para escanear.",
   "message.precast_structure.scan_complete": "Planta criada com %s blocos salvos.",
   "message.precast_structure.printer_needs_blueprint": "Insira uma planta na impressora de estruturas.",
   "message.precast_structure.invalid_blueprint": "Essa planta não pôde ser lida.",

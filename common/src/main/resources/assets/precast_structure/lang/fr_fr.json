@@ -14,7 +14,7 @@
   "message.precast_structure.invalid_fence": "Placez des blocs de barrière ou de portillon périmétrique un bloc au-dessus du bord de la plateforme (sauf le coin de l'échafaudage).",
   "message.precast_structure.invalid_height": "Placez un pilier d'échafaudage métallique sur exactement un coin de la plateforme pour définir la hauteur de la structure.",
   "message.precast_structure.empty_scan": "Le volume encadré est vide.",
-  "message.precast_structure.needs_empty_blueprint": "Tenez au moins un plan vide pour scanner.",
+  "message.precast_structure.needs_empty_blueprint": "Il vous faut au moins un plan vide dans l'inventaire pour scanner.",
   "message.precast_structure.scan_complete": "Plan créé avec %s blocs enregistrés.",
   "message.precast_structure.printer_needs_blueprint": "Insérez un plan dans l'imprimante de structure.",
   "message.precast_structure.invalid_blueprint": "Ce plan n'a pas pu être lu.",

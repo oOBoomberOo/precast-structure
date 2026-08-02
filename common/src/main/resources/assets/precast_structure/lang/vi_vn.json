@@ -14,7 +14,7 @@
   "message.precast_structure.invalid_fence": "Đặt khối hàng rào hoặc cổng chu vi cao hơn mép nền tảng một khối (trừ góc có giàn giáo).",
   "message.precast_structure.invalid_height": "Đặt một cột giàn giáo kim loại đúng một góc nền tảng để đặt chiều cao kết cấu.",
   "message.precast_structure.empty_scan": "Thể tích được khung bao quanh đang trống.",
-  "message.precast_structure.needs_empty_blueprint": "Cầm ít nhất một bản thiết kế trống để quét.",
+  "message.precast_structure.needs_empty_blueprint": "Cần có ít nhất một bản thiết kế trống trong hành trang để quét.",
   "message.precast_structure.scan_complete": "Đã tạo bản thiết kế với %s khối đã lưu.",
   "message.precast_structure.printer_needs_blueprint": "Đặt bản thiết kế vào máy in kết cấu.",
   "message.precast_structure.invalid_blueprint": "Không thể đọc bản thiết kế đó.",
