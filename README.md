@@ -46,7 +46,7 @@ Open the Cloth Config screen from Mod Menu (Fabric) or the mods list (NeoForge) 
 ./gradlew :fabric:remapJar :forge:remapJar
 ```
 
-Jars land under `fabric/build/libs` and `forge/build/libs`. GitHub Releases for Fabric and NeoForge jars are produced from semver tags (or manual workflow dispatch) via `.github/workflows/release.yml`.
+Jars land under `fabric/build/libs` and `forge/build/libs`. GitHub Releases and [Modrinth](https://modrinth.com/project/precast-structure) uploads for Fabric and NeoForge jars are produced from semver tags (or manual workflow dispatch) via `.github/workflows/release.yml`. Set repository secret `MODRINTH_TOKEN` (Modrinth personal access token with `VERSION_CREATE`) before the first release.
 
 ## License
 

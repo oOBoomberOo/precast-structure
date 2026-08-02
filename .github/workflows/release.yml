@@ -125,3 +125,38 @@ jobs:
             release/precast-structure-*-neoforge.jar
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Fetch GitHub release notes
+        id: notes
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release view "${{ steps.version.outputs.tag }}" --json body -q .body > release-notes.md
+          # mc-publish rejects an empty changelog
+          if [[ ! -s release-notes.md ]]; then
+            echo "Pre-cast Structure ${{ steps.version.outputs.version }}" > release-notes.md
+          fi
+
+      - name: Publish to Modrinth
+        uses: Kir-Antipov/mc-publish@v3.3
+        with:
+          modrinth-id: precast-structure
+          modrinth-token: ${{ secrets.MODRINTH_TOKEN }}
+          name: Pre-cast Structure ${{ steps.version.outputs.version }}
+          version: ${{ steps.version.outputs.version }}
+          version-type: ${{ steps.version.outputs.prerelease == 'true' && 'beta' || 'release' }}
+          changelog-file: release-notes.md
+          files: |
+            release/precast-structure-*-fabric.jar
+            release/precast-structure-*-neoforge.jar
+          loaders: |
+            fabric
+            neoforge
+          game-versions: ${{ steps.version.outputs.minecraft_version }}
+          java: "21"
+          dependencies: |
+            architectury-api(required){modrinth:architectury-api}
+            cloth-config(required){modrinth:cloth-config}
+            fabric-api(optional){modrinth:fabric-api}
+            create(optional){modrinth:create}
+            sable(optional){modrinth:sable}
