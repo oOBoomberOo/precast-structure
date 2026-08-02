@@ -73,8 +73,6 @@
   "config.precast_structure.blueprint.max_dimension.tooltip": "Limite rigido applicato agli assi di dimensione del progetto quando si caricano i dati salvati.",
   "config.precast_structure.printer.default_delay_ticks": "Ritardo di stampa predefinito",
   "config.precast_structure.printer.default_delay_ticks.tooltip": "Durata di stampa di riserva in tick. I mondi usano ancora la gamerule precastStructurePrinterDelay.",
-  "config.precast_structure.printer.sound_interval": "Intervallo del suono di stampa",
-  "config.precast_structure.printer.sound_interval.tooltip": "Frequenza di riproduzione del suono di loop di stampa, in tick.",
   "config.precast_structure.hologram.solid_collision": "Collisione solida dell'ologramma",
   "config.precast_structure.hologram.solid_collision.tooltip": "Se abilitato, gli ologrammi di scansione e dispiegamento usano hitbox solide invisibili così giocatori ed entità non possono attraversarli."
 }

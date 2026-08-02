@@ -73,8 +73,6 @@
   "config.precast_structure.blueprint.max_dimension.tooltip": "加载已保存数据时对蓝图尺寸各轴施加的硬上限。",
   "config.precast_structure.printer.default_delay_ticks": "默认打印延迟",
   "config.precast_structure.printer.default_delay_ticks.tooltip": "备用打印时长，以刻为单位。世界仍使用游戏规则 precastStructurePrinterDelay。",
-  "config.precast_structure.printer.sound_interval": "打印音效间隔",
-  "config.precast_structure.printer.sound_interval.tooltip": "打印循环音效的播放间隔，以刻为单位。",
   "config.precast_structure.hologram.solid_collision": "全息固体碰撞",
   "config.precast_structure.hologram.solid_collision.tooltip": "启用后，扫描与部署全息投影使用不可见的固体碰撞箱，玩家与实体无法穿过。"
 }

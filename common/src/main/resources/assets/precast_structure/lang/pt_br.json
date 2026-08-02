@@ -73,8 +73,6 @@
   "config.precast_structure.blueprint.max_dimension.tooltip": "Limite rígido aplicado aos eixos de tamanho da planta ao carregar dados salvos.",
   "config.precast_structure.printer.default_delay_ticks": "Atraso de impressão padrão",
   "config.precast_structure.printer.default_delay_ticks.tooltip": "Duração de impressão de fallback em ticks. Os mundos ainda usam a gamerule precastStructurePrinterDelay.",
-  "config.precast_structure.printer.sound_interval": "Intervalo do som de impressão",
-  "config.precast_structure.printer.sound_interval.tooltip": "Com que frequência o som de loop de impressão toca, em ticks.",
   "config.precast_structure.hologram.solid_collision": "Colisão sólida do holograma",
   "config.precast_structure.hologram.solid_collision.tooltip": "Quando ativado, hologramas de escaneamento e implantação usam hitboxes sólidas invisíveis para que jogadores e entidades não possam atravessá-los."
 }

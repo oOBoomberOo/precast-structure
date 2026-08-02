@@ -73,8 +73,6 @@
   "config.precast_structure.blueprint.max_dimension.tooltip": "저장된 데이터를 불러올 때 청사진 크기 축에 적용되는 상한.",
   "config.precast_structure.printer.default_delay_ticks": "기본 인쇄 지연",
   "config.precast_structure.printer.default_delay_ticks.tooltip": "대체 인쇄 시간(틱 단위). 월드에서는 계속 gamerule precastStructurePrinterDelay를 사용합니다.",
-  "config.precast_structure.printer.sound_interval": "인쇄 소리 간격",
-  "config.precast_structure.printer.sound_interval.tooltip": "인쇄 루프 소리가 재생되는 간격(틱 단위).",
   "config.precast_structure.hologram.solid_collision": "홀로그램 고체 충돌",
   "config.precast_structure.hologram.solid_collision.tooltip": "활성화하면 스캔 및 배치 홀로그램이 보이지 않는 고체 히트박스를 사용해 플레이어와 엔티티가 통과할 수 없습니다."
 }

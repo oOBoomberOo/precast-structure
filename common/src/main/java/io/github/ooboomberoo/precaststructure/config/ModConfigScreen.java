@@ -113,13 +113,6 @@ public final class ModConfigScreen {
             .setTooltip(Component.translatable("config.precast_structure.printer.default_delay_ticks.tooltip"))
             .setSaveConsumer(value -> ModConfig.get().printer.defaultDelayTicks = value)
             .build());
-        printer.addEntry(entries.startIntField(Component.translatable("config.precast_structure.printer.sound_interval"), config.printer.soundIntervalTicks)
-            .setDefaultValue(5)
-            .setMin(1)
-            .setMax(200)
-            .setTooltip(Component.translatable("config.precast_structure.printer.sound_interval.tooltip"))
-            .setSaveConsumer(value -> ModConfig.get().printer.soundIntervalTicks = value)
-            .build());
 
         ConfigCategory hologram = builder.getOrCreateCategory(Component.translatable("config.precast_structure.category.hologram"));
         hologram.addEntry(entries.startBooleanToggle(Component.translatable("config.precast_structure.hologram.solid_collision"), config.hologram.solidCollision)

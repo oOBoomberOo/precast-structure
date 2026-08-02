@@ -73,8 +73,6 @@
   "config.precast_structure.blueprint.max_dimension.tooltip": "Harte Obergrenze für Bauplan-Achsen beim Laden gespeicherter Daten.",
   "config.precast_structure.printer.default_delay_ticks": "Standard-Druckverzögerung",
   "config.precast_structure.printer.default_delay_ticks.tooltip": "Fallback-Druckdauer in Ticks. Welten nutzen weiterhin die Gamerule precastStructurePrinterDelay.",
-  "config.precast_structure.printer.sound_interval": "Druck-Soundintervall",
-  "config.precast_structure.printer.sound_interval.tooltip": "Wie oft der Druck-Loop-Sound abgespielt wird, in Ticks.",
   "config.precast_structure.hologram.solid_collision": "Solide Hologramm-Kollision",
   "config.precast_structure.hologram.solid_collision.tooltip": "Wenn aktiviert, nutzen Scan- und Platzierungs-Hologramme unsichtbare solide Hitboxen, sodass Spieler und Entitys nicht hindurchlaufen können."
 }

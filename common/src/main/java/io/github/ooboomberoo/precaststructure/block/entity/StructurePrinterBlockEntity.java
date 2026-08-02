@@ -43,6 +43,8 @@ public class StructurePrinterBlockEntity extends BaseContainerBlockEntity implem
     public static final int DATA_PROGRESS = 0;
     public static final int DATA_MAX_PROGRESS = 1;
     public static final int DATA_COUNT = 2;
+    /** How often the printing loop sound plays while work is in progress (ticks). */
+    private static final int SOUND_INTERVAL_TICKS = 8;
     private static final int[] INPUT_SLOTS = IntStream.range(BLUEPRINT_SLOT, OUTPUT_SLOT).toArray();
     private static final int[] OUTPUT_SLOTS = {OUTPUT_SLOT};
 
@@ -160,8 +162,8 @@ public class StructurePrinterBlockEntity extends BaseContainerBlockEntity implem
         if (level == null || level.isClientSide()) {
             return;
         }
-        if (level.getGameTime() % ModConfig.get().printer.soundIntervalTicks == 0) {
-            level.playSound(null, worldPosition, ModSounds.PRINTING.get(), SoundSource.BLOCKS, 0.65F, 1.2F);
+        if (level.getGameTime() % SOUND_INTERVAL_TICKS == 0) {
+            level.playSound(null, worldPosition, ModSounds.PRINTING.get(), SoundSource.BLOCKS, 0.7F, 1.0F);
         }
     }
 

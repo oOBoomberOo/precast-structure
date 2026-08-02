@@ -73,8 +73,6 @@
   "config.precast_structure.blueprint.max_dimension.tooltip": "保存データの読み込み時に設計図サイズの各軸へ適用される上限。",
   "config.precast_structure.printer.default_delay_ticks": "既定の印刷遅延",
   "config.precast_structure.printer.default_delay_ticks.tooltip": "フォールバックの印刷時間（ティック単位）。ワールドでは引き続き gamerule precastStructurePrinterDelay が使われます。",
-  "config.precast_structure.printer.sound_interval": "印刷音の間隔",
-  "config.precast_structure.printer.sound_interval.tooltip": "印刷ループ音の再生間隔（ティック単位）。",
   "config.precast_structure.hologram.solid_collision": "ホログラムの固体衝突",
   "config.precast_structure.hologram.solid_collision.tooltip": "有効にすると、スキャンおよび展開ホログラムは見えない固体ヒットボックスを使い、プレイヤーやエンティティが通り抜けられなくなります。"
 }

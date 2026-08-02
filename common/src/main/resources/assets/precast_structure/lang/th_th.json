@@ -73,8 +73,6 @@
   "config.precast_structure.blueprint.max_dimension.tooltip": "เพดานแข็งที่ใช้กับแกนขนาดพิมพ์เขียวเมื่อโหลดข้อมูลที่บันทึกไว้",
   "config.precast_structure.printer.default_delay_ticks": "หน่วงการพิมพ์เริ่มต้น",
   "config.precast_structure.printer.default_delay_ticks.tooltip": "ระยะเวลาพิมพ์สำรองเป็นติ๊ก โลกยังใช้ gamerule precastStructurePrinterDelay",
-  "config.precast_structure.printer.sound_interval": "ช่วงเสียงพิมพ์",
-  "config.precast_structure.printer.sound_interval.tooltip": "ความถี่ที่เสียงวนพิมพ์เล่น เป็นติ๊ก",
   "config.precast_structure.hologram.solid_collision": "การชนทึบของโฮโลแกรม",
   "config.precast_structure.hologram.solid_collision.tooltip": "เมื่อเปิดใช้ โฮโลแกรมสแกนและกางจะใช้ฮิตบ็อกซ์ทึบที่มองไม่เห็น ทำให้ผู้เล่นและเอนทิตีเดินทะลุไม่ได้"
 }

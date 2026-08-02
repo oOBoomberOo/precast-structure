@@ -73,8 +73,6 @@
   "config.precast_structure.blueprint.max_dimension.tooltip": "Limite stricte appliquée aux axes de taille du plan lors du chargement des données enregistrées.",
   "config.precast_structure.printer.default_delay_ticks": "Délai d'impression par défaut",
   "config.precast_structure.printer.default_delay_ticks.tooltip": "Durée d'impression de secours en ticks. Les mondes utilisent toujours la gamerule precastStructurePrinterDelay.",
-  "config.precast_structure.printer.sound_interval": "Intervalle du son d'impression",
-  "config.precast_structure.printer.sound_interval.tooltip": "Fréquence de lecture du son de boucle d'impression, en ticks.",
   "config.precast_structure.hologram.solid_collision": "Collision solide de l'hologramme",
   "config.precast_structure.hologram.solid_collision.tooltip": "Lorsque c'est activé, les hologrammes de scan et de déploiement utilisent des hitboxes solides invisibles afin que les joueurs et entités ne puissent pas les traverser."
 }

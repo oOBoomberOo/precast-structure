@@ -75,8 +75,6 @@ public final class ModConfig {
          * Live worlds still use the {@code precastStructurePrinterDelay} gamerule.
          */
         public int defaultDelayTicks = 100;
-        /** How often the printing loop sound plays (ticks). */
-        public int soundIntervalTicks = 5;
     }
 
     public static final class Hologram {
@@ -163,6 +161,5 @@ public final class ModConfig {
 
         blueprint.maxDimension = Mth.clamp(blueprint.maxDimension, 1, 512);
         printer.defaultDelayTicks = Mth.clamp(printer.defaultDelayTicks, 1, 20_000);
-        printer.soundIntervalTicks = Mth.clamp(printer.soundIntervalTicks, 1, 200);
     }
 }
