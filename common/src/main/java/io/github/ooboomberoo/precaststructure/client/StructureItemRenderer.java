@@ -15,6 +15,10 @@ import net.minecraft.world.item.ItemDisplayContext;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.Blocks;
 
+/**
+ * Precast structure item preview as a solid mesh (hand / inventory / GUI).
+ * World overlays keep hologram styling via {@link HologramRenderSystem} separately.
+ */
 public final class StructureItemRenderer {
     /** Matches vanilla block item GUI scale for a 1×1×1 cube. */
     private static final float GUI_FIT = 0.625F;
@@ -37,23 +41,13 @@ public final class StructureItemRenderer {
 
         StructureBlueprint blueprint = optional.get();
         ContentBox box = ContentBox.of(blueprint);
-        int renderLight = resolveLight(displayContext, light);
 
         poseStack.pushPose();
         applyDisplayTransform(poseStack, displayContext, box);
-
         for (StructureBlockInfo block : blueprint.blocks()) {
             poseStack.pushPose();
             poseStack.translate(block.offset().getX(), block.offset().getY(), block.offset().getZ());
-            io.github.ooboomberoo.precaststructure.compat.CreateCompatClient.renderSingleBlock(
-                dispatcher,
-                block.state(),
-                poseStack,
-                bufferSource,
-                renderLight,
-                overlay,
-                block.nbt()
-            );
+            HologramRenderSystem.renderSolid(poseStack, bufferSource, dispatcher, block.state(), block.nbt(), null);
             poseStack.popPose();
         }
         poseStack.popPose();
@@ -110,17 +104,6 @@ public final class StructureItemRenderer {
         poseStack.mulPose(Axis.XP.rotationDegrees(20.0F));
         poseStack.scale(scale, scale, scale);
         poseStack.translate(-box.centerX(), -box.minY(), -box.centerZ());
-    }
-
-    private static int resolveLight(ItemDisplayContext context, int light) {
-        // Hand/GUI need readable textures; face shading still provides depth.
-        if (context == ItemDisplayContext.GUI
-            || context == ItemDisplayContext.FIXED
-            || context.firstPerson()
-            || context == ItemDisplayContext.GROUND) {
-            return LightTexture.FULL_BRIGHT;
-        }
-        return Math.max(light, LightTexture.pack(10, 10));
     }
 
     private record ContentBox(int minX, int minY, int minZ, int maxX, int maxY, int maxZ) {

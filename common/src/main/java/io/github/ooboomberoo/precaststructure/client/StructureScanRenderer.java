@@ -6,18 +6,16 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import io.github.ooboomberoo.precaststructure.block.StructureScannerBlock;
 import io.github.ooboomberoo.precaststructure.block.entity.StructureScannerBlockEntity;
-import io.github.ooboomberoo.precaststructure.client.StructureHologramRenderer.Part;
-import io.github.ooboomberoo.precaststructure.compat.SableCompatClient;
+import io.github.ooboomberoo.precaststructure.client.HologramRenderSystem.Frame;
+import io.github.ooboomberoo.precaststructure.client.HologramRenderSystem.Part;
 import io.github.ooboomberoo.precaststructure.structure.StructureBlueprint;
 import io.github.ooboomberoo.precaststructure.structure.StructureBlockInfo;
 import io.github.ooboomberoo.precaststructure.structure.StructurePlacement;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.LevelRenderer;
-import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.block.BlockRenderDispatcher;
-import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.util.Mth;
@@ -41,7 +39,7 @@ public final class StructureScanRenderer {
     private static final float LINE_GREEN = 0.95F;
     private static final float LINE_BLUE = 1.0F;
     private static final float PLANE_THICKNESS = 0.04F;
-    private static final float CLIP_EPSILON = StructureHologramRenderer.CLIP_EPSILON;
+    private static final float CLIP_EPSILON = HologramRenderSystem.CLIP_EPSILON;
 
     private StructureScanRenderer() {
     }
@@ -72,17 +70,16 @@ public final class StructureScanRenderer {
             RenderSystem.depthMask(true);
 
             for (StructureScannerBlockEntity scanner : scanners) {
-                Vec3 plotOrigin = SableCompatClient.plotOrigin(scanner, partialTick);
-                poseStack.pushPose();
-                SableCompatClient.applyCameraAndSubLevelTransform(poseStack, scanner, cameraPosition, partialTick);
-                renderSolids(poseStack, bufferSource, dispatcher, level, scanner, partialTick, plotOrigin);
-                poseStack.popPose();
+                Frame frame = HologramRenderSystem.pushWorldFrame(
+                    poseStack, cameraPosition, partialTick, scanner.getBlockPos()
+                );
+                try {
+                    renderSolids(poseStack, bufferSource, dispatcher, level, scanner, partialTick, frame);
+                } finally {
+                    poseStack.popPose();
+                }
             }
             bufferSource.endBatch();
-
-            if (!ModShaders.useCustomHologramShader()) {
-                RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 0.9F);
-            }
 
             for (StructureScannerBlockEntity scanner : scanners) {
                 List<Part> hologramParts = new ArrayList<>();
@@ -90,46 +87,29 @@ public final class StructureScanRenderer {
                 if (hologramParts.isEmpty()) {
                     continue;
                 }
-                Vec3 plotOrigin = SableCompatClient.plotOrigin(scanner, partialTick);
-                poseStack.pushPose();
-                SableCompatClient.applyCameraAndSubLevelTransform(poseStack, scanner, cameraPosition, partialTick);
-                if (ModRenderTypes.useHologramDepthPrepass()) {
-                    RenderSystem.depthMask(true);
-                    RenderSystem.colorMask(false, false, false, false);
-                    StructureHologramRenderer.renderPassLocal(
-                        poseStack, cameraPosition, bufferSource, dispatcher, hologramParts, true, plotOrigin
+                Frame frame = HologramRenderSystem.pushWorldFrame(
+                    poseStack, cameraPosition, partialTick, scanner.getBlockPos()
+                );
+                try {
+                    HologramRenderSystem.renderFramed(
+                        poseStack, cameraPosition, bufferSource, dispatcher, frame, hologramParts, 1.0F, 1.0F, 1.0F
                     );
-                    bufferSource.endBatch();
-
-                    RenderSystem.colorMask(true, true, true, true);
-                    RenderSystem.depthMask(false);
-                    StructureHologramRenderer.renderPassLocal(
-                        poseStack, cameraPosition, bufferSource, dispatcher, hologramParts, false, plotOrigin
-                    );
-                    bufferSource.endBatch();
-                } else {
-                    RenderSystem.colorMask(true, true, true, true);
-                    RenderSystem.depthMask(true);
-                    StructureHologramRenderer.renderPassLocal(
-                        poseStack, cameraPosition, bufferSource, dispatcher, hologramParts, false, plotOrigin
-                    );
-                    bufferSource.endBatch();
+                } finally {
+                    poseStack.popPose();
                 }
-                poseStack.popPose();
             }
-
-            RenderSystem.depthMask(true);
-            RenderSystem.colorMask(true, true, true, true);
-            RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
 
             // Scan plane / bounds must read through ship meshes; depth would hide them inside wool.
             RenderSystem.disableDepthTest();
             for (StructureScannerBlockEntity scanner : scanners) {
-                Vec3 plotOrigin = SableCompatClient.plotOrigin(scanner, partialTick);
-                poseStack.pushPose();
-                SableCompatClient.applyCameraAndSubLevelTransform(poseStack, scanner, cameraPosition, partialTick);
-                renderScanOverlay(poseStack, bufferSource, scanner, partialTick, plotOrigin);
-                poseStack.popPose();
+                Frame frame = HologramRenderSystem.pushWorldFrame(
+                    poseStack, cameraPosition, partialTick, scanner.getBlockPos()
+                );
+                try {
+                    renderScanOverlay(poseStack, bufferSource, scanner, partialTick, frame);
+                } finally {
+                    poseStack.popPose();
+                }
             }
             bufferSource.endBatch();
             RenderSystem.enableDepthTest();
@@ -143,7 +123,7 @@ public final class StructureScanRenderer {
         Level level,
         StructureScannerBlockEntity scanner,
         float partialTick,
-        Vec3 plotOrigin
+        Frame frame
     ) {
         StructureBlueprint ghosts = scanner.getGhostBlueprint();
         if (ghosts == null || ghosts.blocks().isEmpty()) {
@@ -154,6 +134,7 @@ public final class StructureScanRenderer {
         BlockPos origin = scanner.getScanOrigin();
         BlockPos scanSize = scanner.getScanSize();
         Direction scannerFacing = scanner.getBlockState().getValue(StructureScannerBlock.FACING);
+        Vec3 plotOrigin = frame.plotOrigin();
 
         for (StructureBlockInfo block : ghosts.blocks()) {
             BlockPos worldPos = StructurePlacement.localToScanWorld(origin, scanSize, scannerFacing, block.offset());
@@ -173,14 +154,12 @@ public final class StructureScanRenderer {
                 worldPos.getZ() - plotOrigin.z
             );
             Float localClipY = fullyBelow ? null : scanY - worldPos.getY();
-            renderSolidMesh(
+            HologramRenderSystem.renderSolid(
                 poseStack,
                 bufferSource,
                 dispatcher,
                 state,
                 scanNbt(block, scannerFacing, level),
-                worldPos,
-                level,
                 localClipY
             );
             poseStack.popPose();
@@ -231,7 +210,7 @@ public final class StructureScanRenderer {
         MultiBufferSource.BufferSource bufferSource,
         StructureScannerBlockEntity scanner,
         float partialTick,
-        Vec3 plotOrigin
+        Frame frame
     ) {
         float scanY = scanner.getScanLineY(partialTick);
         VertexConsumer lines = bufferSource.getBuffer(RenderType.lines());
@@ -242,37 +221,7 @@ public final class StructureScanRenderer {
             scanner.getScanSize(),
             scanY,
             scanner.getScanProgress(partialTick),
-            plotOrigin
-        );
-    }
-
-    private static void renderSolidMesh(
-        PoseStack poseStack,
-        MultiBufferSource.BufferSource bufferSource,
-        BlockRenderDispatcher dispatcher,
-        BlockState state,
-        @Nullable net.minecraft.nbt.CompoundTag nbt,
-        BlockPos worldPos,
-        Level level,
-        @Nullable Float localClipY
-    ) {
-        // Plot-storage light on Sable ships is often zero; ghosts must stay readable.
-        int light = LightTexture.FULL_BRIGHT;
-        MultiBufferSource source;
-        if (localClipY == null) {
-            source = bufferSource;
-        } else {
-            float clipY = localClipY;
-            source = renderType -> new StructureHologramRenderer.PlaneClipVertexConsumer(bufferSource.getBuffer(renderType), clipY, true);
-        }
-        io.github.ooboomberoo.precaststructure.compat.CreateCompatClient.renderSingleBlock(
-            dispatcher,
-            state,
-            poseStack,
-            source,
-            light,
-            OverlayTexture.NO_OVERLAY,
-            nbt
+            frame.plotOrigin()
         );
     }
 

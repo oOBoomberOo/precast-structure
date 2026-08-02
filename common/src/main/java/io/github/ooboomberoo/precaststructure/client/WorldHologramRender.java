@@ -5,6 +5,7 @@ import net.minecraft.world.phys.Vec3;
 
 /**
  * Shared entry point for world-space hologram overlays (scan / deploy / placement ghost).
+ * All paths draw through {@link HologramRenderSystem}.
  */
 public final class WorldHologramRender {
     private WorldHologramRender() {
@@ -16,6 +17,6 @@ public final class WorldHologramRender {
         }
         StructureScanRenderer.render(poseStack, cameraPosition, partialTick);
         StructureDeployRenderer.render(poseStack, cameraPosition, partialTick);
-        StructureGhostRenderer.render(poseStack, cameraPosition);
+        StructureGhostRenderer.render(poseStack, cameraPosition, partialTick);
     }
 }
