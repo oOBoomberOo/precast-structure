@@ -1,5 +1,6 @@
 package io.github.ooboomberoo.precaststructure.structure;
 
+import io.github.ooboomberoo.precaststructure.compat.CreateCompat;
 import io.github.ooboomberoo.precaststructure.config.ModConfig;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -58,7 +59,8 @@ public record StructureBlueprint(BlockPos size, List<StructureBlockInfo> blocks)
             CompoundTag blockTag = (CompoundTag) entry;
             BlockPos offset = new BlockPos(blockTag.getInt("x"), blockTag.getInt("y"), blockTag.getInt("z"));
             BlockState state = net.minecraft.nbt.NbtUtils.readBlockState(blockLookup, blockTag.getCompound("state"));
-            blocks.add(new StructureBlockInfo(offset, state));
+            CompoundTag nbt = blockTag.contains("nbt", Tag.TAG_COMPOUND) ? blockTag.getCompound("nbt") : null;
+            blocks.add(new StructureBlockInfo(offset, state, nbt));
         }
         return Optional.of(new StructureBlueprint(size, List.copyOf(blocks)));
     }
@@ -68,21 +70,34 @@ public record StructureBlueprint(BlockPos size, List<StructureBlockInfo> blocks)
     }
 
     public Map<Item, Integer> requiredItems() {
+        return requiredItems(RegistryAccess.fromRegistryOfRegistries(BuiltInRegistries.REGISTRY));
+    }
+
+    public Map<Item, Integer> requiredItems(HolderLookup.Provider registries) {
         Map<Item, Integer> requirements = new LinkedHashMap<>();
         for (StructureBlockInfo block : blocks) {
-            Item item = block.state().getBlock().asItem();
-            if (item == net.minecraft.world.item.Items.AIR) {
-                continue;
+            if (!CreateCompat.tryMergeRequirements(block.state(), requirements)) {
+                Item item = block.state().getBlock().asItem();
+                if (item != net.minecraft.world.item.Items.AIR) {
+                    requirements.merge(item, 1, Integer::sum);
+                }
             }
-            requirements.merge(item, 1, Integer::sum);
+            Item bracket = CreateCompat.bracketItem(block.nbt(), registries);
+            if (bracket != null) {
+                requirements.merge(bracket, 1, Integer::sum);
+            }
         }
         return requirements;
     }
 
     /** One input slot per unique item; splits into multiple slots when amount exceeds max stack size. */
     public List<MaterialRequirement> materialSlotRequirements() {
+        return materialSlotRequirements(RegistryAccess.fromRegistryOfRegistries(BuiltInRegistries.REGISTRY));
+    }
+
+    public List<MaterialRequirement> materialSlotRequirements(HolderLookup.Provider registries) {
         List<MaterialRequirement> slots = new ArrayList<>();
-        for (Map.Entry<Item, Integer> entry : requiredItems().entrySet()) {
+        for (Map.Entry<Item, Integer> entry : requiredItems(registries).entrySet()) {
             Item item = entry.getKey();
             int remaining = entry.getValue();
             int maxStack = Math.max(1, item.getDefaultMaxStackSize());

@@ -65,7 +65,15 @@ public final class StructureGhostRenderer {
         for (StructureBlockInfo block : blueprint.blocks()) {
             BlockPos blockPos = origin.offset(StructurePlacement.transformOffset(block.offset(), blueprint, facing));
             BlockState state = StructurePlacement.transformState(block.state(), facing);
-            parts.add(Part.of(blockPos, state));
+            parts.add(Part.of(
+                blockPos,
+                state,
+                io.github.ooboomberoo.precaststructure.compat.CreateCompat.transformNbt(
+                    block.nbt(),
+                    StructurePlacement.rotationFor(facing),
+                    level.registryAccess()
+                )
+            ));
         }
 
         boolean overlapsDeploy = StructureDeploymentManager.overlapsActiveDeploy(

@@ -41,3 +41,17 @@ type="required"
 versionRange="[15,)"
 ordering="NONE"
 side="CLIENT"
+
+[[dependencies.precast_structure]]
+modId="create"
+type="optional"
+versionRange="[6.0.0,)"
+ordering="NONE"
+side="BOTH"
+
+[[dependencies.precast_structure]]
+modId="sable"
+type="optional"
+versionRange="[2.0.0,)"
+ordering="NONE"
+side="BOTH"

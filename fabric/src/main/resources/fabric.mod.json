@@ -30,7 +30,9 @@
     "cloth-config": ">=15"
   },
   "suggests": {
-    "modmenu": "*"
+    "modmenu": "*",
+    "create": "*",
+    "sable": "*"
   },
   "accessWidener": "precast_structure.accesswidener"
 }

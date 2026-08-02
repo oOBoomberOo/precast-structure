@@ -45,7 +45,15 @@ public final class StructureItemRenderer {
         for (StructureBlockInfo block : blueprint.blocks()) {
             poseStack.pushPose();
             poseStack.translate(block.offset().getX(), block.offset().getY(), block.offset().getZ());
-            dispatcher.renderSingleBlock(block.state(), poseStack, bufferSource, renderLight, overlay);
+            io.github.ooboomberoo.precaststructure.compat.CreateCompatClient.renderSingleBlock(
+                dispatcher,
+                block.state(),
+                poseStack,
+                bufferSource,
+                renderLight,
+                overlay,
+                block.nbt()
+            );
             poseStack.popPose();
         }
         poseStack.popPose();

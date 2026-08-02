@@ -1,12 +1,15 @@
 package io.github.ooboomberoo.precaststructure.structure;
 
+import io.github.ooboomberoo.precaststructure.compat.CreateCompat;
 import io.github.ooboomberoo.precaststructure.registry.ModBlockTags;
 import java.util.ArrayList;
 import java.util.List;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Rotation;
+import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 
 public final class BlueprintCapture {
@@ -39,7 +42,16 @@ public final class BlueprintCapture {
                     BlockPos localRaw = StructurePlacement.rotateOffset(new BlockPos(x, y, z), toLocal);
                     BlockPos localOffset = localRaw.subtract(minCorner);
                     BlockState localState = StructurePlacement.rotateState(state, toLocal);
-                    blocks.add(new StructureBlockInfo(localOffset, localState));
+                    CompoundTag nbt = null;
+                    BlockEntity blockEntity = level.getBlockEntity(worldPos);
+                    if (blockEntity != null) {
+                        nbt = CreateCompat.transformNbt(
+                            CreateCompat.captureBlockEntityNbt(level, blockEntity),
+                            toLocal,
+                            level.registryAccess()
+                        );
+                    }
+                    blocks.add(new StructureBlockInfo(localOffset, localState, nbt));
                 }
             }
         }
