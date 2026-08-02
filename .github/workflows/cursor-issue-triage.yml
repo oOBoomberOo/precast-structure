@@ -1,0 +1,43 @@
+name: Cursor issue triage
+
+on:
+  issues:
+    types: [opened]
+
+permissions:
+  contents: read
+
+jobs:
+  notify-cursor:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Forward issue to Cursor Automation
+        env:
+          WEBHOOK_URL: ${{ secrets.CURSOR_WEBHOOK_URL }}
+          WEBHOOK_KEY: ${{ secrets.CURSOR_WEBHOOK_KEY }}
+        run: |
+          if [ -z "$WEBHOOK_URL" ] || [ -z "$WEBHOOK_KEY" ]; then
+            echo "CURSOR_WEBHOOK_URL or CURSOR_WEBHOOK_KEY not set; skipping."
+            exit 0
+          fi
+
+          # Allow either "crsr_..." or "Bearer crsr_..." from Generate auth header
+          AUTH_TOKEN="${WEBHOOK_KEY#Bearer }"
+
+          jq -c '{
+            event: "issues.opened",
+            repository: .repository.full_name,
+            issue: {
+              number: .issue.number,
+              title: .issue.title,
+              body: (.issue.body // ""),
+              html_url: .issue.html_url,
+              user: .issue.user.login,
+              labels: [.issue.labels[].name]
+            }
+          }' "$GITHUB_EVENT_PATH" > /tmp/cursor-payload.json
+
+          curl -sS -f -X POST "$WEBHOOK_URL" \
+            -H "Authorization: Bearer ${AUTH_TOKEN}" \
+            -H "Content-Type: application/json" \
+            --data-binary @/tmp/cursor-payload.json
