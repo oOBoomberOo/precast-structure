@@ -24,9 +24,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Soft Create compatibility: brackets in BE NBT, virtual kinetic ModelData,
- * kinetic BER extras (see CreateCompatClient), and Schematicannon-style material
- * costs (encased shaft/cog → root shaft/cog).
+ * Soft Create compatibility utilities: NBTProcessors capture/apply, bracket rotation in BE NBT,
+ * and Schematicannon-style {@code ItemRequirement} lookup used by {@link CreateSpecialHandler}.
+ *
+ * <p>Block-facing soft-compat (materials, sanitize, kinetic holograms) lives in
+ * {@link CreateSpecialHandler}, registered via {@link #registerSpecialHandlers()} when Create is loaded.
  */
 public final class CreateCompat {
     private static final Logger LOGGER = LoggerFactory.getLogger(CreateCompat.class);
@@ -150,8 +152,28 @@ public final class CreateCompat {
         return item == Items.AIR ? null : item;
     }
 
+    private static volatile boolean specialHandlersRegistered;
+
+    /**
+     * Register Create soft-compat as a {@link io.github.ooboomberoo.precaststructure.structure.special.SpecialBlockHandler}
+     * when Create is present. Call after built-in handlers are bootstrapped so beds/doors/chests stay first.
+     */
+    public static synchronized void registerSpecialHandlers() {
+        if (specialHandlersRegistered) {
+            return;
+        }
+        specialHandlersRegistered = true;
+        if (isLoaded()) {
+            io.github.ooboomberoo.precaststructure.structure.special.SpecialBlockHandlers.register(
+                new CreateSpecialHandler()
+            );
+        }
+    }
+
     /**
      * Uses Create's schematic material API when present (encased shaft → shaft, etc.).
+     * Intended for {@link CreateSpecialHandler} only — do not call from blueprint aggregation for
+     * arbitrary blocks (Create's {@code ItemRequirement.of} double-counts bed/door halves).
      *
      * @return true if Create supplied requirements (including "none"); false for the default asItem path
      */

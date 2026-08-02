@@ -1,7 +1,7 @@
 package io.github.ooboomberoo.precaststructure.structure;
 
-import io.github.ooboomberoo.precaststructure.compat.CreateCompat;
 import io.github.ooboomberoo.precaststructure.config.ModConfig;
+import io.github.ooboomberoo.precaststructure.structure.special.SpecialBlockHandlers;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -76,15 +76,13 @@ public record StructureBlueprint(BlockPos size, List<StructureBlockInfo> blocks)
     public Map<Item, Integer> requiredItems(HolderLookup.Provider registries) {
         Map<Item, Integer> requirements = new LinkedHashMap<>();
         for (StructureBlockInfo block : blocks) {
-            if (!CreateCompat.tryMergeRequirements(block.state(), requirements)) {
+            // Beds/doors/Create kinetics go through SpecialBlockHandlers (first match wins).
+            // Create must not short-circuit vanilla multi-block halves before Bed/DoubleBlock handlers.
+            if (!SpecialBlockHandlers.mergeRequirements(block.state(), block.nbt(), requirements, registries)) {
                 Item item = block.state().getBlock().asItem();
                 if (item != net.minecraft.world.item.Items.AIR) {
                     requirements.merge(item, 1, Integer::sum);
                 }
-            }
-            Item bracket = CreateCompat.bracketItem(block.nbt(), registries);
-            if (bracket != null) {
-                requirements.merge(bracket, 1, Integer::sum);
             }
         }
         return requirements;

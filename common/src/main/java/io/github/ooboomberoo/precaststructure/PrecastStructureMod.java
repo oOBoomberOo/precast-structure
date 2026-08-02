@@ -1,5 +1,6 @@
 package io.github.ooboomberoo.precaststructure;
 
+import io.github.ooboomberoo.precaststructure.compat.CreateCompat;
 import io.github.ooboomberoo.precaststructure.config.ModConfig;
 import io.github.ooboomberoo.precaststructure.network.ModNetworking;
 import io.github.ooboomberoo.precaststructure.registry.ModBlockEntityTypes;
@@ -11,6 +12,7 @@ import io.github.ooboomberoo.precaststructure.registry.ModMenuTypes;
 import io.github.ooboomberoo.precaststructure.registry.ModRecipeSerializers;
 import io.github.ooboomberoo.precaststructure.registry.ModSounds;
 import io.github.ooboomberoo.precaststructure.structure.StructureDeploymentManager;
+import io.github.ooboomberoo.precaststructure.structure.special.SpecialBlockHandlers;
 
 public final class PrecastStructureMod {
     public static final String MOD_ID = "precast_structure";
@@ -30,5 +32,7 @@ public final class PrecastStructureMod {
         ModRecipeSerializers.register();
         ModNetworking.register();
         StructureDeploymentManager.init();
+        SpecialBlockHandlers.bootstrap();
+        CreateCompat.registerSpecialHandlers();
     }
 }

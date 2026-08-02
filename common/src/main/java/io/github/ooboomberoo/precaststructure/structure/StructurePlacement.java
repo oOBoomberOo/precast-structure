@@ -2,6 +2,7 @@ package io.github.ooboomberoo.precaststructure.structure;
 
 import io.github.ooboomberoo.precaststructure.compat.CreateCompat;
 import io.github.ooboomberoo.precaststructure.registry.ModBlockTags;
+import io.github.ooboomberoo.precaststructure.structure.special.SpecialBlockHandlers;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
@@ -273,7 +274,10 @@ public final class StructurePlacement {
         Rotation rotation = rotationFor(facing);
         BlockState state = transformState(block.state(), facing);
         level.setBlock(targetPos, state, 3);
-        CompoundTag nbt = CreateCompat.transformNbt(block.nbt(), rotation, level.registryAccess());
+        CompoundTag nbt = SpecialBlockHandlers.sanitizePlacement(
+            state,
+            CreateCompat.transformNbt(block.nbt(), rotation, level.registryAccess())
+        );
         if (nbt != null) {
             BlockEntity blockEntity = level.getBlockEntity(targetPos);
             if (blockEntity != null) {

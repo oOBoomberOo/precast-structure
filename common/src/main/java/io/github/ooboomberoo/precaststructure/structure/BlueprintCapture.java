@@ -2,6 +2,7 @@ package io.github.ooboomberoo.precaststructure.structure;
 
 import io.github.ooboomberoo.precaststructure.compat.CreateCompat;
 import io.github.ooboomberoo.precaststructure.registry.ModBlockTags;
+import io.github.ooboomberoo.precaststructure.structure.special.SpecialBlockHandlers;
 import java.util.ArrayList;
 import java.util.List;
 import net.minecraft.core.BlockPos;
@@ -50,6 +51,8 @@ public final class BlueprintCapture {
                             toLocal,
                             level.registryAccess()
                         );
+                        // Strip inventories / loot so replicas never copy container contents.
+                        nbt = SpecialBlockHandlers.sanitizeCaptured(localState, nbt);
                     }
                     blocks.add(new StructureBlockInfo(localOffset, localState, nbt));
                 }
