@@ -20,6 +20,7 @@
   "message.precast_structure.scan_complete": "Blueprint created with %s saved blocks.",
   "subtitles.precast_structure.scanning": "Scanner hums",
   "subtitles.precast_structure.scan_complete": "Scan complete",
+  "subtitles.precast_structure.printing": "Printer whirrs",
   "message.precast_structure.printer_needs_blueprint": "Insert a Blueprint into the Structure Printer.",
   "message.precast_structure.invalid_blueprint": "That blueprint could not be read.",
   "message.precast_structure.missing_materials": "You do not have the required building materials.",

@@ -20,6 +20,7 @@
   "message.precast_structure.scan_complete": "청사진을 만들었습니다. 블록 %s개를 저장했습니다.",
   "subtitles.precast_structure.scanning": "스캐너가 윙윙거림",
   "subtitles.precast_structure.scan_complete": "스캔 완료",
+  "subtitles.precast_structure.printing": "프린터가 윙윙거림",
   "message.precast_structure.printer_needs_blueprint": "구조물 프린터에 청사진을 넣으세요.",
   "message.precast_structure.invalid_blueprint": "해당 청사진을 읽을 수 없습니다.",
   "message.precast_structure.missing_materials": "필요한 건축 재료가 부족합니다.",

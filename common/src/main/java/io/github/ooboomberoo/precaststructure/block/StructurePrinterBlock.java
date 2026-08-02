@@ -26,16 +26,19 @@ import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
+import net.minecraft.world.level.block.state.properties.BooleanProperty;
 import net.minecraft.world.level.block.state.properties.DirectionProperty;
 import net.minecraft.world.phys.BlockHitResult;
 
 public class StructurePrinterBlock extends BaseEntityBlock {
     public static final MapCodec<StructurePrinterBlock> CODEC = simpleCodec(StructurePrinterBlock::new);
     public static final DirectionProperty FACING = BlockStateProperties.HORIZONTAL_FACING;
+    /** True while the printer is allowed to run. Cleared when a redstone signal is present. */
+    public static final BooleanProperty ENABLED = BlockStateProperties.ENABLED;
 
     public StructurePrinterBlock(Properties properties) {
         super(properties);
-        this.registerDefaultState(this.stateDefinition.any().setValue(FACING, Direction.NORTH));
+        this.registerDefaultState(this.stateDefinition.any().setValue(FACING, Direction.NORTH).setValue(ENABLED, true));
     }
 
     @Override
@@ -45,12 +48,14 @@ public class StructurePrinterBlock extends BaseEntityBlock {
 
     @Override
     public BlockState getStateForPlacement(BlockPlaceContext context) {
-        return this.defaultBlockState().setValue(FACING, context.getHorizontalDirection().getOpposite());
+        return this.defaultBlockState()
+            .setValue(FACING, context.getHorizontalDirection().getOpposite())
+            .setValue(ENABLED, !context.getLevel().hasNeighborSignal(context.getClickedPos()));
     }
 
     @Override
     protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
-        builder.add(FACING);
+        builder.add(FACING, ENABLED);
     }
 
     @Override
@@ -61,6 +66,28 @@ public class StructurePrinterBlock extends BaseEntityBlock {
     @Override
     protected BlockState mirror(BlockState state, Mirror mirror) {
         return state.rotate(mirror.getRotation(state.getValue(FACING)));
+    }
+
+    @Override
+    protected void onPlace(BlockState state, Level level, BlockPos pos, BlockState oldState, boolean movedByPiston) {
+        super.onPlace(state, level, pos, oldState, movedByPiston);
+        if (!level.isClientSide()) {
+            checkPoweredState(level, pos, state);
+        }
+    }
+
+    @Override
+    protected void neighborChanged(BlockState state, Level level, BlockPos pos, Block neighborBlock, BlockPos neighborPos, boolean movedByPiston) {
+        if (!level.isClientSide()) {
+            checkPoweredState(level, pos, state);
+        }
+    }
+
+    private static void checkPoweredState(Level level, BlockPos pos, BlockState state) {
+        boolean shouldBeEnabled = !level.hasNeighborSignal(pos);
+        if (shouldBeEnabled != state.getValue(ENABLED)) {
+            level.setBlock(pos, state.setValue(ENABLED, shouldBeEnabled), Block.UPDATE_CLIENTS);
+        }
     }
 
     @Override

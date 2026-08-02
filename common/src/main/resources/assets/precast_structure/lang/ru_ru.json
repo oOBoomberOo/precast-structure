@@ -20,6 +20,7 @@
   "message.precast_structure.scan_complete": "Чертёж создан: сохранено блоков — %s.",
   "subtitles.precast_structure.scanning": "Сканер гудит",
   "subtitles.precast_structure.scan_complete": "Сканирование завершено",
+  "subtitles.precast_structure.printing": "Принтер жужжит",
   "message.precast_structure.printer_needs_blueprint": "Вставьте чертёж в принтер сооружений.",
   "message.precast_structure.invalid_blueprint": "Не удалось прочитать этот чертёж.",
   "message.precast_structure.missing_materials": "У вас нет необходимых строительных материалов.",

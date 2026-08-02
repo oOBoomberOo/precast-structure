@@ -20,6 +20,7 @@
   "message.precast_structure.scan_complete": "Plano creado con %s bloques guardados.",
   "subtitles.precast_structure.scanning": "Escáner zumba",
   "subtitles.precast_structure.scan_complete": "Escaneo completo",
+  "subtitles.precast_structure.printing": "Impresora zumba",
   "message.precast_structure.printer_needs_blueprint": "Inserta un plano en la impresora de estructuras.",
   "message.precast_structure.invalid_blueprint": "No se pudo leer ese plano.",
   "message.precast_structure.missing_materials": "No tienes los materiales de construcción necesarios.",

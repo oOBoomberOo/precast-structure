@@ -20,6 +20,7 @@
   "message.precast_structure.scan_complete": "蓝图已创建，保存了 %s 个方块。",
   "subtitles.precast_structure.scanning": "扫描器嗡嗡作响",
   "subtitles.precast_structure.scan_complete": "扫描完成",
+  "subtitles.precast_structure.printing": "打印机嗡嗡作响",
   "message.precast_structure.printer_needs_blueprint": "请将蓝图放入结构打印机。",
   "message.precast_structure.invalid_blueprint": "无法读取该蓝图。",
   "message.precast_structure.missing_materials": "你没有所需的建筑材料。",

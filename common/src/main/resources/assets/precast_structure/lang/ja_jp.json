@@ -20,6 +20,7 @@
   "message.precast_structure.scan_complete": "設計図を作成しました。%s 個のブロックを保存しました。",
   "subtitles.precast_structure.scanning": "スキャナーが唸る",
   "subtitles.precast_structure.scan_complete": "スキャン完了",
+  "subtitles.precast_structure.printing": "プリンターが唸る",
   "message.precast_structure.printer_needs_blueprint": "構造プリンターに設計図を入れてください。",
   "message.precast_structure.invalid_blueprint": "その設計図を読み取れませんでした。",
   "message.precast_structure.missing_materials": "必要な建築材料が不足しています。",

@@ -1,11 +1,13 @@
 package io.github.ooboomberoo.precaststructure.block.entity;
 
 import dev.architectury.registry.menu.ExtendedMenuProvider;
+import io.github.ooboomberoo.precaststructure.block.StructurePrinterBlock;
 import io.github.ooboomberoo.precaststructure.config.ModConfig;
 import io.github.ooboomberoo.precaststructure.menu.StructurePrinterMenu;
 import io.github.ooboomberoo.precaststructure.registry.ModBlockEntityTypes;
 import io.github.ooboomberoo.precaststructure.registry.ModGameRules;
 import io.github.ooboomberoo.precaststructure.registry.ModItems;
+import io.github.ooboomberoo.precaststructure.registry.ModSounds;
 import io.github.ooboomberoo.precaststructure.structure.BlueprintItemData;
 import io.github.ooboomberoo.precaststructure.structure.MaterialRequirement;
 import io.github.ooboomberoo.precaststructure.structure.StructureBlueprint;
@@ -20,6 +22,7 @@ import net.minecraft.core.component.DataComponents;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
+import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.ContainerHelper;
 import net.minecraft.world.WorldlyContainer;
 import net.minecraft.world.entity.player.Inventory;
@@ -40,6 +43,8 @@ public class StructurePrinterBlockEntity extends BaseContainerBlockEntity implem
     public static final int DATA_PROGRESS = 0;
     public static final int DATA_MAX_PROGRESS = 1;
     public static final int DATA_COUNT = 2;
+    /** How often the printing loop sound plays while work is in progress (ticks). */
+    private static final int SOUND_INTERVAL_TICKS = 8;
     private static final int[] INPUT_SLOTS = IntStream.range(BLUEPRINT_SLOT, OUTPUT_SLOT).toArray();
     private static final int[] OUTPUT_SLOTS = {OUTPUT_SLOT};
 
@@ -77,7 +82,7 @@ public class StructurePrinterBlockEntity extends BaseContainerBlockEntity implem
     }
 
     public static void serverTick(Level level, BlockPos pos, BlockState state, StructurePrinterBlockEntity blockEntity) {
-        blockEntity.tryPrint();
+        blockEntity.tryPrint(state);
     }
 
     public List<MaterialRequirement> getMaterialRequirements() {
@@ -99,7 +104,12 @@ public class StructurePrinterBlockEntity extends BaseContainerBlockEntity implem
         return requirements.get(materialIndex);
     }
 
-    private void tryPrint() {
+    private void tryPrint(BlockState state) {
+        if (!state.getValue(StructurePrinterBlock.ENABLED)) {
+            resetProgress();
+            return;
+        }
+
         ItemStack blueprintStack = items.get(BLUEPRINT_SLOT);
         if (!blueprintStack.is(ModItems.BLUEPRINT.get())) {
             resetProgress();
@@ -133,6 +143,7 @@ public class StructurePrinterBlockEntity extends BaseContainerBlockEntity implem
 
         if (printProgress < maxPrintProgress) {
             printProgress++;
+            playWorkingSound();
             setChanged();
             return;
         }
@@ -145,6 +156,15 @@ public class StructurePrinterBlockEntity extends BaseContainerBlockEntity implem
         }
         printProgress = 0;
         setChanged();
+    }
+
+    private void playWorkingSound() {
+        if (level == null || level.isClientSide()) {
+            return;
+        }
+        if (level.getGameTime() % SOUND_INTERVAL_TICKS == 0) {
+            level.playSound(null, worldPosition, ModSounds.PRINTING.get(), SoundSource.BLOCKS, 0.7F, 1.0F);
+        }
     }
 
     private static boolean canAcceptPrintedStructure(ItemStack outputStack, ItemStack structureStack) {

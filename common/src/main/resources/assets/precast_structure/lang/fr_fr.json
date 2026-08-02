@@ -20,6 +20,7 @@
   "message.precast_structure.scan_complete": "Plan créé avec %s blocs enregistrés.",
   "subtitles.precast_structure.scanning": "Le scanner bourdonne",
   "subtitles.precast_structure.scan_complete": "Scan terminé",
+  "subtitles.precast_structure.printing": "L'imprimante ronronne",
   "message.precast_structure.printer_needs_blueprint": "Insérez un plan dans l'imprimante de structure.",
   "message.precast_structure.invalid_blueprint": "Ce plan n'a pas pu être lu.",
   "message.precast_structure.missing_materials": "Vous n'avez pas les matériaux de construction requis.",

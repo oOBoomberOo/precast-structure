@@ -20,6 +20,7 @@
   "message.precast_structure.scan_complete": "Progetto creato con %s blocchi salvati.",
   "subtitles.precast_structure.scanning": "Lo scanner ronza",
   "subtitles.precast_structure.scan_complete": "Scansione completata",
+  "subtitles.precast_structure.printing": "La stampante ronza",
   "message.precast_structure.printer_needs_blueprint": "Inserisci un progetto nella stampante di strutture.",
   "message.precast_structure.invalid_blueprint": "Impossibile leggere quel progetto.",
   "message.precast_structure.missing_materials": "Non hai i materiali da costruzione necessari.",

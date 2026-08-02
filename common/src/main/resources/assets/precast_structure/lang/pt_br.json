@@ -20,6 +20,7 @@
   "message.precast_structure.scan_complete": "Planta criada com %s blocos salvos.",
   "subtitles.precast_structure.scanning": "Scanner zumbe",
   "subtitles.precast_structure.scan_complete": "Escaneamento concluído",
+  "subtitles.precast_structure.printing": "Impressora zumbe",
   "message.precast_structure.printer_needs_blueprint": "Insira uma planta na impressora de estruturas.",
   "message.precast_structure.invalid_blueprint": "Essa planta não pôde ser lida.",
   "message.precast_structure.missing_materials": "Você não tem os materiais de construção necessários.",

@@ -1,0 +1,8 @@
+{
+  "parent": "minecraft:block/orientable",
+  "textures": {
+    "top": "precast_structure:block/structure_printer_top",
+    "front": "precast_structure:block/structure_printer_front_off",
+    "side": "precast_structure:block/structure_printer_side"
+  }
+}

@@ -18,6 +18,10 @@ public final class ModSounds {
         "scan_complete",
         () -> SoundEvent.createVariableRangeEvent(ResourceLocation.fromNamespaceAndPath(PrecastStructureMod.MOD_ID, "scan_complete"))
     );
+    public static final RegistrySupplier<SoundEvent> PRINTING = SOUNDS.register(
+        "printing",
+        () -> SoundEvent.createVariableRangeEvent(ResourceLocation.fromNamespaceAndPath(PrecastStructureMod.MOD_ID, "printing"))
+    );
 
     private ModSounds() {
     }
