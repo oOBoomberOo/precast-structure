@@ -24,11 +24,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Soft Create compatibility utilities: NBTProcessors capture/apply, bracket rotation in BE NBT,
- * and Schematicannon-style {@code ItemRequirement} lookup used by {@link CreateSpecialHandler}.
+ * Soft Create reflection helpers used only by {@link CreateSpecialHandler} (and client render).
  *
- * <p>Block-facing soft-compat (materials, sanitize, kinetic holograms) lives in
- * {@link CreateSpecialHandler}, registered via {@link #registerSpecialHandlers()} when Create is loaded.
+ * <p>Core capture / placement must go through
+ * {@link io.github.ooboomberoo.precaststructure.structure.special.SpecialBlockHandlers} — never call
+ * these methods from {@code BlueprintCapture} / {@code StructurePlacement}.
  */
 public final class CreateCompat {
     private static final Logger LOGGER = LoggerFactory.getLogger(CreateCompat.class);
@@ -62,6 +62,9 @@ public final class CreateCompat {
         return ensureInitialized();
     }
 
+    /**
+     * Vanilla save plus Create {@code NBTProcessors} when bound. For {@link CreateSpecialHandler} only.
+     */
     @Nullable
     public static CompoundTag captureBlockEntityNbt(Level level, BlockEntity blockEntity) {
         CompoundTag nbt = blockEntity.saveWithFullMetadata(level.registryAccess());
@@ -81,9 +84,7 @@ public final class CreateCompat {
         return nbt.isEmpty() ? null : nbt;
     }
 
-    /**
-     * Rotates Create-specific nested block states (brackets) stored in block-entity NBT.
-     */
+    /** Rotates Create bracket block states in BE NBT. For {@link CreateSpecialHandler} only. */
     @Nullable
     public static CompoundTag transformNbt(@Nullable CompoundTag nbt, Rotation rotation, HolderLookup.Provider registries) {
         if (nbt == null || nbt.isEmpty() || rotation == Rotation.NONE) {
@@ -99,6 +100,7 @@ public final class CreateCompat {
         return copy;
     }
 
+    /** Load NBT with Create {@code NBTProcessors} when bound. For {@link CreateSpecialHandler} only. */
     public static void applyBlockEntityNbt(
         Level level,
         BlockEntity blockEntity,

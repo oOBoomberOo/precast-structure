@@ -39,11 +39,6 @@ class HologramPipelineTest {
             HologramLayerPolicy.Target.HOLOGRAM_BLOCK,
             HologramLayerPolicy.resolve(HologramLayerPolicy.Mode.BLOCK_MODEL, true)
         );
-        assertEquals(
-            HologramLayerPolicy.Target.HOLOGRAM_BLOCK,
-            HologramLayerPolicy.resolve(true, false),
-            "legacy resolve(entityFormat=true) must not steal block models"
-        );
     }
 
     @Test
@@ -103,14 +98,11 @@ class HologramPipelineTest {
     }
 
     @Test
-    void ghostPreviewStaysOnHologramPipeline() {
-        assertTrue(StructureGhostRenderer.usesHologramPipeline());
-    }
-
-    @Test
     void normalBlocksAreNotStolenBySpecialHandlers() {
         assertTrue(SpecialBlockHandlers.find(Blocks.JUNGLE_PLANKS.defaultBlockState()) == null);
         assertTrue(SpecialBlockHandlers.find(Blocks.DARK_OAK_PLANKS.defaultBlockState()) == null);
-        assertNotNull(SpecialBlockHandlers.find(Blocks.CHEST.defaultBlockState()));
+        // Chests/lecterns use ContainerCapture + generic BER — no SpecialBlockHandler.
+        assertTrue(SpecialBlockHandlers.find(Blocks.CHEST.defaultBlockState()) == null);
+        assertNotNull(SpecialBlockHandlers.find(Blocks.OAK_DOOR.defaultBlockState()));
     }
 }

@@ -1,12 +1,10 @@
 package io.github.ooboomberoo.precaststructure.structure.special;
 
 import java.util.OptionalInt;
-import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.level.block.DoorBlock;
 import net.minecraft.world.level.block.DoublePlantBlock;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.DoubleBlockHalf;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * Vertical double blocks (doors, tall flowers): both halves stay for placement/render, but only
@@ -16,11 +14,6 @@ public final class DoubleBlockSpecialHandler implements SpecialBlockHandler {
     @Override
     public boolean matches(BlockState state) {
         return state.getBlock() instanceof DoorBlock || state.getBlock() instanceof DoublePlantBlock;
-    }
-
-    @Override
-    public @Nullable CompoundTag sanitizeCapturedNbt(BlockState state, @Nullable CompoundTag nbt) {
-        return InventoryNbt.stripContainerContents(nbt);
     }
 
     @Override

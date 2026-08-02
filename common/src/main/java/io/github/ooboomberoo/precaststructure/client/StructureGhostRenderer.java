@@ -8,6 +8,7 @@ import io.github.ooboomberoo.precaststructure.structure.StructureBlueprint;
 import io.github.ooboomberoo.precaststructure.structure.StructureBlockInfo;
 import io.github.ooboomberoo.precaststructure.structure.StructureDeploymentManager;
 import io.github.ooboomberoo.precaststructure.structure.StructurePlacement;
+import io.github.ooboomberoo.precaststructure.structure.special.SpecialBlockHandlers;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -42,13 +43,6 @@ public final class StructureGhostRenderer {
     private StructureGhostRenderer() {
     }
 
-    /**
-     * Regression hook: placement preview must stay on the hologram pipeline (not solid meshes).
-     */
-    public static boolean usesHologramPipeline() {
-        return true;
-    }
-
     public static void render(PoseStack poseStack, Vec3 cameraPosition, float partialTick) {
         Minecraft minecraft = Minecraft.getInstance();
         Player player = minecraft.player;
@@ -81,7 +75,8 @@ public final class StructureGhostRenderer {
             parts.add(Part.of(
                 blockPos,
                 state,
-                io.github.ooboomberoo.precaststructure.compat.CreateCompat.transformNbt(
+                SpecialBlockHandlers.transformNbt(
+                    state,
                     block.nbt(),
                     StructurePlacement.rotationFor(facing),
                     level.registryAccess()

@@ -32,7 +32,6 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.util.Mth;
-import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.item.ItemStack;
@@ -41,13 +40,9 @@ import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.phys.AABB;
 import org.jetbrains.annotations.Nullable;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public class StructureScannerBlockEntity extends BlockEntity implements ExtendedMenuProvider {
-    private static final Logger LOGGER = LoggerFactory.getLogger(StructureScannerBlockEntity.class);
     public static final int MAX_NAME_LENGTH = 48;
     private static final int RECHECK_INTERVAL = 10;
     private static final int CLEAR_FLAGS = Block.UPDATE_CLIENTS | Block.UPDATE_SUPPRESS_DROPS;
@@ -179,7 +174,6 @@ public class StructureScannerBlockEntity extends BlockEntity implements Extended
 
         StructureFrameDetector.ScanResult result = StructureFrameDetector.detect(level, worldPosition);
         if (!result.successful()) {
-            LOGGER.warn("Scan rejected at {}: {}", worldPosition, result.error().getString());
             player.displayClientMessage(result.error(), true);
             recheckReady();
             return;
@@ -189,18 +183,15 @@ public class StructureScannerBlockEntity extends BlockEntity implements Extended
         Direction scannerFacing = getBlockState().getValue(StructureScannerBlock.FACING);
         StructureBlueprint blueprint = BlueprintCapture.capture(level, frame, scannerFacing);
         if (blueprint.blocks().isEmpty()) {
-            LOGGER.warn("Scan empty at {}", worldPosition);
             player.displayClientMessage(Component.translatable("message.precast_structure.empty_scan"), true);
             return;
         }
 
         if (!hasEmptyBlueprint(player)) {
-            LOGGER.warn("Scan missing empty blueprint at {}", worldPosition);
             player.displayClientMessage(Component.translatable("message.precast_structure.needs_empty_blueprint"), true);
             return;
         }
         if (!consumeEmptyBlueprint(player)) {
-            LOGGER.warn("Scan failed to consume empty blueprint at {}", worldPosition);
             player.displayClientMessage(Component.translatable("message.precast_structure.needs_empty_blueprint"), true);
             return;
         }
@@ -316,18 +307,9 @@ public class StructureScannerBlockEntity extends BlockEntity implements Extended
                 }
             }
         }
-
-        AABB volume = new AABB(
-            origin.getX(),
-            origin.getY(),
-            origin.getZ(),
-            origin.getX() + size.getX(),
-            origin.getY() + size.getY(),
-            origin.getZ() + size.getZ()
-        ).inflate(0.25);
-        for (ItemEntity item : level.getEntitiesOfClass(ItemEntity.class, volume)) {
-            item.discard();
-        }
+        // Do not discard ItemEntities: BlueprintCapture already emptied containers and dropped
+        // their contents into the world before digitize. UPDATE_SUPPRESS_DROPS prevents block
+        // item drops from setBlock.
     }
 
     private void clearScanColliders() {

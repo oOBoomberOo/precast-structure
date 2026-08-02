@@ -3,11 +3,7 @@ package io.github.ooboomberoo.precaststructure.structure.special;
 import net.minecraft.nbt.CompoundTag;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * Targeted container-content stripping for blueprint replicas.
- * Removes item lists / loot table refs while leaving other BE fields (Create machine config,
- * brackets, custom names, etc.) intact.
- */
+/** Legacy placement-only strip of embedded item/loot NBT; new captures empty inventories in-world first. */
 public final class InventoryNbt {
     private static final String[] LIST_OR_COMPOUND_KEYS = {
         "Items",

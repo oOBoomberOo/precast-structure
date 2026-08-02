@@ -1,6 +1,5 @@
 package io.github.ooboomberoo.precaststructure.structure;
 
-import io.github.ooboomberoo.precaststructure.compat.CreateCompat;
 import io.github.ooboomberoo.precaststructure.registry.ModBlockTags;
 import io.github.ooboomberoo.precaststructure.structure.special.SpecialBlockHandlers;
 import java.util.HashSet;
@@ -276,12 +275,12 @@ public final class StructurePlacement {
         level.setBlock(targetPos, state, 3);
         CompoundTag nbt = SpecialBlockHandlers.sanitizePlacement(
             state,
-            CreateCompat.transformNbt(block.nbt(), rotation, level.registryAccess())
+            SpecialBlockHandlers.transformNbt(state, block.nbt(), rotation, level.registryAccess())
         );
         if (nbt != null) {
             BlockEntity blockEntity = level.getBlockEntity(targetPos);
             if (blockEntity != null) {
-                CreateCompat.applyBlockEntityNbt(level, blockEntity, state, nbt);
+                SpecialBlockHandlers.applyBlockEntityNbt(level, blockEntity, state, nbt);
             }
         }
         SoundType soundType = state.getSoundType();

@@ -1,6 +1,5 @@
 package io.github.ooboomberoo.precaststructure.structure;
 
-import io.github.ooboomberoo.precaststructure.compat.CreateCompat;
 import io.github.ooboomberoo.precaststructure.registry.ModBlockTags;
 import io.github.ooboomberoo.precaststructure.structure.special.SpecialBlockHandlers;
 import java.util.ArrayList;
@@ -21,6 +20,10 @@ public final class BlueprintCapture {
      * Captures the framed volume in scanner-local space: local +Z extends away from the scanner
      * into the structure, and the front face (toward the scanner) sits at local z = 0.
      * Placement then rotates that local frame to the player's look direction.
+     *
+     * <p>On the server, container inventories are emptied and dropped in-world before block-entity
+     * NBT is serialized, so blueprint replicas do not copy stored items. Soft-compat BE capture
+     * (Create NBTProcessors, …) goes through {@link SpecialBlockHandlers}.
      */
     public static StructureBlueprint capture(Level level, StructureFrame frame, Direction scannerFacing) {
         List<StructureBlockInfo> blocks = new ArrayList<>();
@@ -40,20 +43,25 @@ public final class BlueprintCapture {
                     if (ModBlockTags.isBlueprintExcluded(state)) {
                         continue;
                     }
+                    BlockEntity blockEntity = level.getBlockEntity(worldPos);
+                    if (blockEntity != null) {
+                        // Empty inventories first so state (has_book, …) and NBT stay consistent.
+                        ContainerCapture.emptyAndDrop(level, worldPos, blockEntity);
+                        state = level.getBlockState(worldPos);
+                    }
                     BlockPos localRaw = StructurePlacement.rotateOffset(new BlockPos(x, y, z), toLocal);
                     BlockPos localOffset = localRaw.subtract(minCorner);
                     BlockState localState = SpecialBlockHandlers.sanitizeCapturedState(
                         StructurePlacement.rotateState(state, toLocal)
                     );
                     CompoundTag nbt = null;
-                    BlockEntity blockEntity = level.getBlockEntity(worldPos);
                     if (blockEntity != null) {
-                        nbt = CreateCompat.transformNbt(
-                            CreateCompat.captureBlockEntityNbt(level, blockEntity),
+                        nbt = SpecialBlockHandlers.transformNbt(
+                            localState,
+                            SpecialBlockHandlers.captureBlockEntityNbt(level, blockEntity),
                             toLocal,
                             level.registryAccess()
                         );
-                        // Strip inventories / loot so replicas never copy container contents.
                         nbt = SpecialBlockHandlers.sanitizeCaptured(localState, nbt);
                     }
                     blocks.add(new StructureBlockInfo(localOffset, localState, nbt));

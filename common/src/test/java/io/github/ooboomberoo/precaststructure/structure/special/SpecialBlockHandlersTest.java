@@ -29,7 +29,8 @@ class SpecialBlockHandlersTest {
     }
 
     @Test
-    void stripsContainerItemsAndLootTables() {
+    void placementStripRemovesContainerItemsAndLootTables() {
+        // Capture empties inventories in-world; InventoryNbt remains a placement safety net.
         CompoundTag nbt = new CompoundTag();
         ListTag items = new ListTag();
         CompoundTag stack = new CompoundTag();
@@ -42,7 +43,11 @@ class SpecialBlockHandlersTest {
         nbt.putLong("LootTableSeed", 42L);
         nbt.putString("CustomName", "\"KeepMe\"");
 
-        CompoundTag sanitized = InventoryNbt.stripContainerContents(nbt);
+        CompoundTag sanitized = SpecialBlockHandlers.sanitizePlacement(
+            Blocks.CHEST.defaultBlockState(),
+            nbt
+        );
+        assertTrue(sanitized != null);
         assertFalse(sanitized.contains("Items"));
         assertFalse(sanitized.contains("LootTable"));
         assertFalse(sanitized.contains("LootTableSeed"));
@@ -127,18 +132,21 @@ class SpecialBlockHandlersTest {
     }
 
     @Test
-    void sanitizeCapturedClearsChestItems() {
+    void sanitizeCapturedLeavesNbtUnchanged() {
+        // Inventories are emptied before serialize; capture sanitize must not key-strip.
         CompoundTag nbt = new CompoundTag();
         nbt.put("Items", new ListTag());
         CompoundTag stack = new CompoundTag();
         stack.putString("id", "minecraft:stone");
         nbt.getList("Items", 10).add(stack);
+        nbt.putString("CustomName", "\"KeepMe\"");
 
         CompoundTag sanitized = SpecialBlockHandlers.sanitizeCaptured(
             Blocks.CHEST.defaultBlockState(),
             nbt
         );
-        assertTrue(sanitized == null || !sanitized.contains("Items"));
+        assertTrue(sanitized != null && sanitized.contains("Items"));
+        assertEquals("\"KeepMe\"", sanitized.getString("CustomName"));
     }
 
     @Test
@@ -173,23 +181,17 @@ class SpecialBlockHandlersTest {
     }
 
     @Test
-    void lecternClearsHasBookOnSanitize() {
+    void lecternAndChestNeedNoSpecialHandler() {
+        // Book/HAS_BOOK cleared in-world via ContainerCapture before serialize.
         var withBook = Blocks.LECTERN.defaultBlockState().setValue(
             net.minecraft.world.level.block.state.properties.BlockStateProperties.HAS_BOOK, true
         );
-        var sanitized = SpecialBlockHandlers.sanitizeCapturedState(withBook);
-        assertFalse(sanitized.getValue(
-            net.minecraft.world.level.block.state.properties.BlockStateProperties.HAS_BOOK
-        ));
-        assertTrue(SpecialBlockHandlers.find(withBook) instanceof LecternSpecialHandler);
-    }
-
-    @Test
-    void skullAndChestHaveSpecialHandlers() {
-        // Skulls use generic BER preview (no special handler); chests still strip inventory.
+        assertEquals(withBook, SpecialBlockHandlers.sanitizeCapturedState(withBook));
+        assertNull(SpecialBlockHandlers.find(withBook));
         assertNull(SpecialBlockHandlers.find(Blocks.CREEPER_HEAD.defaultBlockState()));
-        assertTrue(SpecialBlockHandlers.find(Blocks.CHEST.defaultBlockState()) instanceof ChestSpecialHandler);
-        assertTrue(SpecialBlockHandlers.find(Blocks.SHULKER_BOX.defaultBlockState()) instanceof ChestSpecialHandler);
+        assertNull(SpecialBlockHandlers.find(Blocks.CHEST.defaultBlockState()));
+        assertNull(SpecialBlockHandlers.find(Blocks.SHULKER_BOX.defaultBlockState()));
+        assertNull(SpecialBlockHandlers.find(Blocks.ENDER_CHEST.defaultBlockState()));
     }
 
     @Test
@@ -228,7 +230,6 @@ class SpecialBlockHandlersTest {
         front.putBoolean("has_glowing_text", false);
         nbt.put("front_text", front);
         nbt.putBoolean("is_waxed", true);
-        nbt.put("Items", new ListTag());
 
         CompoundTag sanitized = SpecialBlockHandlers.sanitizeCaptured(
             Blocks.OAK_SIGN.defaultBlockState(),
@@ -236,15 +237,57 @@ class SpecialBlockHandlersTest {
         );
         assertTrue(sanitized != null && sanitized.contains("front_text"));
         assertTrue(sanitized.getBoolean("is_waxed"));
+    }
+
+    @Test
+    void sanitizePlacementStripsLegacyItemsFromSignNbt() {
+        CompoundTag nbt = new CompoundTag();
+        nbt.putBoolean("is_waxed", true);
+        nbt.put("Items", new ListTag());
+
+        CompoundTag sanitized = SpecialBlockHandlers.sanitizePlacement(
+            Blocks.OAK_SIGN.defaultBlockState(),
+            nbt
+        );
+        assertTrue(sanitized != null && sanitized.getBoolean("is_waxed"));
         assertFalse(sanitized.contains("Items"));
     }
 
     @Test
-    void stripsLecternPageFromNbt() {
+    void transformNbtNoopsWithoutMatchingHandler() {
+        CompoundTag nbt = new CompoundTag();
+        nbt.putString("CustomName", "\"Keep\"");
+        // No Create handler in unit tests — facade must leave NBT unchanged.
+        assertEquals(
+            nbt,
+            SpecialBlockHandlers.transformNbt(
+                Blocks.CHEST.defaultBlockState(),
+                nbt,
+                net.minecraft.world.level.block.Rotation.CLOCKWISE_90,
+                net.minecraft.core.RegistryAccess.EMPTY
+            )
+        );
+        assertEquals(
+            nbt,
+            SpecialBlockHandlers.transformNbt(
+                Blocks.STONE.defaultBlockState(),
+                nbt,
+                net.minecraft.world.level.block.Rotation.NONE,
+                net.minecraft.core.RegistryAccess.EMPTY
+            )
+        );
+    }
+
+    @Test
+    void sanitizePlacementStripsLecternPageFromLegacyNbt() {
         CompoundTag nbt = new CompoundTag();
         nbt.putInt("Page", 3);
         nbt.putString("id", "minecraft:lectern");
-        CompoundTag sanitized = InventoryNbt.stripContainerContents(nbt);
+        CompoundTag sanitized = SpecialBlockHandlers.sanitizePlacement(
+            Blocks.LECTERN.defaultBlockState(),
+            nbt
+        );
+        assertTrue(sanitized != null);
         assertFalse(sanitized.contains("Page"));
         assertEquals("minecraft:lectern", sanitized.getString("id"));
     }

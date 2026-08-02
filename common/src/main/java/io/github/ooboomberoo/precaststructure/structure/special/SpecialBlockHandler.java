@@ -9,30 +9,62 @@ import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.Items;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Rotation;
+import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * Pluggable handling for blocks that need non-default blueprint, material, or hologram behavior
- * (chests, beds, multi-block halves, Create kinetics, …).
+ * (beds, multi-block halves, Create kinetics, …).
  *
  * <p>Register instances through {@link SpecialBlockHandlers#register}. Core capture / placement /
  * hologram loops discover handlers via the registry — do not patch those call sites for each
  * new block type.
+ *
+ * <p>Container inventories are emptied in-world during capture
+ * ({@link io.github.ooboomberoo.precaststructure.structure.ContainerCapture}); do not strip item
+ * keys from NBT in {@link #sanitizeCapturedNbt}. Placement may still strip legacy keys via
+ * {@link SpecialBlockHandlers#sanitizePlacement}.
  */
 public interface SpecialBlockHandler {
     boolean matches(BlockState state);
 
     /**
-     * After raw block-entity capture. Strip inventories / loot while keeping appearance config
-     * (facing lives on the block state; Create brackets etc. stay in NBT).
+     * Serialize this block entity for a blueprint. Default is vanilla
+     * {@code saveWithFullMetadata} (coords stripped). Override for soft-compat processors
+     * (e.g. Create NBTProcessors). Inventories should already be empty via
+     * {@link io.github.ooboomberoo.precaststructure.structure.ContainerCapture}.
+     */
+    default @Nullable CompoundTag captureBlockEntityNbt(Level level, BlockEntity blockEntity) {
+        return SpecialBlockHandlers.saveBlockEntityNbt(level, blockEntity);
+    }
+
+    /**
+     * Load blueprint NBT onto a placed block entity. Default is vanilla
+     * {@code loadWithComponents} plus a neighbour update. Override for soft-compat processors.
+     */
+    default void applyBlockEntityNbt(
+        Level level,
+        BlockEntity blockEntity,
+        BlockState placedState,
+        @Nullable CompoundTag nbt
+    ) {
+        SpecialBlockHandlers.loadBlockEntityNbt(level, blockEntity, placedState, nbt);
+    }
+
+    /**
+     * After raw block-entity capture. Prefer leaving NBT alone — inventories should already be
+     * empty from {@link io.github.ooboomberoo.precaststructure.structure.ContainerCapture}.
      */
     default @Nullable CompoundTag sanitizeCapturedNbt(BlockState state, @Nullable CompoundTag nbt) {
         return nbt;
     }
 
     /**
-     * Normalize block state on capture / hologram / place (e.g. clear lectern {@code has_book}).
+     * Normalize block state on capture / hologram / place when needed. Content flags such as
+     * lectern {@code has_book} should already match emptied inventories after capture.
      */
     default BlockState sanitizeCapturedState(BlockState state) {
         return state;
@@ -45,6 +77,19 @@ public interface SpecialBlockHandler {
 
     default BlockState sanitizePlacementState(BlockState state) {
         return sanitizeCapturedState(state);
+    }
+
+    /**
+     * Rotate nested block-state data stored in BE NBT when the blueprint is rotated for capture,
+     * placement, or preview (e.g. Create brackets). Default leaves NBT unchanged.
+     */
+    default @Nullable CompoundTag transformNbt(
+        BlockState state,
+        @Nullable CompoundTag nbt,
+        Rotation rotation,
+        HolderLookup.Provider registries
+    ) {
+        return nbt;
     }
 
     /**
