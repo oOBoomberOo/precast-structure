@@ -10,6 +10,7 @@ import org.junit.jupiter.api.Test;
 import net.minecraft.SharedConstants;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.nbt.NbtOps;
 import net.minecraft.server.Bootstrap;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.Rotation;
@@ -100,6 +101,53 @@ class StructureBlueprintTest {
         assertEquals(new BlockPos(1, 0, 0), StructurePlacement.frontCenterLocal(new BlockPos(3, 4, 3)));
         assertEquals(new BlockPos(0, 0, 0), StructurePlacement.frontCenterLocal(new BlockPos(1, 3, 1)));
         assertEquals(new BlockPos(1, 0, 0), StructurePlacement.frontCenterLocal(new BlockPos(4, 1, 4)));
+    }
+
+    @Test
+    void trimmedToContentsShrinksScanVolumeToOccupiedBlocks() {
+        StructureBlueprint pillarInLargerVolume = new StructureBlueprint(
+            new BlockPos(3, 8, 3),
+            List.of(
+                new StructureBlockInfo(new BlockPos(1, 2, 1), Blocks.OAK_LOG.defaultBlockState()),
+                new StructureBlockInfo(new BlockPos(1, 3, 1), Blocks.OAK_LOG.defaultBlockState()),
+                new StructureBlockInfo(new BlockPos(1, 4, 1), Blocks.OAK_LOG.defaultBlockState())
+            )
+        );
+
+        StructureBlueprint trimmed = pillarInLargerVolume.trimmedToContents();
+        assertEquals(new BlockPos(1, 3, 1), trimmed.size());
+        assertEquals(3, trimmed.blocks().size());
+        assertEquals(new BlockPos(0, 0, 0), trimmed.blocks().get(0).offset());
+        assertEquals(new BlockPos(0, 1, 0), trimmed.blocks().get(1).offset());
+        assertEquals(new BlockPos(0, 2, 0), trimmed.blocks().get(2).offset());
+    }
+
+    @Test
+    void captureKeepsFrameRelativeOffsetsThroughSaveLoadAndCodec() {
+        // Mimics BlueprintCapture / scan-ghost output: full scan volume, blocks not at local origin.
+        StructureBlueprint captured = new StructureBlueprint(
+            new BlockPos(5, 4, 5),
+            List.of(
+                new StructureBlockInfo(new BlockPos(2, 1, 3), Blocks.STONE.defaultBlockState()),
+                new StructureBlockInfo(new BlockPos(2, 2, 3), Blocks.STONE.defaultBlockState())
+            )
+        );
+
+        StructureBlueprint fromSave = StructureBlueprint.load(captured.save()).orElseThrow();
+        assertEquals(new BlockPos(5, 4, 5), fromSave.size());
+        assertEquals(new BlockPos(2, 1, 3), fromSave.blocks().get(0).offset());
+        assertEquals(new BlockPos(2, 2, 3), fromSave.blocks().get(1).offset());
+
+        StructureBlueprint fromCodec = StructureBlueprint.CODEC
+            .parse(NbtOps.INSTANCE, captured.save())
+            .getOrThrow();
+        assertEquals(new BlockPos(5, 4, 5), fromCodec.size());
+        assertEquals(new BlockPos(2, 1, 3), fromCodec.blocks().get(0).offset());
+        assertEquals(new BlockPos(2, 2, 3), fromCodec.blocks().get(1).offset());
+
+        // Capture itself is unchanged; item persist applies trimmedToContents() separately.
+        assertEquals(new BlockPos(5, 4, 5), captured.size());
+        assertEquals(new BlockPos(2, 1, 3), captured.blocks().get(0).offset());
     }
 
     @Test
