@@ -8,23 +8,25 @@ Pre-cast Structure is a Minecraft mod for **1.21.1** (Fabric and NeoForge). You 
 
 Frame the volume first:
 
-1. Lay a solid rectangle of **Platform Floor** (3×3 or larger).
-2. Run **Perimeter Fence** (or gates) one block above the platform edge.
+1. Lay a solid rectangle of **Platform Floor** (3×3 or larger; max size is configurable, default 64).
+2. Run **Perimeter Fence** (or gates) one block above the platform edge — leave the scaffold corner open.
 3. Put a **Metal Scaffold** pillar on exactly one corner — that sets the height.
 4. Park a **Structure Scanner** against one side of the platform.
 
-Build inside the frame, then open the scanner with an **Empty Blueprint** in your inventory. It digitizes the interior and hands you a filled **Blueprint**. Scanning empties chests, lecterns, jukeboxes, and other containers in the frame first (contents drop in place), so replicas never copy stored items. Beds, doors, and similar double blocks count as one material each.
+Build inside the frame, then open the scanner with an **Empty Blueprint** in your inventory. It digitizes the interior and hands you a filled **Blueprint**. Scanning empties chests, lecterns, jukeboxes, and other containers first (contents drop in place; ender chests are skipped), then clears the framed build into a scan hologram. The platform, fence, scaffold, and scanner stay; the build itself is consumed. Beds, doors, and similar double blocks count as one material each.
 
-Feed that blueprint into a **Structure Printer** along with the materials the build needs. When it finishes, you get a **Pre-cast Structure** item. Hold it to see a ghost preview; right-click to place (or watch it deploy with the rising hologram if animated deploy is on).
+Feed that blueprint into a **Structure Printer** along with the materials the build needs. The blueprint stays in the printer; only the listed materials are consumed. When it finishes, you get a **Pre-cast Structure** item.
 
-Filled blueprints can be cloned (blueprint + empty blueprint) or cleared back to empty by crafting the filled one alone. Recipes are in JEI/REI.
+Hold the item for a ghost preview (it tints red when placement is blocked). Right-click to place into replaceable space only — never into a structure that is still deploying. With animated deploy on (default), it rises in with a hologram; turn that off in Cloth Config for instant place. Solid hologram collision (also on by default) keeps players from walking through scan and deploy holograms.
+
+Filled blueprints clone map-style: filled blueprint + empty blueprint → two filled copies. Craft a filled blueprint alone to clear it back to empty. Recipes show in the vanilla recipe book, and in JEI/REI if you use them.
 
 ## Compatibility
 
 Optional soft dependencies — the mod runs fine without them:
 
-- **[Create](https://modrinth.com/mod/create)** — kinetic block NBT, hologram meshes, and material costs (including brackets / encased shafts) when Create is installed.
-- **Sable** (Create Aeronautics) — scan and placement holograms follow Simulated ship poses so previews stay visible on moving plots.
+- **[Create](https://modrinth.com/mod/create)** (6.0+) — kinetic block NBT, hologram meshes, and material costs (including brackets / encased shafts) when Create is installed.
+- **[Sable](https://modrinth.com/mod/sable)** (Create Aeronautics) — scan and placement holograms follow Simulated ship poses so previews stay visible on moving plots.
 
 ## Requirements
 
@@ -34,7 +36,7 @@ Optional soft dependencies — the mod runs fine without them:
 - [Cloth Config](https://modrinth.com/mod/cloth-config)
 - Fabric build also needs [Fabric API](https://modrinth.com/mod/fabric-api)
 
-There's a Cloth Config screen for scan/deploy timing, frame size limits, printer delay, and hologram collision. A matching **1.20.1** line lives on the `version/1.20.x` branch (Fabric + Forge).
+Open the Cloth Config screen from Mod Menu (Fabric) or the mods list (NeoForge) for scan/deploy timing, frame size limits, printer delay, animated deploy, and hologram collision. Live worlds still honor the `precastStructurePrinterDelay` gamerule; the Cloth value is the fallback. A matching **1.20.1** line lives on the `version/1.20.x` branch (Fabric + Forge).
 
 ## Building
 
