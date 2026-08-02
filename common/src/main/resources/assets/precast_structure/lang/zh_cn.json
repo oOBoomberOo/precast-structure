@@ -63,7 +63,7 @@
   "config.precast_structure.deploy.sound_interval": "部署音效间隔",
   "config.precast_structure.deploy.sound_interval.tooltip": "部署循环音效的播放间隔，以刻为单位。",
   "config.precast_structure.deploy.client_grace_ticks": "部署完成宽限刻",
-  "config.precast_structure.deploy.client_grace_ticks.tooltip": "放置后在光照更新期间保留实体幽灵遮罩的客户端刻数。",
+  "config.precast_structure.deploy.client_grace_ticks.tooltip": "放置后在光照更新期间保留固体幽灵遮罩的客户端刻数。",
   "config.precast_structure.frame.min_platform_size": "最小平台尺寸",
   "config.precast_structure.frame.min_platform_size.tooltip": "平台的最小宽度与深度（含边界）。",
   "config.precast_structure.frame.max_platform_size": "最大平台尺寸",
@@ -72,6 +72,6 @@
   "config.precast_structure.blueprint.max_dimension.tooltip": "加载已保存数据时对蓝图尺寸各轴施加的硬上限。",
   "config.precast_structure.printer.default_delay_ticks": "默认打印延迟",
   "config.precast_structure.printer.default_delay_ticks.tooltip": "备用打印时长，以刻为单位。世界仍使用游戏规则 precastStructurePrinterDelay。",
-  "config.precast_structure.hologram.solid_collision": "全息实体碰撞",
-  "config.precast_structure.hologram.solid_collision.tooltip": "启用后，扫描与部署全息投影使用不可见的实体碰撞箱，玩家与实体无法穿过。"
+  "config.precast_structure.hologram.solid_collision": "全息固体碰撞",
+  "config.precast_structure.hologram.solid_collision.tooltip": "启用后，扫描与部署全息投影使用不可见的固体碰撞箱，玩家与实体无法穿过。"
 }
