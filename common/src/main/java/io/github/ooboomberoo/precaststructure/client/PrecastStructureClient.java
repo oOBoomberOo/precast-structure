@@ -23,8 +23,11 @@ public final class PrecastStructureClient {
         ModNetworking.registerClient();
         ClientPlayerEvent.CLIENT_PLAYER_QUIT.register(player -> StructureDeploymentManager.clientClear());
         ClientTickEvent.CLIENT_POST.register(minecraft -> StructureDeploymentManager.clientTick(minecraft.level));
-        MenuRegistry.registerScreenFactory(ModMenuTypes.STRUCTURE_SCANNER.get(), StructureScannerScreen::new);
-        MenuRegistry.registerScreenFactory(ModMenuTypes.STRUCTURE_PRINTER.get(), StructurePrinterScreen::new);
+        // NeoForge requires RegisterMenuScreensEvent; Architectury's helper is a no-op there.
+        if (!Platform.isNeoForge()) {
+            MenuRegistry.registerScreenFactory(ModMenuTypes.STRUCTURE_SCANNER.get(), StructureScannerScreen::new);
+            MenuRegistry.registerScreenFactory(ModMenuTypes.STRUCTURE_PRINTER.get(), StructurePrinterScreen::new);
+        }
         RenderTypeRegistry.register(RenderType.cutout(), ModBlocks.METAL_SCAFFOLD.get());
         registerConfigScreen();
     }
