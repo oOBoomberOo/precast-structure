@@ -42,7 +42,9 @@ public final class BlueprintCapture {
                     }
                     BlockPos localRaw = StructurePlacement.rotateOffset(new BlockPos(x, y, z), toLocal);
                     BlockPos localOffset = localRaw.subtract(minCorner);
-                    BlockState localState = StructurePlacement.rotateState(state, toLocal);
+                    BlockState localState = SpecialBlockHandlers.sanitizeCapturedState(
+                        StructurePlacement.rotateState(state, toLocal)
+                    );
                     CompoundTag nbt = null;
                     BlockEntity blockEntity = level.getBlockEntity(worldPos);
                     if (blockEntity != null) {
@@ -59,6 +61,8 @@ public final class BlueprintCapture {
             }
         }
 
+        // Keep the full scan-volume size and frame-relative offsets so the scan hologram stays
+        // where the blocks were. Persist path trims via BlueprintItemData.write / trimmedToContents().
         return new StructureBlueprint(orientedSize, List.copyOf(blocks));
     }
 }

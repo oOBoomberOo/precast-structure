@@ -272,7 +272,7 @@ public final class StructurePlacement {
             return false;
         }
         Rotation rotation = rotationFor(facing);
-        BlockState state = transformState(block.state(), facing);
+        BlockState state = SpecialBlockHandlers.sanitizePlacementState(transformState(block.state(), facing));
         level.setBlock(targetPos, state, 3);
         CompoundTag nbt = SpecialBlockHandlers.sanitizePlacement(
             state,

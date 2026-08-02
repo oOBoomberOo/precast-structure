@@ -31,9 +31,20 @@ public interface SpecialBlockHandler {
         return nbt;
     }
 
+    /**
+     * Normalize block state on capture / hologram / place (e.g. clear lectern {@code has_book}).
+     */
+    default BlockState sanitizeCapturedState(BlockState state) {
+        return state;
+    }
+
     /** Before applying block-entity NBT on place/deploy (also covers old blueprints). */
     default @Nullable CompoundTag sanitizePlacementNbt(BlockState state, @Nullable CompoundTag nbt) {
         return sanitizeCapturedNbt(state, nbt);
+    }
+
+    default BlockState sanitizePlacementState(BlockState state) {
+        return sanitizeCapturedState(state);
     }
 
     /**

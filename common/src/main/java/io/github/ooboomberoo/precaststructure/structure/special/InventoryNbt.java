@@ -16,6 +16,8 @@ public final class InventoryNbt {
         "Item",
         "RecordItem",
         "Book",
+        "Page",
+        "page",
         "item_stack"
     };
 

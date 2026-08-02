@@ -13,7 +13,9 @@ import org.jetbrains.annotations.Nullable;
 /**
  * Ordered registry of {@link SpecialBlockHandler}s. First match wins.
  *
- * <p>Built-ins cover chests/shulkers, beds, and vertical double blocks (doors / tall plants).
+ * <p>Built-ins cover beds (materials), chests/shulkers (inventory strip), lecterns, and vertical
+ * double blocks (doors / tall plants). BER-primary blocks (signs, skulls, banners, …) use the
+ * generic preview path in {@code HologramRenderSystem} — no per-block render handler required.
  * Soft-compat modules (e.g. Create) append with {@link #register} from mod init when present.
  */
 public final class SpecialBlockHandlers {
@@ -33,6 +35,7 @@ public final class SpecialBlockHandlers {
         }
         bootstrapped = true;
         register(new BedSpecialHandler());
+        register(new LecternSpecialHandler());
         register(new ChestSpecialHandler());
         register(new DoubleBlockSpecialHandler());
     }
@@ -64,6 +67,11 @@ public final class SpecialBlockHandlers {
         return sanitized == null || sanitized.isEmpty() ? null : sanitized;
     }
 
+    public static BlockState sanitizeCapturedState(BlockState state) {
+        SpecialBlockHandler handler = find(state);
+        return handler != null ? handler.sanitizeCapturedState(state) : state;
+    }
+
     @Nullable
     public static CompoundTag sanitizePlacement(BlockState state, @Nullable CompoundTag nbt) {
         if (nbt == null || nbt.isEmpty()) {
@@ -74,6 +82,11 @@ public final class SpecialBlockHandlers {
             ? handler.sanitizePlacementNbt(state, nbt)
             : InventoryNbt.stripContainerContents(nbt);
         return sanitized == null || sanitized.isEmpty() ? null : sanitized;
+    }
+
+    public static BlockState sanitizePlacementState(BlockState state) {
+        SpecialBlockHandler handler = find(state);
+        return handler != null ? handler.sanitizePlacementState(state) : state;
     }
 
     public static OptionalInt materialUnits(BlockState state) {

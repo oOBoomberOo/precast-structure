@@ -171,4 +171,81 @@ class SpecialBlockHandlersTest {
         assertFalse(handler.matches(Blocks.CHEST.defaultBlockState()));
         assertFalse(handler.matches(Blocks.STONE.defaultBlockState()));
     }
+
+    @Test
+    void lecternClearsHasBookOnSanitize() {
+        var withBook = Blocks.LECTERN.defaultBlockState().setValue(
+            net.minecraft.world.level.block.state.properties.BlockStateProperties.HAS_BOOK, true
+        );
+        var sanitized = SpecialBlockHandlers.sanitizeCapturedState(withBook);
+        assertFalse(sanitized.getValue(
+            net.minecraft.world.level.block.state.properties.BlockStateProperties.HAS_BOOK
+        ));
+        assertTrue(SpecialBlockHandlers.find(withBook) instanceof LecternSpecialHandler);
+    }
+
+    @Test
+    void skullAndChestHaveSpecialHandlers() {
+        // Skulls use generic BER preview (no special handler); chests still strip inventory.
+        assertNull(SpecialBlockHandlers.find(Blocks.CREEPER_HEAD.defaultBlockState()));
+        assertTrue(SpecialBlockHandlers.find(Blocks.CHEST.defaultBlockState()) instanceof ChestSpecialHandler);
+        assertTrue(SpecialBlockHandlers.find(Blocks.SHULKER_BOX.defaultBlockState()) instanceof ChestSpecialHandler);
+    }
+
+    @Test
+    void signsNeedNoSpecialHandlerButKeepTextAndAreBerPrimary() {
+        assertNull(SpecialBlockHandlers.find(Blocks.OAK_SIGN.defaultBlockState()));
+        assertNull(SpecialBlockHandlers.find(Blocks.OAK_WALL_SIGN.defaultBlockState()));
+        assertNull(SpecialBlockHandlers.find(Blocks.OAK_HANGING_SIGN.defaultBlockState()));
+        assertNull(SpecialBlockHandlers.find(Blocks.OAK_WALL_HANGING_SIGN.defaultBlockState()));
+        assertTrue(SpecialBlockHandlers.shouldRenderPreview(Blocks.OAK_SIGN.defaultBlockState()));
+        // Signs/skulls use INVISIBLE or ENTITYBLOCK_ANIMATED — both are BER-primary.
+        var berPrimary = java.util.EnumSet.of(
+            net.minecraft.world.level.block.RenderShape.ENTITYBLOCK_ANIMATED,
+            net.minecraft.world.level.block.RenderShape.INVISIBLE
+        );
+        assertTrue(berPrimary.contains(Blocks.OAK_SIGN.defaultBlockState().getRenderShape()));
+        assertTrue(berPrimary.contains(Blocks.CREEPER_HEAD.defaultBlockState().getRenderShape()));
+        assertTrue(berPrimary.contains(Blocks.CHEST.defaultBlockState().getRenderShape()));
+        assertFalse(berPrimary.contains(Blocks.LECTERN.defaultBlockState().getRenderShape()));
+        assertEquals(
+            net.minecraft.world.level.block.RenderShape.MODEL,
+            Blocks.LECTERN.defaultBlockState().getRenderShape()
+        );
+    }
+
+    @Test
+    void sanitizeCapturedKeepsSignTextNbt() {
+        CompoundTag nbt = new CompoundTag();
+        CompoundTag front = new CompoundTag();
+        ListTag messages = new ListTag();
+        messages.add(net.minecraft.nbt.StringTag.valueOf("\"Hello\""));
+        messages.add(net.minecraft.nbt.StringTag.valueOf("\"\""));
+        messages.add(net.minecraft.nbt.StringTag.valueOf("\"\""));
+        messages.add(net.minecraft.nbt.StringTag.valueOf("\"\""));
+        front.put("messages", messages);
+        front.putString("color", "black");
+        front.putBoolean("has_glowing_text", false);
+        nbt.put("front_text", front);
+        nbt.putBoolean("is_waxed", true);
+        nbt.put("Items", new ListTag());
+
+        CompoundTag sanitized = SpecialBlockHandlers.sanitizeCaptured(
+            Blocks.OAK_SIGN.defaultBlockState(),
+            nbt
+        );
+        assertTrue(sanitized != null && sanitized.contains("front_text"));
+        assertTrue(sanitized.getBoolean("is_waxed"));
+        assertFalse(sanitized.contains("Items"));
+    }
+
+    @Test
+    void stripsLecternPageFromNbt() {
+        CompoundTag nbt = new CompoundTag();
+        nbt.putInt("Page", 3);
+        nbt.putString("id", "minecraft:lectern");
+        CompoundTag sanitized = InventoryNbt.stripContainerContents(nbt);
+        assertFalse(sanitized.contains("Page"));
+        assertEquals("minecraft:lectern", sanitized.getString("id"));
+    }
 }
