@@ -1,5 +1,7 @@
 # Pre-cast Structure
 
+![Pre-cast Structure Logo](common/src/main/resources/assets/precast_structure/icon.png)
+
 Build something once, bag it, and drop it somewhere else.
 
 Pre-cast Structure is a Minecraft mod for **1.21.1** (Fabric and NeoForge). You frame a build, scan it into a blueprint, print that into a portable structure item, then place it with a hologram preview — useful for camps, shops, or anything you keep rebuilding by hand.
