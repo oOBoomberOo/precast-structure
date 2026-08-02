@@ -525,7 +525,7 @@ public final class HologramRenderSystem {
         if (!HologramLayerPolicy.isEntityVertexFormat(requestedType.format())) {
             return requestedType;
         }
-        ResourceLocation atlas = textureAtlasFromRenderType(requestedType);
+        ResourceLocation atlas = RenderTypeAtlas.texture(requestedType);
         if (atlas != null) {
             return ModRenderTypes.entityHologramDepth(atlas);
         }
@@ -540,30 +540,11 @@ public final class HologramRenderSystem {
         if (!HologramLayerPolicy.isEntityVertexFormat(requestedType.format())) {
             return requestedType;
         }
-        ResourceLocation atlas = textureAtlasFromRenderType(requestedType);
+        ResourceLocation atlas = RenderTypeAtlas.texture(requestedType);
         if (atlas != null) {
             return ModRenderTypes.entityHologramColor(atlas);
         }
         return requestedType;
-    }
-
-    @Nullable
-    private static ResourceLocation textureAtlasFromRenderType(RenderType type) {
-        String text = type.toString();
-        int optional = text.indexOf("Optional[");
-        if (optional < 0) {
-            return null;
-        }
-        int start = optional + "Optional[".length();
-        int end = text.indexOf(']', start);
-        if (end <= start) {
-            return null;
-        }
-        try {
-            return ResourceLocation.parse(text.substring(start, end));
-        } catch (RuntimeException ignored) {
-            return null;
-        }
     }
 
     /**

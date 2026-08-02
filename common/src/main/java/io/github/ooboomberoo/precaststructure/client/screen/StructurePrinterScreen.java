@@ -190,8 +190,10 @@ public class StructurePrinterScreen extends AbstractContainerScreen<StructurePri
     }
 
     private void renderGhostItem(GuiGraphics guiGraphics, ItemStack ghost, int x, int y, String count) {
-        // Lazy-load so StructurePrinterScreen registration does not pull ItemRenderer into early
-        // client class init (NeoForge attribute bootstrap).
+        // Do not call GhostItemRenderer directly: this screen is loaded at menu registration
+        // (StructurePrinterScreen::new). A constant-pool ref would load GhostItemRenderer →
+        // ItemRenderer during that early init and can crash NeoForge attribute bake (swim_speed /
+        // DefaultAttributes). Class.forName defers that chain until first paint.
         try {
             Class.forName("io.github.ooboomberoo.precaststructure.client.screen.GhostItemRenderer")
                 .getDeclaredMethod(

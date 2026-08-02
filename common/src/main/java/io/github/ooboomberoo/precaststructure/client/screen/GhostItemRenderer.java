@@ -4,6 +4,7 @@ import com.mojang.blaze3d.platform.Lighting;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
+import io.github.ooboomberoo.precaststructure.client.RenderTypeAtlas;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.renderer.MultiBufferSource;
@@ -15,7 +16,6 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.FastColor;
 import net.minecraft.world.item.ItemDisplayContext;
 import net.minecraft.world.item.ItemStack;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * GUI ghost items: vanilla {@link GuiGraphics#setColor} / {@code setShaderColor} do not tint
@@ -26,7 +26,12 @@ final class GhostItemRenderer {
     private GhostItemRenderer() {
     }
 
-    /** Called reflectively from {@link StructurePrinterScreen} so this class (and ItemRenderer) stay unloaded until paint. */
+    /**
+     * Invoked via {@code Class.forName} from {@link StructurePrinterScreen}, not a direct call.
+     * Menu registration uses {@code StructurePrinterScreen::new}, which loads that class early; any
+     * bytecode reference here would also load {@link ItemRenderer} (and LivingEntity attribute
+     * bootstrap) before NeoForge binds attributes such as {@code swim_speed}.
+     */
     public static void render(GuiGraphics guiGraphics, ItemStack stack, int x, int y, float alpha) {
         if (stack.isEmpty()) {
             return;
@@ -70,29 +75,11 @@ final class GhostItemRenderer {
     }
 
     private static RenderType translucentLayer(RenderType requested) {
-        ResourceLocation atlas = atlasFrom(requested);
+        ResourceLocation atlas = RenderTypeAtlas.texture(requested);
         if (atlas == null) {
             atlas = ResourceLocation.withDefaultNamespace("textures/atlas/blocks.png");
         }
         return RenderType.entityTranslucentCull(atlas);
-    }
-
-    private static @Nullable ResourceLocation atlasFrom(RenderType type) {
-        String text = type.toString();
-        int optional = text.indexOf("Optional[");
-        if (optional < 0) {
-            return null;
-        }
-        int start = optional + "Optional[".length();
-        int end = text.indexOf(']', start);
-        if (end <= start) {
-            return null;
-        }
-        try {
-            return ResourceLocation.parse(text.substring(start, end));
-        } catch (RuntimeException ignored) {
-            return null;
-        }
     }
 
     private static final class AlphaTintVertexConsumer implements VertexConsumer {

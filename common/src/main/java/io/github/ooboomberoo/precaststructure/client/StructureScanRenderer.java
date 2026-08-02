@@ -11,6 +11,7 @@ import io.github.ooboomberoo.precaststructure.client.HologramRenderSystem.Part;
 import io.github.ooboomberoo.precaststructure.structure.StructureBlueprint;
 import io.github.ooboomberoo.precaststructure.structure.StructureBlockInfo;
 import io.github.ooboomberoo.precaststructure.structure.StructurePlacement;
+import io.github.ooboomberoo.precaststructure.structure.special.SpecialBlockHandlers;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.LevelRenderer;
 import net.minecraft.client.renderer.MultiBufferSource;
@@ -198,7 +199,8 @@ public final class StructureScanRenderer {
         if (block.nbt() == null || level == null) {
             return block.nbt();
         }
-        return io.github.ooboomberoo.precaststructure.compat.CreateCompat.transformNbt(
+        return SpecialBlockHandlers.transformNbt(
+            StructurePlacement.localToScanWorldState(block.state(), scannerFacing),
             block.nbt(),
             StructurePlacement.rotationFor(StructurePlacement.scanForward(scannerFacing)),
             level.registryAccess()

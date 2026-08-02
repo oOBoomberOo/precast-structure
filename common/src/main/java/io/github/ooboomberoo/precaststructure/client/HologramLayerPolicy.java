@@ -7,10 +7,9 @@ import org.jetbrains.annotations.Nullable;
 /**
  * Pure policy for which render layer a hologram mesh should use.
  *
- * <p><b>Block models</b> (including Veil remapping them onto {@code entity_cutout} /
- * {@link DefaultVertexFormat#NEW_ENTITY}) must ALWAYS use the hologram block layer. Runtime
- * evidence: jungle_planks requested {@code entity_cutout} with {@code entityFormat=true} and were
- * drawn opaque via {@link Target#REQUESTED_ENTITY_COLOR}.
+ * <p><b>Block models</b> always resolve to {@link Target#HOLOGRAM_BLOCK}, even when Veil remaps
+ * them onto {@code entity_cutout} / {@link DefaultVertexFormat#NEW_ENTITY}. Vertex format alone
+ * is not a reliable signal for layer choice under that remapping.
  *
  * <p><b>True BER meshes</b> (chest / bed / shulker) keep entity atlas layers via
  * {@link #resolveEntityBer(boolean)}.
@@ -42,24 +41,14 @@ public final class HologramLayerPolicy {
         return Target.HOLOGRAM_BLOCK;
     }
 
-    /**
-     * @deprecated Prefer {@link #resolve(Mode, boolean)}. Kept for tests covering the old
-     *             entityFormat boolean; entityFormat=true must NOT steal block models.
-     */
-    @Deprecated
-    public static Target resolve(boolean entityFormat, boolean depthPass) {
-        // Historical API treated entityFormat as BER. That is unsafe under Veil (planks use
-        // NEW_ENTITY). Callers must use Mode instead; this overload now always holograms.
-        return Target.HOLOGRAM_BLOCK;
-    }
-
     public static Target resolveEntityBer(boolean depthPass) {
         return depthPass ? Target.HOLOGRAM_ENTITY_DEPTH : Target.REQUESTED_ENTITY_COLOR;
     }
 
     /**
-     * True only for entity-atlas meshes. Useful for diagnostics; do NOT gate block-model remap
-     * on this under Veil (block models may report NEW_ENTITY).
+     * Whether {@code format} matches {@link DefaultVertexFormat#NEW_ENTITY}.
+     * Block models remapped by Veil may also report this format, so callers must not use this
+     * alone to choose between block and entity hologram layers.
      */
     public static boolean isEntityVertexFormat(@Nullable VertexFormat format) {
         if (format == null) {

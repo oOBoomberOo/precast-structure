@@ -15,24 +15,26 @@ import org.joml.Vector3f;
 import org.lwjgl.system.MemoryStack;
 
 /**
- * Clips geometry against a horizontal wipe plane using Sutherland–Hodgman.
+ * {@link VertexConsumer} that clips submitted geometry to a horizontal wipe plane,
+ * used for hologram deploy/scan reveal effects.
  *
- * <p><b>putBulkData</b> (block models): quads arrive in model space — clip at
- * {@code modelClipY}, then transform with the pose matrix.
- *
- * <p><b>one-shot addVertex</b> (ModelPart / BER meshes): vanilla transforms first, then
- * calls {@link #addVertex(float, float, float, int, float, float, int, int, float, float, float)}.
- * Those verts are already in pose-output space — clip at {@code outputClipY} and emit
- * without re-transforming. Fluent {@code addVertex(Pose,...)} buffering is intentionally
- * unused: ModelPart never takes that path.
+ * <p>Two clip heights may be supplied:
+ * <ul>
+ *   <li>{@code modelClipY} — Y in block-model space, applied to baked quads
+ *       ({@link #putBulkData}).</li>
+ *   <li>{@code outputClipY} — Y in pose-output space, applied to already-transformed
+ *       vertices ({@link #addVertex(float, float, float, int, float, float, int, int, float, float, float)}).
+ *       Often {@code blockPose.transformPosition(0, modelClipY, 0).y}.</li>
+ * </ul>
+ * The single-height constructor uses the same value for both.
  */
 public final class PlaneClipVertexConsumer implements VertexConsumer {
     private static final int MAX_CLIP_VERTS = 8;
 
     private final VertexConsumer delegate;
-    /** Block-model space plane (putBulkData). */
+    /** Wipe plane Y in block-model space. */
     private final float modelClipY;
-    /** Pose-output space plane (one-shot BER verts). */
+    /** Wipe plane Y in pose-output space. */
     private final float outputClipY;
     private final boolean keepBelow;
     private final ClipVert[] input = new ClipVert[4];
@@ -153,8 +155,8 @@ public final class PlaneClipVertexConsumer implements VertexConsumer {
     }
 
     /**
-     * ModelPart / BER path: positions are already pose-transformed.
-     * SpriteCoordinateExpander forwards this overload to the inner consumer.
+     * Accepts a fully attributed vertex in pose-output space; every four vertices form a quad
+     * that is clipped at {@code outputClipY}.
      */
     @Override
     public void addVertex(
@@ -215,8 +217,9 @@ public final class PlaneClipVertexConsumer implements VertexConsumer {
     }
 
     /**
-     * Emit clipped polygon as {@link VertexFormat.Mode#QUADS} primitives.
-     * {@code matrix == null} means verts are already transformed (oneshot BER).
+     * Emits the clipped polygon as {@link VertexFormat.Mode#QUADS} primitives.
+     * When {@code matrix} is non-null, vertices are transformed before emit; when null,
+     * they are already in output space.
      */
     private void emitClippedQuad(Matrix4f matrix, float clipY) {
         int clippedCount = clipQuad(input, clipY, keepBelow, clipA, clipB);

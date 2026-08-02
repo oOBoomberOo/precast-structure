@@ -16,8 +16,8 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.Blocks;
 
 /**
- * Precast structure item preview as a solid mesh (hand / inventory / GUI).
- * World overlays keep hologram styling via {@link HologramRenderSystem} separately.
+ * Renders an opaque 3D preview of a precast structure item in hand, inventory, and GUI contexts.
+ * The preview is drawn as a solid mesh rather than a translucent hologram.
  */
 public final class StructureItemRenderer {
     /** Matches vanilla block item GUI scale for a 1×1×1 cube. */

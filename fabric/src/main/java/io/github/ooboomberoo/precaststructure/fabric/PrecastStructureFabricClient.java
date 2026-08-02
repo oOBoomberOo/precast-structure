@@ -1,13 +1,17 @@
 package io.github.ooboomberoo.precaststructure.fabric;
 
 import com.mojang.blaze3d.vertex.DefaultVertexFormat;
+import dev.architectury.registry.menu.MenuRegistry;
 import io.github.ooboomberoo.precaststructure.PrecastStructureMod;
 import io.github.ooboomberoo.precaststructure.client.ModShaders;
 import io.github.ooboomberoo.precaststructure.client.PrecastStructureClient;
 import io.github.ooboomberoo.precaststructure.client.ShaderCompat;
 import io.github.ooboomberoo.precaststructure.client.StructureItemRenderer;
 import io.github.ooboomberoo.precaststructure.client.WorldHologramRender;
+import io.github.ooboomberoo.precaststructure.client.screen.StructurePrinterScreen;
+import io.github.ooboomberoo.precaststructure.client.screen.StructureScannerScreen;
 import io.github.ooboomberoo.precaststructure.registry.ModItems;
+import io.github.ooboomberoo.precaststructure.registry.ModMenuTypes;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.rendering.v1.BuiltinItemRendererRegistry;
 import net.fabricmc.fabric.api.client.rendering.v1.CoreShaderRegistrationCallback;
@@ -19,6 +23,8 @@ public final class PrecastStructureFabricClient implements ClientModInitializer 
     @Override
     public void onInitializeClient() {
         PrecastStructureClient.init();
+        MenuRegistry.registerScreenFactory(ModMenuTypes.STRUCTURE_SCANNER.get(), StructureScannerScreen::new);
+        MenuRegistry.registerScreenFactory(ModMenuTypes.STRUCTURE_PRINTER.get(), StructurePrinterScreen::new);
         CoreShaderRegistrationCallback.EVENT.register(context -> {
             context.register(
                 ResourceLocation.fromNamespaceAndPath(PrecastStructureMod.MOD_ID, ModShaders.SCAN_HOLOGRAM),

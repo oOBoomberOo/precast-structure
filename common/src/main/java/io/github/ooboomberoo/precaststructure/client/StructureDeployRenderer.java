@@ -10,6 +10,7 @@ import io.github.ooboomberoo.precaststructure.structure.StructureBlockInfo;
 import io.github.ooboomberoo.precaststructure.structure.StructureDeployment;
 import io.github.ooboomberoo.precaststructure.structure.StructureDeploymentManager;
 import io.github.ooboomberoo.precaststructure.structure.StructurePlacement;
+import io.github.ooboomberoo.precaststructure.structure.special.SpecialBlockHandlers;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.LevelRenderer;
 import net.minecraft.client.renderer.MultiBufferSource;
@@ -154,7 +155,8 @@ public final class StructureDeployRenderer {
                 bufferSource,
                 dispatcher,
                 state,
-                io.github.ooboomberoo.precaststructure.compat.CreateCompat.transformNbt(
+                SpecialBlockHandlers.transformNbt(
+                    state,
                     block.nbt(),
                     StructurePlacement.rotationFor(deployment.facing()),
                     level.registryAccess()
@@ -180,7 +182,8 @@ public final class StructureDeployRenderer {
             out.add(new Part(
                 worldPos,
                 state,
-                io.github.ooboomberoo.precaststructure.compat.CreateCompat.transformNbt(
+                SpecialBlockHandlers.transformNbt(
+                    state,
                     block.nbt(),
                     StructurePlacement.rotationFor(deployment.facing()),
                     level.registryAccess()
