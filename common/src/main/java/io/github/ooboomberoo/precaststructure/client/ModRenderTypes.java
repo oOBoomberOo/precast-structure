@@ -11,6 +11,11 @@ import net.minecraft.client.renderer.RenderType;
  * <p>Without a shader pack, holograms use a depth prepass then a translucent color pass so
  * blending cannot reveal farther hologram faces that were drawn earlier.
  *
+ * <p>The depth prepass uses the vanilla solid program (not {@code scan_hologram}): the hologram
+ * fragment shader is translucent/emissive and under Veil often fails to populate the depth
+ * buffer, which makes every internal face show through. Color still uses the custom hologram
+ * program for scanlines / sweeps.
+ *
  * <p>When Iris/Oculus has a shader pack enabled, custom core shaders cannot participate in
  * Iris gbuffers (geometry would vanish). The Iris path uses {@link RenderType#translucentMovingBlock()}
  * (BLOCK format, Iris-remapped) plus {@link HologramStyleVertexConsumer}, drawn after deferred.
@@ -27,10 +32,12 @@ public final class ModRenderTypes extends RenderType {
         false,
         CompositeState.builder()
             .setLightmapState(LIGHTMAP)
-            .setShaderState(SCAN_HOLOGRAM_SHADER)
+            .setShaderState(RENDERTYPE_SOLID_SHADER)
             .setTextureState(BLOCK_SHEET_MIPPED)
             .setTransparencyState(NO_TRANSPARENCY)
+            .setDepthTestState(LEQUAL_DEPTH_TEST)
             .setWriteMaskState(DEPTH_WRITE)
+            .setCullState(CULL)
             .setOutputState(MAIN_TARGET)
             .createCompositeState(false)
     );
@@ -49,6 +56,7 @@ public final class ModRenderTypes extends RenderType {
             .setTransparencyState(TRANSLUCENT_TRANSPARENCY)
             .setWriteMaskState(COLOR_WRITE)
             .setDepthTestState(LEQUAL_DEPTH_TEST)
+            .setCullState(CULL)
             .setOutputState(MAIN_TARGET)
             .createCompositeState(false)
     );

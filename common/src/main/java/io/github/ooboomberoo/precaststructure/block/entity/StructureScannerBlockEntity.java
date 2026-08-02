@@ -43,8 +43,11 @@ import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
 import org.jetbrains.annotations.Nullable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class StructureScannerBlockEntity extends BlockEntity implements ExtendedMenuProvider {
+    private static final Logger LOGGER = LoggerFactory.getLogger(StructureScannerBlockEntity.class);
     public static final int MAX_NAME_LENGTH = 48;
     private static final int RECHECK_INTERVAL = 10;
     private static final int CLEAR_FLAGS = Block.UPDATE_CLIENTS | Block.UPDATE_SUPPRESS_DROPS;
@@ -176,6 +179,7 @@ public class StructureScannerBlockEntity extends BlockEntity implements Extended
 
         StructureFrameDetector.ScanResult result = StructureFrameDetector.detect(level, worldPosition);
         if (!result.successful()) {
+            LOGGER.warn("Scan rejected at {}: {}", worldPosition, result.error().getString());
             player.displayClientMessage(result.error(), true);
             recheckReady();
             return;
@@ -185,15 +189,18 @@ public class StructureScannerBlockEntity extends BlockEntity implements Extended
         Direction scannerFacing = getBlockState().getValue(StructureScannerBlock.FACING);
         StructureBlueprint blueprint = BlueprintCapture.capture(level, frame, scannerFacing);
         if (blueprint.blocks().isEmpty()) {
+            LOGGER.warn("Scan empty at {}", worldPosition);
             player.displayClientMessage(Component.translatable("message.precast_structure.empty_scan"), true);
             return;
         }
 
         if (!hasEmptyBlueprint(player)) {
+            LOGGER.warn("Scan missing empty blueprint at {}", worldPosition);
             player.displayClientMessage(Component.translatable("message.precast_structure.needs_empty_blueprint"), true);
             return;
         }
         if (!consumeEmptyBlueprint(player)) {
+            LOGGER.warn("Scan failed to consume empty blueprint at {}", worldPosition);
             player.displayClientMessage(Component.translatable("message.precast_structure.needs_empty_blueprint"), true);
             return;
         }
@@ -444,7 +451,7 @@ public class StructureScannerBlockEntity extends BlockEntity implements Extended
 
     @Override
     public AbstractContainerMenu createMenu(int containerId, Inventory inventory, net.minecraft.world.entity.player.Player player) {
-        return new StructureScannerMenu(containerId, inventory, worldPosition, structureName);
+        return new StructureScannerMenu(containerId, inventory, this);
     }
 
     @Override

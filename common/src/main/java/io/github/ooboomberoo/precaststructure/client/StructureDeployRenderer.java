@@ -83,19 +83,23 @@ public final class StructureDeployRenderer {
 
         if (ModRenderTypes.useHologramDepthPrepass()) {
             RenderSystem.depthMask(true);
+            RenderSystem.colorMask(false, false, false, false);
             StructureHologramRenderer.renderPass(poseStack, cameraPosition, bufferSource, dispatcher, hologramParts, true);
             bufferSource.endBatch();
 
+            RenderSystem.colorMask(true, true, true, true);
             RenderSystem.depthMask(false);
             StructureHologramRenderer.renderPass(poseStack, cameraPosition, bufferSource, dispatcher, hologramParts, false);
             bufferSource.endBatch();
         } else {
+            RenderSystem.colorMask(true, true, true, true);
             RenderSystem.depthMask(true);
             StructureHologramRenderer.renderPass(poseStack, cameraPosition, bufferSource, dispatcher, hologramParts, false);
             bufferSource.endBatch();
         }
 
         RenderSystem.depthMask(true);
+        RenderSystem.colorMask(true, true, true, true);
         RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
             for (StructureDeployment deployment : StructureDeploymentManager.clientDeployments()) {
                 if (isFinishingCover(level, deployment, partialTick)) {
@@ -142,7 +146,18 @@ public final class StructureDeployRenderer {
             poseStack.pushPose();
             poseStack.translate(worldPos.getX(), worldPos.getY(), worldPos.getZ());
             Float localClipY = fullyBelow ? null : deployY - worldPos.getY();
-            renderSolidMesh(poseStack, bufferSource, dispatcher, state, localClipY);
+            renderSolidMesh(
+                poseStack,
+                bufferSource,
+                dispatcher,
+                state,
+                io.github.ooboomberoo.precaststructure.compat.CreateCompat.transformNbt(
+                    block.nbt(),
+                    StructurePlacement.rotationFor(deployment.facing()),
+                    level.registryAccess()
+                ),
+                localClipY
+            );
             poseStack.popPose();
         }
 
@@ -161,7 +176,17 @@ public final class StructureDeployRenderer {
             }
             boolean fullyAbove = bounds.minY() >= deployY - CLIP_EPSILON;
             Float localClipY = fullyAbove ? null : deployY - worldPos.getY();
-            out.add(new Part(worldPos, state, localClipY, false));
+            out.add(new Part(
+                worldPos,
+                state,
+                io.github.ooboomberoo.precaststructure.compat.CreateCompat.transformNbt(
+                    block.nbt(),
+                    StructurePlacement.rotationFor(deployment.facing()),
+                    level.registryAccess()
+                ),
+                localClipY,
+                false
+            ));
         }
     }
 
@@ -170,6 +195,7 @@ public final class StructureDeployRenderer {
         MultiBufferSource.BufferSource bufferSource,
         BlockRenderDispatcher dispatcher,
         BlockState state,
+        @Nullable net.minecraft.nbt.CompoundTag nbt,
         @Nullable Float localClipY
     ) {
         // Fullbright avoids the post-place lighting lag (ghosts would otherwise go dark for a beat).
@@ -180,7 +206,15 @@ public final class StructureDeployRenderer {
             float clipY = localClipY;
             source = renderType -> new StructureHologramRenderer.PlaneClipVertexConsumer(bufferSource.getBuffer(renderType), clipY, true);
         }
-        dispatcher.renderSingleBlock(state, poseStack, source, LightTexture.FULL_BRIGHT, OverlayTexture.NO_OVERLAY);
+        io.github.ooboomberoo.precaststructure.compat.CreateCompatClient.renderSingleBlock(
+            dispatcher,
+            state,
+            poseStack,
+            source,
+            LightTexture.FULL_BRIGHT,
+            OverlayTexture.NO_OVERLAY,
+            nbt
+        );
     }
 
     private static void renderDeployOverlay(

@@ -5,14 +5,18 @@ import io.github.ooboomberoo.precaststructure.block.StructureScannerBlock;
 import io.github.ooboomberoo.precaststructure.block.entity.StructureScannerBlockEntity;
 import io.github.ooboomberoo.precaststructure.menu.StructureScannerMenu;
 import io.github.ooboomberoo.precaststructure.network.ModNetworking;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.AbstractButton;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.narration.NarrationElementOutput;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
+import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.MinecraftServer;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.level.block.state.BlockState;
 import org.lwjgl.glfw.GLFW;
@@ -44,8 +48,44 @@ public class StructureScannerScreen extends AbstractContainerScreen<StructureSca
         this.nameField.setValue(this.menu.getInitialStructureName());
         this.nameField.setCanLoseFocus(true);
         this.addRenderableWidget(this.nameField);
-        this.addRenderableWidget(Button.builder(Component.translatable("gui.precast_structure.scan_structure"), button -> ModNetworking.sendScannerAction(this.menu.getBlockPos(), this.nameField.getValue())).bounds(this.leftPos + 12, this.topPos + 58, 152, 20).build());
+        this.addRenderableWidget(Button.builder(Component.translatable("gui.precast_structure.scan_structure"), button -> this.requestScan()).bounds(this.leftPos + 12, this.topPos + 58, 152, 20).build());
         this.addRenderableWidget(new CloseButton(this.leftPos + this.imageWidth - CLOSE_SIZE - 5, this.topPos + 5));
+    }
+
+    private void requestScan() {
+        BlockPos pos = this.menu.getBlockPos();
+        String structureName = this.nameField.getValue();
+        ModNetworking.sendScannerAction(pos, structureName);
+
+        // Integrated-server fallback: C2S Architectury packets can be dropped while the
+        // game window is unfocused under MCP automation; invoke the same handler locally.
+        Minecraft minecraft = this.minecraft;
+        if (minecraft == null || minecraft.player == null) {
+            return;
+        }
+        MinecraftServer server = minecraft.getSingleplayerServer();
+        if (server == null) {
+            return;
+        }
+        var playerId = minecraft.player.getUUID();
+        server.execute(() -> {
+            ServerPlayer serverPlayer = server.getPlayerList().getPlayer(playerId);
+            if (serverPlayer == null) {
+                return;
+            }
+            if (!(serverPlayer.containerMenu instanceof StructureScannerMenu menu) || !menu.getBlockPos().equals(pos)) {
+                return;
+            }
+            StructureScannerBlockEntity scanner = menu.getScanner();
+            if (scanner == null && serverPlayer.level().getBlockEntity(pos) instanceof StructureScannerBlockEntity levelScanner) {
+                scanner = levelScanner;
+            }
+            if (scanner == null) {
+                return;
+            }
+            scanner.setStructureName(structureName);
+            scanner.scanStructure(serverPlayer);
+        });
     }
 
     @Override

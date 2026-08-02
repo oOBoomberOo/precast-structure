@@ -14,10 +14,12 @@ import net.minecraft.client.renderer.block.model.BakedQuad;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Vec3i;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.util.FastColor;
 import net.minecraft.util.Mth;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
+import io.github.ooboomberoo.precaststructure.compat.CreateCompatClient;
 import org.jetbrains.annotations.Nullable;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
@@ -36,9 +38,17 @@ public final class StructureHologramRenderer {
     private StructureHologramRenderer() {
     }
 
-    public record Part(BlockPos worldPos, BlockState state, @Nullable Float clipY, boolean keepBelow) {
+    public record Part(BlockPos worldPos, BlockState state, @Nullable CompoundTag nbt, @Nullable Float clipY, boolean keepBelow) {
         public static Part of(BlockPos worldPos, BlockState state) {
-            return new Part(worldPos, state, null, false);
+            return new Part(worldPos, state, null, null, false);
+        }
+
+        public static Part of(BlockPos worldPos, BlockState state, @Nullable CompoundTag nbt) {
+            return new Part(worldPos, state, nbt, null, false);
+        }
+
+        public static Part clipped(BlockPos worldPos, BlockState state, @Nullable CompoundTag nbt, float clipY, boolean keepBelow) {
+            return new Part(worldPos, state, nbt, clipY, keepBelow);
         }
     }
 
@@ -51,32 +61,39 @@ public final class StructureHologramRenderer {
             MultiBufferSource.BufferSource bufferSource = MultiBufferSource.immediate(byteBuffer);
 
         RenderSystem.enableDepthTest();
+        RenderSystem.depthFunc(org.lwjgl.opengl.GL11.GL_LEQUAL);
         // Iris path already cyans in HologramStyleVertexConsumer; ColorModulator still handles blocked red.
         float alpha = ModShaders.useCustomHologramShader() ? 1.0F : 0.9F;
         RenderSystem.setShaderColor(colorR, colorG, colorB, alpha);
 
         if (ModRenderTypes.useHologramDepthPrepass()) {
+            // Opaque depth seed, then translucent color that depth-tests against it.
             RenderSystem.depthMask(true);
+            RenderSystem.colorMask(false, false, false, false);
             renderPass(poseStack, cameraPosition, bufferSource, dispatcher, parts, true);
             bufferSource.endBatch();
 
+            RenderSystem.colorMask(true, true, true, true);
             RenderSystem.depthMask(false);
             renderPass(poseStack, cameraPosition, bufferSource, dispatcher, parts, false);
             bufferSource.endBatch();
         } else {
             // Single translucent pass: Iris remaps solid depth-only draws into gbuffers.
+            RenderSystem.colorMask(true, true, true, true);
             RenderSystem.depthMask(true);
             renderPass(poseStack, cameraPosition, bufferSource, dispatcher, parts, false);
             bufferSource.endBatch();
         }
 
         RenderSystem.depthMask(true);
+        RenderSystem.colorMask(true, true, true, true);
         RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
     }
     }
 
     /**
      * Emits hologram meshes into an existing buffer (one depth or color pass).
+     * Applies camera translation itself.
      */
     public static void renderPass(
         PoseStack poseStack,
@@ -85,6 +102,40 @@ public final class StructureHologramRenderer {
         BlockRenderDispatcher dispatcher,
         Iterable<Part> parts,
         boolean depthPass
+    ) {
+        poseStack.pushPose();
+        poseStack.translate(-cameraPosition.x, -cameraPosition.y, -cameraPosition.z);
+        renderPassLocal(poseStack, cameraPosition, bufferSource, dispatcher, parts, depthPass);
+        poseStack.popPose();
+    }
+
+    /**
+     * Like {@link #renderPass} but expects the caller to have already applied camera
+     * (and any sub-level) transforms on {@code poseStack}.
+     */
+    public static void renderPassLocal(
+        PoseStack poseStack,
+        Vec3 cameraPosition,
+        MultiBufferSource.BufferSource bufferSource,
+        BlockRenderDispatcher dispatcher,
+        Iterable<Part> parts,
+        boolean depthPass
+    ) {
+        renderPassLocal(poseStack, cameraPosition, bufferSource, dispatcher, parts, depthPass, Vec3.ZERO);
+    }
+
+    /**
+     * @param plotOrigin subtracted from each part's plot-storage {@link Part#worldPos()} in
+     *                   double precision before the float PoseStack translate (Sable rotation point).
+     */
+    public static void renderPassLocal(
+        PoseStack poseStack,
+        Vec3 cameraPosition,
+        MultiBufferSource.BufferSource bufferSource,
+        BlockRenderDispatcher dispatcher,
+        Iterable<Part> parts,
+        boolean depthPass,
+        Vec3 plotOrigin
     ) {
         if (depthPass && !ModRenderTypes.useHologramDepthPrepass()) {
             return;
@@ -96,17 +147,16 @@ public final class StructureHologramRenderer {
         float camY = (float) cameraPosition.y;
         float camZ = (float) cameraPosition.z;
 
-        poseStack.pushPose();
-        poseStack.translate(-cameraPosition.x, -cameraPosition.y, -cameraPosition.z);
-
         for (Part part : parts) {
             poseStack.pushPose();
-            poseStack.translate(part.worldPos().getX(), part.worldPos().getY(), part.worldPos().getZ());
-            renderPart(poseStack, bufferSource, dispatcher, part, hologramType, styleEffects, camX, camY, camZ, time);
+            poseStack.translate(
+                part.worldPos().getX() - plotOrigin.x,
+                part.worldPos().getY() - plotOrigin.y,
+                part.worldPos().getZ() - plotOrigin.z
+            );
+            renderPart(poseStack, bufferSource, dispatcher, part, hologramType, depthPass, styleEffects, camX, camY, camZ, time);
             poseStack.popPose();
         }
-
-        poseStack.popPose();
     }
 
     private static void renderPart(
@@ -115,13 +165,20 @@ public final class StructureHologramRenderer {
         BlockRenderDispatcher dispatcher,
         Part part,
         RenderType hologramType,
+        boolean depthPass,
         boolean styleEffects,
         float cameraX,
         float cameraY,
         float cameraZ,
         float time
     ) {
-        MultiBufferSource source = renderType -> {
+        MultiBufferSource source = requestedType -> {
+            // Always draw through the hologram layer. Comparing VertexFormat with == breaks under
+            // Architectury's loader split and silently falls back to vanilla + CPU tint.
+            // Skip non-block-sized formats in the depth prepass (chests/beds/signs use entity atlases).
+            if (depthPass && !isBlockVertexFormat(requestedType.format())) {
+                return DiscardingVertexConsumer.INSTANCE;
+            }
             VertexConsumer buffer = bufferSource.getBuffer(hologramType);
             if (styleEffects) {
                 buffer = new HologramStyleVertexConsumer(buffer, cameraX, cameraY, cameraZ, time);
@@ -131,7 +188,62 @@ public final class StructureHologramRenderer {
             }
             return buffer;
         };
-        dispatcher.renderSingleBlock(part.state(), poseStack, source, LightTexture.FULL_BRIGHT, OverlayTexture.NO_OVERLAY);
+        CreateCompatClient.renderSingleBlock(
+            dispatcher,
+            part.state(),
+            poseStack,
+            source,
+            LightTexture.FULL_BRIGHT,
+            OverlayTexture.NO_OVERLAY,
+            part.nbt()
+        );
+    }
+
+    private static boolean isBlockVertexFormat(com.mojang.blaze3d.vertex.VertexFormat format) {
+        if (format == DefaultVertexFormat.BLOCK) {
+            return true;
+        }
+        // Cross-loader safe: Architectury may duplicate the BLOCK singleton.
+        return format.getVertexSize() == DefaultVertexFormat.BLOCK.getVertexSize()
+            && format.getElements().equals(DefaultVertexFormat.BLOCK.getElements());
+    }
+
+    /** Drops geometry (used to skip entity meshes in the block-format depth prepass). */
+    private static final class DiscardingVertexConsumer implements VertexConsumer {
+        static final DiscardingVertexConsumer INSTANCE = new DiscardingVertexConsumer();
+
+        private DiscardingVertexConsumer() {
+        }
+
+        @Override
+        public VertexConsumer addVertex(float x, float y, float z) {
+            return this;
+        }
+
+        @Override
+        public VertexConsumer setColor(int red, int green, int blue, int alpha) {
+            return this;
+        }
+
+        @Override
+        public VertexConsumer setUv(float u, float v) {
+            return this;
+        }
+
+        @Override
+        public VertexConsumer setUv1(int u, int v) {
+            return this;
+        }
+
+        @Override
+        public VertexConsumer setUv2(int u, int v) {
+            return this;
+        }
+
+        @Override
+        public VertexConsumer setNormal(float x, float y, float z) {
+            return this;
+        }
     }
 
     /**

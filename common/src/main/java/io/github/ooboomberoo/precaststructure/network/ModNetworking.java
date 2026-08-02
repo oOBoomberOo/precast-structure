@@ -45,7 +45,11 @@ public final class ModNetworking {
                 if (!(serverPlayer.containerMenu instanceof StructureScannerMenu menu) || !menu.getBlockPos().equals(pos)) {
                     return;
                 }
-                if (!(serverPlayer.level().getBlockEntity(pos) instanceof StructureScannerBlockEntity scanner)) {
+                StructureScannerBlockEntity scanner = menu.getScanner();
+                if (scanner == null && serverPlayer.level().getBlockEntity(pos) instanceof StructureScannerBlockEntity levelScanner) {
+                    scanner = levelScanner;
+                }
+                if (scanner == null) {
                     return;
                 }
                 scanner.setStructureName(structureName);
