@@ -12,7 +12,7 @@ public final class ModDataComponents {
         DeferredRegister.create(PrecastStructureMod.MOD_ID, Registries.DATA_COMPONENT_TYPE);
 
     /**
-     * Typed blueprint payload (size + blocks). Replaces storing under {@code minecraft:custom_data}.
+     * {@link StructureBlueprint} stored on blueprint/precast items (size and block data).
      */
     public static final RegistrySupplier<DataComponentType<StructureBlueprint>> BLUEPRINT_STRUCTURE =
         DATA_COMPONENTS.register(
