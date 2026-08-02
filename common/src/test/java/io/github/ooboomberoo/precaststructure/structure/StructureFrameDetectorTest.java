@@ -65,6 +65,29 @@ class StructureFrameDetectorTest {
         );
     }
 
+    @Test
+    void scannerAttachedBesidePlatformAtFloorLevel() {
+        PlatformBounds bounds = PlatformBounds.of(rectangle(0, 4, 0, 4, 4));
+        assertNotNull(bounds);
+
+        assertTrue(StructureFrameDetector.isScannerAttachedToPlatform(new BlockPos(-1, 4, 2), bounds));
+        assertTrue(StructureFrameDetector.isScannerAttachedToPlatform(new BlockPos(2, 4, 5), bounds));
+        assertFalse(StructureFrameDetector.isScannerAttachedToPlatform(new BlockPos(-1, 4, -1), bounds));
+        assertFalse(StructureFrameDetector.isScannerAttachedToPlatform(new BlockPos(2, 4, 2), bounds));
+    }
+
+    @Test
+    void scannerAttachedOnFenceLineBorder() {
+        PlatformBounds bounds = PlatformBounds.of(rectangle(0, 4, 0, 4, 4));
+        assertNotNull(bounds);
+
+        assertTrue(StructureFrameDetector.isScannerAttachedToPlatform(new BlockPos(0, 5, 2), bounds));
+        assertTrue(StructureFrameDetector.isScannerAttachedToPlatform(new BlockPos(4, 5, 4), bounds));
+        assertFalse(StructureFrameDetector.isScannerAttachedToPlatform(new BlockPos(2, 5, 2), bounds));
+        assertFalse(StructureFrameDetector.isScannerAttachedToPlatform(new BlockPos(0, 6, 2), bounds));
+        assertFalse(StructureFrameDetector.isScannerAttachedToPlatform(new BlockPos(-1, 5, 2), bounds));
+    }
+
     private static Set<BlockPos> rectangle(int minX, int y, int minZ, int maxX, int maxZ) {
         Set<BlockPos> cells = new HashSet<>();
         for (int x = minX; x <= maxX; x++) {

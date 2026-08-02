@@ -112,6 +112,12 @@ public final class StructureFrameDetector {
             return ScanResult.error(Component.translatable("message.precast_structure.invalid_floor"));
         }
 
+        // Classic placement is beside the platform at floor Y; fence-line placement sits on the
+        // border one block above. Reject interior/off-frame scanners so they are not digitized.
+        if (!isScannerAttachedToPlatform(scannerPos, bounds)) {
+            return ScanResult.error(Component.translatable("message.precast_structure.invalid_platform"));
+        }
+
         CornerScaffold scaffold = findCornerScaffold(level, bounds);
         if (scaffold == null) {
             return ScanResult.error(Component.translatable("message.precast_structure.invalid_height"));
@@ -134,7 +140,46 @@ public final class StructureFrameDetector {
                 seeds.add(neighbor.immutable());
             }
         }
+        if (!seeds.isEmpty()) {
+            return seeds;
+        }
+        // Fence-line / scaffold placement: scanner sits on a border platform floor.
+        BlockPos below = scannerPos.below();
+        if (isPlatform(level.getBlockState(below))) {
+            seeds.add(below.immutable());
+        }
         return seeds;
+    }
+
+    static boolean isScannerAttachedToPlatform(BlockPos scannerPos, PlatformBounds bounds) {
+        if (scannerPos.getY() == bounds.y()) {
+            return isHorizontallyAdjacentToBounds(scannerPos, bounds);
+        }
+        if (scannerPos.getY() == bounds.y() + 1) {
+            return isOnPlatformBorder(scannerPos, bounds);
+        }
+        return false;
+    }
+
+    private static boolean isHorizontallyAdjacentToBounds(BlockPos scannerPos, PlatformBounds bounds) {
+        int x = scannerPos.getX();
+        int z = scannerPos.getZ();
+        boolean touchesX = (x == bounds.minX() - 1 || x == bounds.maxX() + 1)
+            && z >= bounds.minZ()
+            && z <= bounds.maxZ();
+        boolean touchesZ = (z == bounds.minZ() - 1 || z == bounds.maxZ() + 1)
+            && x >= bounds.minX()
+            && x <= bounds.maxX();
+        return touchesX || touchesZ;
+    }
+
+    private static boolean isOnPlatformBorder(BlockPos scannerPos, PlatformBounds bounds) {
+        int x = scannerPos.getX();
+        int z = scannerPos.getZ();
+        if (x < bounds.minX() || x > bounds.maxX() || z < bounds.minZ() || z > bounds.maxZ()) {
+            return false;
+        }
+        return x == bounds.minX() || x == bounds.maxX() || z == bounds.minZ() || z == bounds.maxZ();
     }
 
     private static Set<BlockPos> floodFillPlatform(Level level, List<BlockPos> seeds) {
@@ -216,7 +261,7 @@ public final class StructureFrameDetector {
     private static int countPillar(Level level, BlockPos pillarBase) {
         int maxHeight = ModConfig.get().frame.maxPlatformSize;
         int height = 0;
-        while (height < maxHeight && level.getBlockState(pillarBase.above(height + 1)).is(ModBlocks.METAL_SCAFFOLD.get())) {
+        while (height < maxHeight && isCornerScaffold(level.getBlockState(pillarBase.above(height + 1)))) {
             height++;
         }
         return height;
@@ -226,8 +271,14 @@ public final class StructureFrameDetector {
         return state.is(ModBlocks.PLATFORM_FLOOR.get());
     }
 
-    private static boolean isPerimeterBarrier(BlockState state) {
-        return state.is(ModBlocks.PERIMETER_FENCE.get()) || state.is(ModBlocks.PERIMETER_FENCE_GATE.get());
+    static boolean isPerimeterBarrier(BlockState state) {
+        return state.is(ModBlocks.PERIMETER_FENCE.get())
+            || state.is(ModBlocks.PERIMETER_FENCE_GATE.get())
+            || state.is(ModBlocks.STRUCTURE_SCANNER.get());
+    }
+
+    static boolean isCornerScaffold(BlockState state) {
+        return state.is(ModBlocks.METAL_SCAFFOLD.get()) || state.is(ModBlocks.STRUCTURE_SCANNER.get());
     }
 
     record PlatformBounds(int minX, int maxX, int minZ, int maxZ, int y) {
