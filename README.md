@@ -13,7 +13,7 @@ Frame the volume first:
 1. Lay a solid rectangle of **Platform Floor** (3×3 or larger; max size is configurable, default 64).
 2. Run **Perimeter Fence** (or gates) one block above the platform edge — leave the scaffold corner open.
 3. Put a **Metal Scaffold** pillar on exactly one corner — that sets the height.
-4. Park a **Structure Scanner** against one side of the platform.
+4. Park a **Structure Scanner** against one side of the platform, or in the fence/scaffold line (it counts as a perimeter/scaffold block).
 
 Build inside the frame, then open the scanner with an **Empty Blueprint** in your inventory. It digitizes the interior and hands you a filled **Blueprint**. Scanning empties chests, lecterns, jukeboxes, and other containers first (contents drop in place; ender chests are skipped), then clears the framed build into a scan hologram. The platform, fence, scaffold, and scanner stay; the build itself is consumed. Beds, doors, and similar double blocks count as one material each.
 

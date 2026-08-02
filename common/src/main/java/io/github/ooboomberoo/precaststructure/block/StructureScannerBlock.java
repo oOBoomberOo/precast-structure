@@ -4,6 +4,7 @@ import com.mojang.serialization.MapCodec;
 import dev.architectury.registry.menu.MenuRegistry;
 import io.github.ooboomberoo.precaststructure.block.entity.StructureScannerBlockEntity;
 import io.github.ooboomberoo.precaststructure.registry.ModBlockEntityTypes;
+import io.github.ooboomberoo.precaststructure.structure.StructureFrameDetector;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.network.chat.Component;
@@ -68,8 +69,23 @@ public class StructureScannerBlock extends BaseEntityBlock {
     @Override
     protected void onPlace(BlockState state, Level level, BlockPos pos, BlockState oldState, boolean movedByPiston) {
         super.onPlace(state, level, pos, oldState, movedByPiston);
-        if (!level.isClientSide() && level.getBlockEntity(pos) instanceof StructureScannerBlockEntity scanner) {
-            scanner.recheckReady();
+        if (!level.isClientSide()) {
+            if (level.getBlockEntity(pos) instanceof StructureScannerBlockEntity scanner) {
+                scanner.recheckReady();
+            }
+            // Scanner can form part of another frame's fence/scaffold line.
+            if (!oldState.is(state.getBlock())) {
+                StructureFrameDetector.notifyScannersNear(level, pos);
+            }
+        }
+    }
+
+    @Override
+    protected void onRemove(BlockState state, Level level, BlockPos pos, BlockState newState, boolean movedByPiston) {
+        boolean changed = !state.is(newState.getBlock());
+        super.onRemove(state, level, pos, newState, movedByPiston);
+        if (changed && !level.isClientSide()) {
+            StructureFrameDetector.notifyScannersNear(level, pos);
         }
     }
 
