@@ -42,11 +42,17 @@ public final class StructureFrameDetector {
         for (BlockPos seed : platformSeeds) {
             Set<BlockPos> platform = floodFillPlatform(level, List.of(seed));
             for (BlockPos floor : platform) {
+                // Classic placement: scanner sits beside a platform floor cell.
                 for (Direction direction : HORIZONTAL) {
                     BlockPos neighbor = floor.relative(direction);
                     if (level.getBlockEntity(neighbor) instanceof StructureScannerBlockEntity) {
                         scanners.add(neighbor.immutable());
                     }
+                }
+                // Fence-line / scaffold placement: scanner sits on the border above the floor.
+                BlockPos above = floor.above();
+                if (level.getBlockEntity(above) instanceof StructureScannerBlockEntity) {
+                    scanners.add(above.immutable());
                 }
             }
         }
