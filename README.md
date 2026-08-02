@@ -8,18 +8,30 @@ Pre-cast Structure is a Minecraft mod for **1.21.1** (Fabric and NeoForge). You 
 
 Frame the volume first:
 
-1. Lay a solid rectangle of **Platform Floor** (3×3 or larger; max size is configurable, default 64).
+1. Lay a solid rectangle of **Platform Floor** (3×3 or larger; min/max size is configurable, default max 64 — that cap also limits scaffold height).
 2. Run **Perimeter Fence** (or gates) one block above the platform edge — leave the scaffold corner open.
 3. Put a **Metal Scaffold** pillar on exactly one corner — that sets the height.
 4. Park a **Structure Scanner** against one side of the platform.
 
 Build inside the frame, then open the scanner with an **Empty Blueprint** in your inventory. It digitizes the interior and hands you a filled **Blueprint**. Scanning empties chests, lecterns, jukeboxes, and other containers first (contents drop in place; ender chests are skipped), then clears the framed build into a scan hologram. The platform, fence, scaffold, and scanner stay; the build itself is consumed. Beds, doors, and similar double blocks count as one material each.
 
-Feed that blueprint into a **Structure Printer** along with the materials the build needs. The blueprint stays in the printer; only the listed materials are consumed. When it finishes, you get a **Pre-cast Structure** item.
+Feed that blueprint into a **Structure Printer** along with the materials the build needs. The blueprint stays in the printer; only the listed materials are consumed. The printer has **28 material slots**, so blueprints with more than 28 distinct materials will not print until simplified. When it finishes, you get a **Pre-cast Structure** item.
 
-Hold the item for a ghost preview (it tints red when placement is blocked). Right-click to place into replaceable space only — never into a structure that is still deploying. With animated deploy on (default), it rises in with a hologram; turn that off in Cloth Config for instant place. Solid hologram collision (also on by default) keeps players from walking through scan and deploy holograms.
+Hold the item for a ghost preview (it tints red when placement is blocked). Right-click to place into clear space — air, plants, leaves, water, and other replaceable blocks — never into solid blocks or a structure that is still deploying. With animated deploy on (default), it rises in with a hologram; turn that off in Cloth Config for instant place. Solid hologram collision (also on by default) keeps players from walking through scan and deploy holograms.
 
-Filled blueprints clone map-style: filled blueprint + empty blueprint → two filled copies. Craft a filled blueprint alone to clear it back to empty. Recipes show in the vanilla recipe book, and in JEI/REI if you use them.
+Filled blueprints clone map-style: filled blueprint + empty blueprint → two filled copies. Craft a filled blueprint alone to clear it back to empty. Shaped crafting recipes show in the vanilla recipe book (and in JEI/REI if you use them); blueprint cloning is a special recipe like map cloning and may not appear as a book entry.
+
+## Crafting
+
+| Result | Ingredients |
+| --- | --- |
+| Platform Floor ×4 | Iron ingot + smooth stone |
+| Perimeter Fence ×3 | Sticks + yellow dye + black dye |
+| Perimeter Fence Gate | Sticks + yellow dye + black dye |
+| Metal Scaffold ×4 | Iron ingot + iron nuggets |
+| Structure Scanner | Iron + glass pane + lapis + redstone |
+| Structure Printer | Iron + hopper + crafting table + redstone |
+| Empty Blueprint ×2 | Paper + blue dye + lapis |
 
 ## Compatibility
 
