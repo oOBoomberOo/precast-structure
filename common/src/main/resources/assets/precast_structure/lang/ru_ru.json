@@ -21,6 +21,7 @@
   "message.precast_structure.missing_materials": "У вас нет необходимых строительных материалов.",
   "message.precast_structure.print_complete": "Предмет сборного сооружения создан.",
   "message.precast_structure.blocked_placement": "Установка сооружения заблокирована в %s, %s, %s.",
+  "message.precast_structure.deploy_overlap": "Нельзя разместить сооружение внутри другого, которое ещё разворачивается.",
   "tooltip.precast_structure.blank_blueprint": "Используется сканером сооружений для захвата постройки",
   "tooltip.precast_structure.empty_blueprint": "Нет сохранённых данных сооружения.",
   "tooltip.precast_structure.dimensions": "Сохранённый размер: %s×%s×%s",

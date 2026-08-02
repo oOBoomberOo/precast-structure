@@ -21,6 +21,7 @@
   "message.precast_structure.missing_materials": "Bạn không có đủ vật liệu xây dựng cần thiết.",
   "message.precast_structure.print_complete": "Đã tạo vật phẩm kết cấu đúc sẵn.",
   "message.precast_structure.blocked_placement": "Việc đặt kết cấu bị chặn tại %s, %s, %s.",
+  "message.precast_structure.deploy_overlap": "Không thể đặt kết cấu vào một kết cấu đang được triển khai.",
   "tooltip.precast_structure.blank_blueprint": "Dùng bởi máy quét kết cấu để ghi lại công trình",
   "tooltip.precast_structure.empty_blueprint": "Không có dữ liệu kết cấu đã lưu.",
   "tooltip.precast_structure.dimensions": "Kích thước đã lưu: %s×%s×%s",

@@ -25,6 +25,7 @@
   "message.precast_structure.missing_materials": "คุณไม่มีวัสดุก่อสร้างที่จำเป็น",
   "message.precast_structure.print_complete": "สร้างไอเท็มโครงสร้างสำเร็จรูปแล้ว",
   "message.precast_structure.blocked_placement": "การวางโครงสร้างถูกบล็อกที่ %s, %s, %s",
+  "message.precast_structure.deploy_overlap": "ไม่สามารถวางโครงสร้างทับโครงสร้างที่กำลังติดตั้งอยู่ได้",
   "tooltip.precast_structure.blank_blueprint": "ใช้โดยเครื่องสแกนโครงสร้างเพื่อจับภาพสิ่งก่อสร้าง",
   "tooltip.precast_structure.empty_blueprint": "ไม่มีข้อมูลโครงสร้างที่บันทึกไว้",
   "tooltip.precast_structure.dimensions": "ขนาดที่บันทึก: %s×%s×%s",

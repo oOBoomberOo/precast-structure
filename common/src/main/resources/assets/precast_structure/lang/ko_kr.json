@@ -21,6 +21,7 @@
   "message.precast_structure.missing_materials": "필요한 건축 재료가 부족합니다.",
   "message.precast_structure.print_complete": "프리캐스트 구조물 아이템을 만들었습니다.",
   "message.precast_structure.blocked_placement": "%s, %s, %s에서 구조물 배치가 막혔습니다.",
+  "message.precast_structure.deploy_overlap": "아직 배치 중인 구조물 안에는 설치할 수 없습니다.",
   "tooltip.precast_structure.blank_blueprint": "구조물 스캐너로 건축물을 캡처하는 데 사용됩니다",
   "tooltip.precast_structure.empty_blueprint": "저장된 구조물 데이터가 없습니다.",
   "tooltip.precast_structure.dimensions": "저장된 크기: %s×%s×%s",

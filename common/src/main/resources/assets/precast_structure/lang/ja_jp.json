@@ -21,6 +21,7 @@
   "message.precast_structure.missing_materials": "必要な建築材料が不足しています。",
   "message.precast_structure.print_complete": "プレキャスト構造物アイテムを作成しました。",
   "message.precast_structure.blocked_placement": "%s, %s, %s で構造物の設置が妨げられています。",
+  "message.precast_structure.deploy_overlap": "展開中の構造物の中には設置できません。",
   "tooltip.precast_structure.blank_blueprint": "構造スキャナーで建築を取り込むために使用します",
   "tooltip.precast_structure.empty_blueprint": "保存された構造データがありません。",
   "tooltip.precast_structure.dimensions": "保存サイズ：%s×%s×%s",

@@ -21,6 +21,7 @@
   "message.precast_structure.missing_materials": "你没有所需的建筑材料。",
   "message.precast_structure.print_complete": "预制结构物品已创建。",
   "message.precast_structure.blocked_placement": "结构放置在 %s, %s, %s 处受阻。",
+  "message.precast_structure.deploy_overlap": "无法将结构放置到仍在部署中的结构内。",
   "tooltip.precast_structure.blank_blueprint": "由结构扫描器用于捕获建筑",
   "tooltip.precast_structure.empty_blueprint": "没有已保存的结构数据。",
   "tooltip.precast_structure.dimensions": "保存尺寸：%s×%s×%s",

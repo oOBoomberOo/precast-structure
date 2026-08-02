@@ -21,6 +21,7 @@
   "message.precast_structure.missing_materials": "No tienes los materiales de construcción necesarios.",
   "message.precast_structure.print_complete": "Objeto de estructura prefabricada creado.",
   "message.precast_structure.blocked_placement": "La colocación de la estructura está bloqueada en %s, %s, %s.",
+  "message.precast_structure.deploy_overlap": "No se puede colocar una estructura dentro de otra que aún se está desplegando.",
   "tooltip.precast_structure.blank_blueprint": "Usado por el escáner de estructuras para capturar una construcción",
   "tooltip.precast_structure.empty_blueprint": "No hay datos de estructura guardados.",
   "tooltip.precast_structure.dimensions": "Tamaño guardado: %s×%s×%s",

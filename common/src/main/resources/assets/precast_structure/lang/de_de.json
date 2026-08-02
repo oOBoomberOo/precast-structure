@@ -21,6 +21,7 @@
   "message.precast_structure.missing_materials": "Dir fehlen die erforderlichen Baumaterialien.",
   "message.precast_structure.print_complete": "Fertigstruktur-Gegenstand erstellt.",
   "message.precast_structure.blocked_placement": "Strukturplatzierung ist bei %s, %s, %s blockiert.",
+  "message.precast_structure.deploy_overlap": "Du kannst keine Struktur in eine Struktur platzieren, die noch ausgerollt wird.",
   "tooltip.precast_structure.blank_blueprint": "Wird vom Strukturscanner zum Erfassen eines Baus verwendet",
   "tooltip.precast_structure.empty_blueprint": "Keine gespeicherten Strukturdaten.",
   "tooltip.precast_structure.dimensions": "Gespeicherte Größe: %s×%s×%s",
