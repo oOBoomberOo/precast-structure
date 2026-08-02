@@ -86,7 +86,7 @@ public class StructurePrinterBlockEntity extends BaseContainerBlockEntity implem
             return List.of();
         }
         return BlueprintItemData.read(blueprintStack, level.registryAccess())
-            .map(StructureBlueprint::materialSlotRequirements)
+            .map(blueprint -> blueprint.materialSlotRequirements(level.registryAccess()))
             .orElse(List.of());
     }
 
@@ -113,7 +113,7 @@ public class StructurePrinterBlockEntity extends BaseContainerBlockEntity implem
         }
 
         StructureBlueprint blueprint = optional.get();
-        List<MaterialRequirement> requirements = blueprint.materialSlotRequirements();
+        List<MaterialRequirement> requirements = blueprint.materialSlotRequirements(level.registryAccess());
         if (requirements.size() > MATERIAL_SLOT_COUNT || !hasMaterials(requirements)) {
             resetProgress();
             return;

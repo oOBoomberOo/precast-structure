@@ -1,13 +1,14 @@
 package io.github.ooboomberoo.precaststructure.client;
 
 import com.mojang.blaze3d.vertex.PoseStack;
-import io.github.ooboomberoo.precaststructure.client.StructureHologramRenderer.Part;
+import io.github.ooboomberoo.precaststructure.client.HologramRenderSystem.Part;
 import io.github.ooboomberoo.precaststructure.registry.ModItems;
 import io.github.ooboomberoo.precaststructure.structure.BlueprintItemData;
 import io.github.ooboomberoo.precaststructure.structure.StructureBlueprint;
 import io.github.ooboomberoo.precaststructure.structure.StructureBlockInfo;
 import io.github.ooboomberoo.precaststructure.structure.StructureDeploymentManager;
 import io.github.ooboomberoo.precaststructure.structure.StructurePlacement;
+import io.github.ooboomberoo.precaststructure.structure.special.SpecialBlockHandlers;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -25,8 +26,11 @@ import java.util.List;
 import java.util.Optional;
 
 /**
- * Placement preview for held precast structures, using the shared hologram renderer.
+ * Placement preview for held precast structures via {@link HologramRenderSystem}.
  * Placeable previews stay cyan-hologram; blocked previews tint red (no bounding box).
+ *
+ * <p>Ghosts always use the translucent hologram pipeline ({@link HologramRenderSystem#render}),
+ * never {@link HologramRenderSystem#renderSolid}.
  */
 public final class StructureGhostRenderer {
     private static final float PLACEABLE_R = 1.0F;
@@ -39,7 +43,7 @@ public final class StructureGhostRenderer {
     private StructureGhostRenderer() {
     }
 
-    public static void render(PoseStack poseStack, Vec3 cameraPosition) {
+    public static void render(PoseStack poseStack, Vec3 cameraPosition, float partialTick) {
         Minecraft minecraft = Minecraft.getInstance();
         Player player = minecraft.player;
         Level level = minecraft.level;
@@ -58,14 +62,26 @@ public final class StructureGhostRenderer {
         }
 
         StructureBlueprint blueprint = optional.get();
-        Direction facing = player.getDirection();
-        BlockPos origin = StructurePlacement.resolveOrigin(new UseOnContext(player, player.getUsedItemHand(), hitResult));
+        // UseOnContext.getHorizontalDirection is remapped into Sable plot-local yaw on Simulated
+        // ships (see UseOnContextMixin). player.getDirection() stays world-yaw and desyncs the ghost.
+        UseOnContext context = new UseOnContext(player, player.getUsedItemHand(), hitResult);
+        Direction facing = context.getHorizontalDirection();
+        BlockPos origin = StructurePlacement.resolveOrigin(context);
 
         List<Part> parts = new ArrayList<>(blueprint.blocks().size());
         for (StructureBlockInfo block : blueprint.blocks()) {
             BlockPos blockPos = origin.offset(StructurePlacement.transformOffset(block.offset(), blueprint, facing));
             BlockState state = StructurePlacement.transformState(block.state(), facing);
-            parts.add(Part.of(blockPos, state));
+            parts.add(Part.of(
+                blockPos,
+                state,
+                SpecialBlockHandlers.transformNbt(
+                    state,
+                    block.nbt(),
+                    StructurePlacement.rotationFor(facing),
+                    level.registryAccess()
+                )
+            ));
         }
 
         boolean overlapsDeploy = StructureDeploymentManager.overlapsActiveDeploy(
@@ -75,10 +91,15 @@ public final class StructureGhostRenderer {
         boolean placeable = !overlapsDeploy
             && StructurePlacement.firstBlockedPosition(level, origin, blueprint, facing).isEmpty();
 
+        // Anchor at placement origin so Sable sub-level poses apply on Simulated ships.
         if (placeable) {
-            StructureHologramRenderer.render(poseStack, cameraPosition, parts, PLACEABLE_R, PLACEABLE_G, PLACEABLE_B);
+            HologramRenderSystem.render(
+                poseStack, cameraPosition, partialTick, origin, parts, PLACEABLE_R, PLACEABLE_G, PLACEABLE_B
+            );
         } else {
-            StructureHologramRenderer.render(poseStack, cameraPosition, parts, BLOCKED_R, BLOCKED_G, BLOCKED_B);
+            HologramRenderSystem.render(
+                poseStack, cameraPosition, partialTick, origin, parts, BLOCKED_R, BLOCKED_G, BLOCKED_B
+            );
         }
     }
 

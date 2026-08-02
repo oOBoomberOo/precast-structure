@@ -32,8 +32,8 @@ public class BlueprintItem extends Item {
         tooltipComponents.add(Component.translatable("tooltip.precast_structure.dimensions", blueprint.size().getX(), blueprint.size().getY(), blueprint.size().getZ()).withStyle(ChatFormatting.AQUA));
 
         int shown = 0;
-        int total = blueprint.requiredItems().size();
-        for (Map.Entry<net.minecraft.world.item.Item, Integer> entry : blueprint.requiredItems().entrySet()) {
+        int total = blueprint.requiredItems(registries).size();
+        for (Map.Entry<net.minecraft.world.item.Item, Integer> entry : blueprint.requiredItems(registries).entrySet()) {
             if (shown >= MAX_TOOLTIP_MATERIALS) {
                 tooltipComponents.add(Component.translatable("tooltip.precast_structure.more_materials", total - shown).withStyle(ChatFormatting.DARK_GRAY));
                 break;

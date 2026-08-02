@@ -1,12 +1,14 @@
 package io.github.ooboomberoo.precaststructure.structure;
 
 import io.github.ooboomberoo.precaststructure.registry.ModBlockTags;
+import io.github.ooboomberoo.precaststructure.structure.special.SpecialBlockHandlers;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.tags.BlockTags;
@@ -18,6 +20,7 @@ import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.RailBlock;
 import net.minecraft.world.level.block.Rotation;
 import net.minecraft.world.level.block.SoundType;
+import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.Property;
 import net.minecraft.world.level.block.state.properties.RailShape;
@@ -267,8 +270,19 @@ public final class StructurePlacement {
         if (!isReplaceable(level.getBlockState(targetPos))) {
             return false;
         }
-        BlockState state = transformState(block.state(), facing);
+        Rotation rotation = rotationFor(facing);
+        BlockState state = SpecialBlockHandlers.sanitizePlacementState(transformState(block.state(), facing));
         level.setBlock(targetPos, state, 3);
+        CompoundTag nbt = SpecialBlockHandlers.sanitizePlacement(
+            state,
+            SpecialBlockHandlers.transformNbt(state, block.nbt(), rotation, level.registryAccess())
+        );
+        if (nbt != null) {
+            BlockEntity blockEntity = level.getBlockEntity(targetPos);
+            if (blockEntity != null) {
+                SpecialBlockHandlers.applyBlockEntityNbt(level, blockEntity, state, nbt);
+            }
+        }
         SoundType soundType = state.getSoundType();
         if (playedSounds == null) {
             playPlaceSound(level, targetPos, soundType);

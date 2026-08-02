@@ -195,7 +195,7 @@ public class StructurePrinterMenu extends AbstractContainerMenu {
             return List.of();
         }
         return BlueprintItemData.read(blueprintStack, registries)
-            .map(StructureBlueprint::materialSlotRequirements)
+            .map(blueprint -> blueprint.materialSlotRequirements(registries))
             .orElse(List.of());
     }
 

@@ -32,7 +32,6 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.util.Mth;
-import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.item.ItemStack;
@@ -41,7 +40,6 @@ import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.phys.AABB;
 import org.jetbrains.annotations.Nullable;
 
 public class StructureScannerBlockEntity extends BlockEntity implements ExtendedMenuProvider {
@@ -309,18 +307,9 @@ public class StructureScannerBlockEntity extends BlockEntity implements Extended
                 }
             }
         }
-
-        AABB volume = new AABB(
-            origin.getX(),
-            origin.getY(),
-            origin.getZ(),
-            origin.getX() + size.getX(),
-            origin.getY() + size.getY(),
-            origin.getZ() + size.getZ()
-        ).inflate(0.25);
-        for (ItemEntity item : level.getEntitiesOfClass(ItemEntity.class, volume)) {
-            item.discard();
-        }
+        // Do not discard ItemEntities: BlueprintCapture already emptied containers and dropped
+        // their contents into the world before digitize. UPDATE_SUPPRESS_DROPS prevents block
+        // item drops from setBlock.
     }
 
     private void clearScanColliders() {
@@ -444,7 +433,7 @@ public class StructureScannerBlockEntity extends BlockEntity implements Extended
 
     @Override
     public AbstractContainerMenu createMenu(int containerId, Inventory inventory, net.minecraft.world.entity.player.Player player) {
-        return new StructureScannerMenu(containerId, inventory, worldPosition, structureName);
+        return new StructureScannerMenu(containerId, inventory, this);
     }
 
     @Override

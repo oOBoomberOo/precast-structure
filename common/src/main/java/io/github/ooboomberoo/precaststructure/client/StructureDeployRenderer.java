@@ -4,18 +4,18 @@ import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.ByteBufferBuilder;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
-import io.github.ooboomberoo.precaststructure.client.StructureHologramRenderer.Part;
+import io.github.ooboomberoo.precaststructure.client.HologramRenderSystem.Frame;
+import io.github.ooboomberoo.precaststructure.client.HologramRenderSystem.Part;
 import io.github.ooboomberoo.precaststructure.structure.StructureBlockInfo;
 import io.github.ooboomberoo.precaststructure.structure.StructureDeployment;
 import io.github.ooboomberoo.precaststructure.structure.StructureDeploymentManager;
 import io.github.ooboomberoo.precaststructure.structure.StructurePlacement;
+import io.github.ooboomberoo.precaststructure.structure.special.SpecialBlockHandlers;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.LevelRenderer;
-import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.block.BlockRenderDispatcher;
-import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.core.BlockPos;
 import net.minecraft.util.Mth;
 import net.minecraft.world.level.EmptyBlockGetter;
@@ -24,7 +24,6 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.shapes.VoxelShape;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -38,7 +37,7 @@ public final class StructureDeployRenderer {
     private static final float LINE_GREEN = 0.95F;
     private static final float LINE_BLUE = 1.0F;
     private static final float PLANE_THICKNESS = 0.04F;
-    private static final float CLIP_EPSILON = StructureHologramRenderer.CLIP_EPSILON;
+    private static final float CLIP_EPSILON = HologramRenderSystem.CLIP_EPSILON;
 
     private StructureDeployRenderer() {
     }
@@ -62,46 +61,53 @@ public final class StructureDeployRenderer {
 
             for (StructureDeployment deployment : StructureDeploymentManager.clientDeployments()) {
                 boolean finishing = isFinishingCover(level, deployment, partialTick);
-                renderSolids(poseStack, cameraPosition, bufferSource, dispatcher, level, deployment, partialTick, finishing);
+                Frame frame = HologramRenderSystem.pushWorldFrame(
+                    poseStack, cameraPosition, partialTick, deployment.origin()
+                );
+                try {
+                    renderSolids(poseStack, bufferSource, dispatcher, level, deployment, partialTick, finishing, frame);
+                } finally {
+                    poseStack.popPose();
+                }
             }
             bufferSource.endBatch();
 
             RenderSystem.polygonOffset(0.0F, 0.0F);
             RenderSystem.disablePolygonOffset();
 
-            List<Part> hologramParts = new ArrayList<>();
             for (StructureDeployment deployment : StructureDeploymentManager.clientDeployments()) {
                 if (isFinishingCover(level, deployment, partialTick)) {
                     continue;
                 }
+                List<Part> hologramParts = new ArrayList<>();
                 collectHologramParts(level, deployment, partialTick, hologramParts);
+                if (hologramParts.isEmpty()) {
+                    continue;
+                }
+                Frame frame = HologramRenderSystem.pushWorldFrame(
+                    poseStack, cameraPosition, partialTick, deployment.origin()
+                );
+                try {
+                    HologramRenderSystem.renderFramed(
+                        poseStack, cameraPosition, bufferSource, dispatcher, frame, hologramParts, 1.0F, 1.0F, 1.0F
+                    );
+                } finally {
+                    poseStack.popPose();
+                }
             }
 
-        if (!ModShaders.useCustomHologramShader()) {
-            RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 0.9F);
-        }
-
-        if (ModRenderTypes.useHologramDepthPrepass()) {
-            RenderSystem.depthMask(true);
-            StructureHologramRenderer.renderPass(poseStack, cameraPosition, bufferSource, dispatcher, hologramParts, true);
-            bufferSource.endBatch();
-
-            RenderSystem.depthMask(false);
-            StructureHologramRenderer.renderPass(poseStack, cameraPosition, bufferSource, dispatcher, hologramParts, false);
-            bufferSource.endBatch();
-        } else {
-            RenderSystem.depthMask(true);
-            StructureHologramRenderer.renderPass(poseStack, cameraPosition, bufferSource, dispatcher, hologramParts, false);
-            bufferSource.endBatch();
-        }
-
-        RenderSystem.depthMask(true);
-        RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
             for (StructureDeployment deployment : StructureDeploymentManager.clientDeployments()) {
                 if (isFinishingCover(level, deployment, partialTick)) {
                     continue;
                 }
-                renderDeployOverlay(poseStack, cameraPosition, bufferSource, level, deployment, partialTick);
+                Frame frame = HologramRenderSystem.pushWorldFrame(
+                    poseStack, cameraPosition, partialTick, deployment.origin()
+                );
+                try {
+                    renderDeployOverlay(poseStack, bufferSource, level, deployment, partialTick, frame);
+                } finally {
+                    poseStack.popPose();
+                }
             }
             bufferSource.endBatch();
         }
@@ -114,19 +120,17 @@ public final class StructureDeployRenderer {
 
     private static void renderSolids(
         PoseStack poseStack,
-        Vec3 cameraPosition,
         MultiBufferSource.BufferSource bufferSource,
         BlockRenderDispatcher dispatcher,
         Level level,
         StructureDeployment deployment,
         float partialTick,
-        boolean finishing
+        boolean finishing,
+        Frame frame
     ) {
         float deployY = finishing ? Float.POSITIVE_INFINITY : deployment.getDeployLineY(level, partialTick);
         BlockPos origin = deployment.origin();
-
-        poseStack.pushPose();
-        poseStack.translate(-cameraPosition.x, -cameraPosition.y, -cameraPosition.z);
+        Vec3 plotOrigin = frame.plotOrigin();
 
         for (StructureBlockInfo block : deployment.blueprint().blocks()) {
             BlockPos worldPos = origin.offset(StructurePlacement.transformOffset(block.offset(), deployment.blueprint(), deployment.facing()));
@@ -140,13 +144,27 @@ public final class StructureDeployRenderer {
             }
 
             poseStack.pushPose();
-            poseStack.translate(worldPos.getX(), worldPos.getY(), worldPos.getZ());
+            poseStack.translate(
+                worldPos.getX() - plotOrigin.x,
+                worldPos.getY() - plotOrigin.y,
+                worldPos.getZ() - plotOrigin.z
+            );
             Float localClipY = fullyBelow ? null : deployY - worldPos.getY();
-            renderSolidMesh(poseStack, bufferSource, dispatcher, state, localClipY);
+            HologramRenderSystem.renderSolid(
+                poseStack,
+                bufferSource,
+                dispatcher,
+                state,
+                SpecialBlockHandlers.transformNbt(
+                    state,
+                    block.nbt(),
+                    StructurePlacement.rotationFor(deployment.facing()),
+                    level.registryAccess()
+                ),
+                localClipY
+            );
             poseStack.popPose();
         }
-
-        poseStack.popPose();
     }
 
     private static void collectHologramParts(Level level, StructureDeployment deployment, float partialTick, List<Part> out) {
@@ -161,43 +179,33 @@ public final class StructureDeployRenderer {
             }
             boolean fullyAbove = bounds.minY() >= deployY - CLIP_EPSILON;
             Float localClipY = fullyAbove ? null : deployY - worldPos.getY();
-            out.add(new Part(worldPos, state, localClipY, false));
+            out.add(new Part(
+                worldPos,
+                state,
+                SpecialBlockHandlers.transformNbt(
+                    state,
+                    block.nbt(),
+                    StructurePlacement.rotationFor(deployment.facing()),
+                    level.registryAccess()
+                ),
+                localClipY,
+                false
+            ));
         }
-    }
-
-    private static void renderSolidMesh(
-        PoseStack poseStack,
-        MultiBufferSource.BufferSource bufferSource,
-        BlockRenderDispatcher dispatcher,
-        BlockState state,
-        @Nullable Float localClipY
-    ) {
-        // Fullbright avoids the post-place lighting lag (ghosts would otherwise go dark for a beat).
-        MultiBufferSource source;
-        if (localClipY == null) {
-            source = bufferSource;
-        } else {
-            float clipY = localClipY;
-            source = renderType -> new StructureHologramRenderer.PlaneClipVertexConsumer(bufferSource.getBuffer(renderType), clipY, true);
-        }
-        dispatcher.renderSingleBlock(state, poseStack, source, LightTexture.FULL_BRIGHT, OverlayTexture.NO_OVERLAY);
     }
 
     private static void renderDeployOverlay(
         PoseStack poseStack,
-        Vec3 cameraPosition,
         MultiBufferSource.BufferSource bufferSource,
         Level level,
         StructureDeployment deployment,
-        float partialTick
+        float partialTick,
+        Frame frame
     ) {
         float deployY = deployment.getDeployLineY(level, partialTick);
         float progress = deployment.getProgress(level, partialTick);
         VertexConsumer lines = bufferSource.getBuffer(RenderType.lines());
-        poseStack.pushPose();
-        poseStack.translate(-cameraPosition.x, -cameraPosition.y, -cameraPosition.z);
-        renderDeployPlane(poseStack, lines, deployment.boundsMin(), deployment.planeSize(), deployY, progress);
-        poseStack.popPose();
+        renderDeployPlane(poseStack, lines, deployment.boundsMin(), deployment.planeSize(), deployY, progress, frame.plotOrigin());
     }
 
     private static BoundsY blockBoundsY(BlockState state, BlockPos worldPos) {
@@ -218,14 +226,16 @@ public final class StructureDeployRenderer {
         BlockPos origin,
         BlockPos size,
         float deployY,
-        float progress
+        float progress,
+        Vec3 plotOrigin
     ) {
-        double minX = origin.getX();
-        double minZ = origin.getZ();
-        double maxX = origin.getX() + Math.max(1, size.getX());
-        double maxZ = origin.getZ() + Math.max(1, size.getZ());
-        double bottom = origin.getY();
-        double top = origin.getY() + Math.max(1, size.getY());
+        double minX = origin.getX() - plotOrigin.x;
+        double minZ = origin.getZ() - plotOrigin.z;
+        double maxX = origin.getX() + Math.max(1, size.getX()) - plotOrigin.x;
+        double maxZ = origin.getZ() + Math.max(1, size.getZ()) - plotOrigin.z;
+        double bottom = origin.getY() - plotOrigin.y;
+        double top = origin.getY() + Math.max(1, size.getY()) - plotOrigin.y;
+        double planeY = deployY - plotOrigin.y;
         float pulse = 0.7F + 0.3F * Mth.sin(deployY * 8.0F + progress * 20.0F);
 
         LevelRenderer.renderLineBox(poseStack, lines, minX, bottom, minZ, maxX, top, maxZ, LINE_RED, LINE_GREEN, LINE_BLUE, 0.15F);
@@ -233,10 +243,10 @@ public final class StructureDeployRenderer {
             poseStack,
             lines,
             minX,
-            deployY - PLANE_THICKNESS * 0.5F,
+            planeY - PLANE_THICKNESS * 0.5F,
             minZ,
             maxX,
-            deployY + PLANE_THICKNESS * 0.5F,
+            planeY + PLANE_THICKNESS * 0.5F,
             maxZ,
             LINE_RED,
             LINE_GREEN,
