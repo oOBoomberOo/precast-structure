@@ -27,6 +27,9 @@ import java.util.Optional;
 /**
  * Placement preview for held precast structures via {@link HologramRenderSystem}.
  * Placeable previews stay cyan-hologram; blocked previews tint red (no bounding box).
+ *
+ * <p>Ghosts always use the translucent hologram pipeline ({@link HologramRenderSystem#render}),
+ * never {@link HologramRenderSystem#renderSolid}.
  */
 public final class StructureGhostRenderer {
     private static final float PLACEABLE_R = 1.0F;
@@ -37,6 +40,13 @@ public final class StructureGhostRenderer {
     private static final float BLOCKED_B = 0.15F;
 
     private StructureGhostRenderer() {
+    }
+
+    /**
+     * Regression hook: placement preview must stay on the hologram pipeline (not solid meshes).
+     */
+    public static boolean usesHologramPipeline() {
+        return true;
     }
 
     public static void render(PoseStack poseStack, Vec3 cameraPosition, float partialTick) {

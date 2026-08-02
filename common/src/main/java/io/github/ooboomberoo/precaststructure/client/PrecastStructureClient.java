@@ -33,7 +33,6 @@ public final class PrecastStructureClient {
     }
 
     private static void registerConfigScreen() {
-        // Architectury bridges this to Fabric Mod Menu and NeoForge IConfigScreenFactory.
         if (Platform.isModLoaded("cloth-config") || Platform.isModLoaded("cloth_config")) {
             Platform.getMod(PrecastStructureMod.MOD_ID).registerConfigurationScreen(ModConfigScreen::create);
         }

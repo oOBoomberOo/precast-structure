@@ -19,11 +19,18 @@ public final class PrecastStructureFabricClient implements ClientModInitializer 
     @Override
     public void onInitializeClient() {
         PrecastStructureClient.init();
-        CoreShaderRegistrationCallback.EVENT.register(context -> context.register(
-            ResourceLocation.fromNamespaceAndPath(PrecastStructureMod.MOD_ID, ModShaders.SCAN_HOLOGRAM),
-            DefaultVertexFormat.BLOCK,
-            ModShaders::setScanHologram
-        ));
+        CoreShaderRegistrationCallback.EVENT.register(context -> {
+            context.register(
+                ResourceLocation.fromNamespaceAndPath(PrecastStructureMod.MOD_ID, ModShaders.SCAN_HOLOGRAM),
+                DefaultVertexFormat.BLOCK,
+                ModShaders::setScanHologram
+            );
+            context.register(
+                ResourceLocation.fromNamespaceAndPath(PrecastStructureMod.MOD_ID, ModShaders.SCAN_HOLOGRAM_ENTITY),
+                DefaultVertexFormat.NEW_ENTITY,
+                ModShaders::setScanHologramEntity
+            );
+        });
         BuiltinItemRendererRegistry.INSTANCE.register(ModItems.PRECAST_STRUCTURE.get(), StructureItemRenderer::render);
         // Vanilla: after opaque/cutout so depth occludes holograms.
         // Iris deferred packs: after translucent so composite does not wipe the draw.

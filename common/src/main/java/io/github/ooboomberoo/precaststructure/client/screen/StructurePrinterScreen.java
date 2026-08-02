@@ -1,6 +1,5 @@
 package io.github.ooboomberoo.precaststructure.client.screen;
 
-import com.mojang.blaze3d.systems.RenderSystem;
 import io.github.ooboomberoo.precaststructure.PrecastStructureMod;
 import io.github.ooboomberoo.precaststructure.block.entity.StructurePrinterBlockEntity;
 import io.github.ooboomberoo.precaststructure.menu.StructurePrinterMenu;
@@ -23,8 +22,9 @@ public class StructurePrinterScreen extends AbstractContainerScreen<StructurePri
     private static final int SCROLLBAR_UV_X = 176;
     private static final int SCROLLBAR_UV_Y = 50;
     private static final int SCROLLBAR_HANDLE_HEIGHT = 15;
-    private static final int GHOST_COUNT_COLOR = 0xA0C8C8C8;
-    private static final float GHOST_ALPHA = 0.4F;
+    private static final int GHOST_COUNT_COLOR = 0xC8FFFFFF;
+    /** Applied via {@link GhostItemRenderer} (GuiGraphics item draws ignore setColor alpha). */
+    private static final float GHOST_ALPHA = 0.35F;
 
     private boolean scrolling;
 
@@ -190,14 +190,22 @@ public class StructurePrinterScreen extends AbstractContainerScreen<StructurePri
     }
 
     private void renderGhostItem(GuiGraphics guiGraphics, ItemStack ghost, int x, int y, String count) {
-        guiGraphics.pose().pushPose();
-        RenderSystem.enableBlend();
-        RenderSystem.defaultBlendFunc();
-        RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, GHOST_ALPHA);
-        guiGraphics.renderItem(ghost, x, y);
-        RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
-        RenderSystem.disableBlend();
-        guiGraphics.pose().popPose();
+        // Lazy-load so StructurePrinterScreen registration does not pull ItemRenderer into early
+        // client class init (NeoForge attribute bootstrap).
+        try {
+            Class.forName("io.github.ooboomberoo.precaststructure.client.screen.GhostItemRenderer")
+                .getDeclaredMethod(
+                    "render",
+                    GuiGraphics.class,
+                    ItemStack.class,
+                    int.class,
+                    int.class,
+                    float.class
+                )
+                .invoke(null, guiGraphics, ghost, x, y, GHOST_ALPHA);
+        } catch (ReflectiveOperationException e) {
+            throw new IllegalStateException("Ghost item renderer missing", e);
+        }
 
         if (count != null) {
             guiGraphics.pose().pushPose();
@@ -208,6 +216,6 @@ public class StructurePrinterScreen extends AbstractContainerScreen<StructurePri
     }
 
     private static String formatGhostCount(int amount) {
-        return amount > 1 ? String.valueOf(amount) : null;
+        return String.valueOf(Math.max(1, amount));
     }
 }

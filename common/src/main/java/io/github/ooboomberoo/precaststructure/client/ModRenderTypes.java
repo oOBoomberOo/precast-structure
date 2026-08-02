@@ -2,6 +2,8 @@ package io.github.ooboomberoo.precaststructure.client;
 
 import com.mojang.blaze3d.vertex.DefaultVertexFormat;
 import com.mojang.blaze3d.vertex.VertexFormat;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.resources.ResourceLocation;
 
@@ -12,13 +14,14 @@ import net.minecraft.resources.ResourceLocation;
  * <p>Without a shader pack, holograms use a depth prepass then a translucent color pass so
  * blending cannot reveal farther hologram faces that were drawn earlier.
  *
- * <p>The depth prepass uses the vanilla solid program (not {@code scan_hologram}): the hologram
- * fragment shader is translucent/emissive and under Veil often fails to populate the depth
- * buffer, which makes every internal face show through. Color still uses the custom hologram
- * program for scanlines / sweeps.
+ * <p>The depth prepass also uses {@code scan_hologram} (not {@code rendertype_solid}). A prior
+ * solid-shader depth seed looked correct in isolation but under Veil/Sable WriteMask/colorMask
+ * often fails, so the depth pass painted fully opaque real-looking blocks and stole the ghost.
+ * Neighbor-face culling covers most internal seams; color still uses the same hologram program.
  *
- * <p>Entity BER meshes (chest / bed / shulker) use a matching {@link DefaultVertexFormat#NEW_ENTITY}
- * depth layer so hollow interiors are occluded without remapping onto the block-atlas depth buffer.
+ * <p>Entity BER meshes (chest / bed / shulker / skull) use per-atlas NEW_ENTITY depth (DEPTH_WRITE)
+ * and color (COLOR_WRITE + translucent) layers. Vanilla {@code entity_translucent} also writes
+ * depth, which z-fights the prepass — so BER color must use COLOR_WRITE only.
  *
  * <p>When Iris/Oculus has a shader pack enabled, custom core shaders cannot participate in
  * Iris gbuffers (geometry would vanish). The Iris path uses {@link RenderType#translucentMovingBlock()}
@@ -26,13 +29,11 @@ import net.minecraft.resources.ResourceLocation;
  */
 public final class ModRenderTypes extends RenderType {
     private static final ShaderStateShard SCAN_HOLOGRAM_SHADER = new ShaderStateShard(ModShaders::getScanHologram);
+    private static final ShaderStateShard SCAN_HOLOGRAM_ENTITY_SHADER = new ShaderStateShard(ModShaders::getScanHologramEntity);
 
-    /** Dummy atlas for entity depth-only draws; UVs are irrelevant when color writes are off. */
-    private static final TextureStateShard ENTITY_DEPTH_TEXTURE = new TextureStateShard(
-        ResourceLocation.withDefaultNamespace("textures/entity/chest/normal.png"),
-        false,
-        false
-    );
+    private static final Map<ResourceLocation, RenderType> ENTITY_HOLOGRAM_DEPTH = new ConcurrentHashMap<>();
+    private static final Map<ResourceLocation, RenderType> ENTITY_HOLOGRAM_COLOR = new ConcurrentHashMap<>();
+    private static final Map<ResourceLocation, RenderType> ENTITY_HOLOGRAM_COLOR_FALLBACK = new ConcurrentHashMap<>();
 
     private static final RenderType SCAN_HOLOGRAM_DEPTH = create(
         "precast_structure_scan_hologram_depth",
@@ -43,29 +44,9 @@ public final class ModRenderTypes extends RenderType {
         false,
         CompositeState.builder()
             .setLightmapState(LIGHTMAP)
-            .setShaderState(RENDERTYPE_SOLID_SHADER)
+            .setShaderState(SCAN_HOLOGRAM_SHADER)
             .setTextureState(BLOCK_SHEET_MIPPED)
             .setTransparencyState(NO_TRANSPARENCY)
-            .setDepthTestState(LEQUAL_DEPTH_TEST)
-            .setWriteMaskState(DEPTH_WRITE)
-            .setCullState(CULL)
-            .setOutputState(MAIN_TARGET)
-            .createCompositeState(false)
-    );
-
-    private static final RenderType SCAN_HOLOGRAM_ENTITY_DEPTH = create(
-        "precast_structure_scan_hologram_entity_depth",
-        DefaultVertexFormat.NEW_ENTITY,
-        VertexFormat.Mode.QUADS,
-        786432,
-        false,
-        false,
-        CompositeState.builder()
-            .setShaderState(RENDERTYPE_ENTITY_SOLID_SHADER)
-            .setTextureState(ENTITY_DEPTH_TEXTURE)
-            .setTransparencyState(NO_TRANSPARENCY)
-            .setLightmapState(LIGHTMAP)
-            .setOverlayState(OVERLAY)
             .setDepthTestState(LEQUAL_DEPTH_TEST)
             .setWriteMaskState(DEPTH_WRITE)
             .setCullState(CULL)
@@ -100,14 +81,104 @@ public final class ModRenderTypes extends RenderType {
         return SCAN_HOLOGRAM_DEPTH;
     }
 
-    /** Depth-only layer for chest/bed/shulker BER meshes (NEW_ENTITY format). */
+    /**
+     * Fallback entity depth layer when the BER atlas cannot be recovered from the requested type.
+     */
     public static RenderType scanHologramEntityDepth() {
-        return SCAN_HOLOGRAM_ENTITY_DEPTH;
+        return entityHologramDepth(ResourceLocation.withDefaultNamespace("textures/entity/chest/normal.png"));
     }
 
     public static RenderType scanHologram() {
         // translucentMovingBlock is the vanilla ghost-block layer Iris remaps correctly.
         return ModShaders.useCustomHologramShader() ? SCAN_HOLOGRAM : translucentMovingBlock();
+    }
+
+    /** Depth-only BER layer using the real entity atlas (avoids wrong-UV depth vs color). */
+    public static RenderType entityHologramDepth(ResourceLocation atlas) {
+        return ENTITY_HOLOGRAM_DEPTH.computeIfAbsent(atlas, ModRenderTypes::createEntityHologramDepth);
+    }
+
+    /**
+     * Translucent BER color layer: COLOR_WRITE only so it does not z-fight the depth prepass.
+     * Uses {@code scan_hologram_entity} when available (same animation as block holograms).
+     */
+    public static RenderType entityHologramColor(ResourceLocation atlas) {
+        if (ModShaders.useCustomEntityHologramShader()) {
+            return ENTITY_HOLOGRAM_COLOR.computeIfAbsent(atlas, ModRenderTypes::createEntityHologramColor);
+        }
+        return ENTITY_HOLOGRAM_COLOR_FALLBACK.computeIfAbsent(atlas, ModRenderTypes::createEntityHologramColorFallback);
+    }
+
+    /** @deprecated use {@link #entityHologramColor(ResourceLocation)} */
+    @Deprecated
+    public static RenderType entityHologram(ResourceLocation atlas) {
+        return entityHologramColor(atlas);
+    }
+
+    private static RenderType createEntityHologramDepth(ResourceLocation atlas) {
+        return create(
+            "precast_structure_entity_hologram_depth/" + atlas.toDebugFileName(),
+            DefaultVertexFormat.NEW_ENTITY,
+            VertexFormat.Mode.QUADS,
+            786432,
+            false,
+            false,
+            CompositeState.builder()
+                .setShaderState(RENDERTYPE_ENTITY_SOLID_SHADER)
+                .setTextureState(new TextureStateShard(atlas, false, false))
+                .setTransparencyState(NO_TRANSPARENCY)
+                .setLightmapState(LIGHTMAP)
+                .setOverlayState(OVERLAY)
+                .setDepthTestState(LEQUAL_DEPTH_TEST)
+                .setWriteMaskState(DEPTH_WRITE)
+                .setCullState(CULL)
+                .setOutputState(MAIN_TARGET)
+                .createCompositeState(false)
+        );
+    }
+
+    private static RenderType createEntityHologramColor(ResourceLocation atlas) {
+        return create(
+            "precast_structure_entity_hologram_color/" + atlas.toDebugFileName(),
+            DefaultVertexFormat.NEW_ENTITY,
+            VertexFormat.Mode.QUADS,
+            786432,
+            false,
+            true,
+            CompositeState.builder()
+                .setShaderState(SCAN_HOLOGRAM_ENTITY_SHADER)
+                .setTextureState(new TextureStateShard(atlas, false, false))
+                .setTransparencyState(TRANSLUCENT_TRANSPARENCY)
+                .setLightmapState(LIGHTMAP)
+                .setOverlayState(OVERLAY)
+                .setDepthTestState(LEQUAL_DEPTH_TEST)
+                .setWriteMaskState(COLOR_WRITE)
+                .setCullState(CULL)
+                .setOutputState(MAIN_TARGET)
+                .createCompositeState(true)
+        );
+    }
+
+    private static RenderType createEntityHologramColorFallback(ResourceLocation atlas) {
+        return create(
+            "precast_structure_entity_hologram_color_fallback/" + atlas.toDebugFileName(),
+            DefaultVertexFormat.NEW_ENTITY,
+            VertexFormat.Mode.QUADS,
+            786432,
+            false,
+            true,
+            CompositeState.builder()
+                .setShaderState(RENDERTYPE_ENTITY_TRANSLUCENT_SHADER)
+                .setTextureState(new TextureStateShard(atlas, false, false))
+                .setTransparencyState(TRANSLUCENT_TRANSPARENCY)
+                .setLightmapState(LIGHTMAP)
+                .setOverlayState(OVERLAY)
+                .setDepthTestState(LEQUAL_DEPTH_TEST)
+                .setWriteMaskState(COLOR_WRITE)
+                .setCullState(CULL)
+                .setOutputState(MAIN_TARGET)
+                .createCompositeState(true)
+        );
     }
 
     /** Depth prepass is only valid with the custom core shader (non-Iris) path. */

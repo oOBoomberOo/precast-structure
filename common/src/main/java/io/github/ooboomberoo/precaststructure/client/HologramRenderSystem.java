@@ -2,9 +2,9 @@ package io.github.ooboomberoo.precaststructure.client;
 
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.ByteBufferBuilder;
-import com.mojang.blaze3d.vertex.DefaultVertexFormat;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
+import io.github.ooboomberoo.precaststructure.client.special.BlockEntityPreviewRenderer;
 import io.github.ooboomberoo.precaststructure.compat.SableCompatClient;
 import io.github.ooboomberoo.precaststructure.structure.special.SpecialBlockHandler;
 import io.github.ooboomberoo.precaststructure.structure.special.SpecialBlockHandlers;
@@ -17,10 +17,8 @@ import net.minecraft.client.renderer.block.model.BakedQuad;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
-import net.minecraft.core.Vec3i;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.util.FastColor;
-import net.minecraft.util.Mth;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
@@ -30,12 +28,7 @@ import net.minecraft.world.level.material.FluidState;
 import net.minecraft.world.level.material.Fluids;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
-import org.joml.Matrix4f;
-import org.joml.Vector3f;
-import org.lwjgl.system.MemoryStack;
 
-import java.nio.ByteBuffer;
-import java.nio.IntBuffer;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -270,27 +263,22 @@ public final class HologramRenderSystem {
             source = bufferSource;
         } else {
             float clipY = localClipY;
-            source = renderType -> new PlaneClipVertexConsumer(bufferSource.getBuffer(renderType), clipY, true);
+            // BER ModelPart verts are already pose-transformed; wipe Y must match that space.
+            float outputClipY = poseStack.last().pose().transformPosition(0.0F, clipY, 0.0F, new org.joml.Vector3f()).y;
+            source = renderType -> new PlaneClipVertexConsumer(
+                bufferSource.getBuffer(renderType), clipY, outputClipY, true
+            );
         }
-        SpecialBlockHandler handler = SpecialBlockHandlers.find(state);
-        if (handler != null && handler.render(
+        renderPreviewMesh(
             dispatcher,
             state,
             poseStack,
+            source,
             source,
             LightTexture.FULL_BRIGHT,
             OverlayTexture.NO_OVERLAY,
             nbt,
             SpecialBlockHandler.RenderMode.SOLID
-        )) {
-            return;
-        }
-        dispatcher.renderSingleBlock(
-            state,
-            poseStack,
-            source,
-            LightTexture.FULL_BRIGHT,
-            OverlayTexture.NO_OVERLAY
         );
     }
 
@@ -387,65 +375,195 @@ public final class HologramRenderSystem {
         int packedLight,
         int packedOverlay
     ) {
-        // Block-format meshes remap onto the hologram layer. Entity-format meshes (chest/bed BER)
-        // keep their requested type for color so entity-atlas UVs stay valid; depth uses a matching
-        // NEW_ENTITY depth-only layer so hollow interiors are occluded (not a stone cube proxy).
-        MultiBufferSource source = requestedType -> {
-            boolean blockFormat = isBlockVertexFormat(requestedType.format());
-            RenderType targetType;
-            if (blockFormat) {
-                targetType = hologramType;
-            } else if (depthPass) {
-                targetType = ModRenderTypes.scanHologramEntityDepth();
-            } else {
-                targetType = requestedType;
-            }
-            VertexConsumer buffer = bufferSource.getBuffer(targetType);
-            if (styleEffects) {
-                buffer = new HologramStyleVertexConsumer(buffer, cameraX, cameraY, cameraZ, time);
-            }
-            if (part.clipY() != null) {
-                buffer = new PlaneClipVertexConsumer(buffer, part.clipY(), part.keepBelow());
-            }
-            if (hiddenFaces != 0 && blockFormat) {
-                buffer = new NeighborCullVertexConsumer(buffer, hiddenFaces);
-            }
-            return buffer;
+        // Sanitize lectern has_book / inventories for holograms even on old blueprints.
+        BlockState drawState = SpecialBlockHandlers.sanitizeCapturedState(part.state());
+        CompoundTag drawNbt = SpecialBlockHandlers.sanitizeCaptured(drawState, part.nbt());
+        Part drawPart = new Part(part.worldPos(), drawState, drawNbt, part.clipY(), part.keepBelow());
+
+        // Block models always use the hologram layer. Under Veil, planks may request
+        // entity_cutout / NEW_ENTITY; treating that as BER drew opaque vanilla cutout instead.
+        // True BER special handlers use a separate entity-preserving buffer source below.
+        MultiBufferSource entityBerSource = requestedType -> {
+            HologramLayerPolicy.Target target = HologramLayerPolicy.resolve(
+                HologramLayerPolicy.Mode.ENTITY_BER, depthPass
+            );
+            return wrapBuffer(
+                bufferSource,
+                drawPart,
+                hologramType,
+                target,
+                requestedType,
+                styleEffects,
+                cameraX,
+                cameraY,
+                cameraZ,
+                time,
+                hiddenFaces,
+                poseStack
+            );
         };
 
         SpecialBlockHandler.RenderMode mode = depthPass
             ? SpecialBlockHandler.RenderMode.HOLOGRAM_DEPTH
             : SpecialBlockHandler.RenderMode.HOLOGRAM;
-        SpecialBlockHandler handler = SpecialBlockHandlers.find(part.state());
-        if (handler != null && handler.render(
+        MultiBufferSource modelSource = requestedType -> wrapBuffer(
+            bufferSource,
+            drawPart,
+            hologramType,
+            HologramLayerPolicy.resolve(HologramLayerPolicy.Mode.BLOCK_MODEL, depthPass),
+            requestedType,
+            styleEffects,
+            cameraX,
+            cameraY,
+            cameraZ,
+            time,
+            hiddenFaces,
+            poseStack
+        );
+        renderPreviewMesh(
             dispatcher,
-            part.state(),
+            drawState,
             poseStack,
-            source,
+            modelSource,
+            entityBerSource,
             packedLight,
             packedOverlay,
-            part.nbt(),
+            drawNbt,
+            mode
+        );
+    }
+
+    /**
+     * Special handlers first (Create kinetics, custom overrides). Otherwise generic path:
+     * {@link RenderShape#ENTITYBLOCK_ANIMATED} / {@code INVISIBLE} → BER only; model-shaped
+     * entity blocks → baked model then optional BER overlay (enchanting table, lectern, …).
+     */
+    private static void renderPreviewMesh(
+        BlockRenderDispatcher dispatcher,
+        BlockState state,
+        PoseStack poseStack,
+        MultiBufferSource modelSource,
+        MultiBufferSource berSource,
+        int packedLight,
+        int packedOverlay,
+        @Nullable CompoundTag nbt,
+        SpecialBlockHandler.RenderMode mode
+    ) {
+        SpecialBlockHandler handler = SpecialBlockHandlers.find(state);
+        if (handler != null && handler.render(
+            dispatcher,
+            state,
+            poseStack,
+            berSource,
+            packedLight,
+            packedOverlay,
+            nbt,
             mode
         )) {
             return;
         }
 
-        dispatcher.renderSingleBlock(
-            part.state(),
-            poseStack,
-            source,
-            packedLight,
-            packedOverlay
-        );
+        if (BlockEntityPreviewRenderer.isBerPrimary(state)) {
+            if (BlockEntityPreviewRenderer.render(
+                state, poseStack, berSource, packedLight, packedOverlay, nbt
+            )) {
+                return;
+            }
+        }
+
+        dispatcher.renderSingleBlock(state, poseStack, modelSource, packedLight, packedOverlay);
+
+        if (!BlockEntityPreviewRenderer.isBerPrimary(state)) {
+            BlockEntityPreviewRenderer.render(
+                state, poseStack, berSource, packedLight, packedOverlay, nbt
+            );
+        }
     }
 
-    private static boolean isBlockVertexFormat(com.mojang.blaze3d.vertex.VertexFormat format) {
-        if (format == DefaultVertexFormat.BLOCK) {
-            return true;
+    private static VertexConsumer wrapBuffer(
+        MultiBufferSource bufferSource,
+        Part part,
+        RenderType hologramType,
+        HologramLayerPolicy.Target target,
+        RenderType requestedType,
+        boolean styleEffects,
+        float cameraX,
+        float cameraY,
+        float cameraZ,
+        float time,
+        int hiddenFaces,
+        PoseStack poseStack
+    ) {
+        RenderType targetType = switch (target) {
+            case HOLOGRAM_BLOCK -> hologramType;
+            case HOLOGRAM_ENTITY_DEPTH -> entityHologramDepthType(requestedType);
+            case REQUESTED_ENTITY_COLOR -> entityHologramColorType(requestedType);
+        };
+        VertexConsumer buffer = bufferSource.getBuffer(targetType);
+        // BER color uses scan_hologram_entity (fragment animation). CPU style is Iris fallback only.
+        boolean applyStyle = styleEffects
+            || (target == HologramLayerPolicy.Target.REQUESTED_ENTITY_COLOR
+                && !ModShaders.useCustomEntityHologramShader());
+        if (applyStyle) {
+            buffer = new HologramStyleVertexConsumer(buffer, cameraX, cameraY, cameraZ, time);
         }
-        // Cross-loader safe: Architectury may duplicate the BLOCK singleton.
-        return format.getVertexSize() == DefaultVertexFormat.BLOCK.getVertexSize()
-            && format.getElements().equals(DefaultVertexFormat.BLOCK.getElements());
+        if (part.clipY() != null) {
+            float modelClipY = part.clipY();
+            float outputClipY = poseStack.last().pose()
+                .transformPosition(0.0F, modelClipY, 0.0F, new org.joml.Vector3f()).y;
+            buffer = new PlaneClipVertexConsumer(buffer, modelClipY, outputClipY, part.keepBelow());
+        }
+        if (hiddenFaces != 0 && target == HologramLayerPolicy.Target.HOLOGRAM_BLOCK) {
+            buffer = new NeighborCullVertexConsumer(buffer, hiddenFaces);
+        }
+        return buffer;
+    }
+
+    private static RenderType entityHologramDepthType(RenderType requestedType) {
+        // Sign/banner text uses POSITION_COLOR_TEX_LIGHTMAP (no UV1/Normal). Remapping those
+        // onto NEW_ENTITY hologram layers crashes BufferBuilder ("Missing elements: UV1, Normal").
+        if (!HologramLayerPolicy.isEntityVertexFormat(requestedType.format())) {
+            return requestedType;
+        }
+        ResourceLocation atlas = textureAtlasFromRenderType(requestedType);
+        if (atlas != null) {
+            return ModRenderTypes.entityHologramDepth(atlas);
+        }
+        return ModRenderTypes.scanHologramEntityDepth();
+    }
+
+    /**
+     * Translucent COLOR_WRITE-only layer using the BER atlas (not vanilla entity_translucent,
+     * which also writes depth and z-fights the prepass).
+     */
+    private static RenderType entityHologramColorType(RenderType requestedType) {
+        if (!HologramLayerPolicy.isEntityVertexFormat(requestedType.format())) {
+            return requestedType;
+        }
+        ResourceLocation atlas = textureAtlasFromRenderType(requestedType);
+        if (atlas != null) {
+            return ModRenderTypes.entityHologramColor(atlas);
+        }
+        return requestedType;
+    }
+
+    @Nullable
+    private static ResourceLocation textureAtlasFromRenderType(RenderType type) {
+        String text = type.toString();
+        int optional = text.indexOf("Optional[");
+        if (optional < 0) {
+            return null;
+        }
+        int start = optional + "Optional[".length();
+        int end = text.indexOf(']', start);
+        if (end <= start) {
+            return null;
+        }
+        try {
+            return ResourceLocation.parse(text.substring(start, end));
+        } catch (RuntimeException ignored) {
+            return null;
+        }
     }
 
     /**
@@ -571,269 +689,6 @@ public final class HologramRenderSystem {
         public VertexConsumer setNormal(float x, float y, float z) {
             delegate.setNormal(x, y, z);
             return this;
-        }
-    }
-
-    /**
-     * Clips baked quads against a horizontal model-space plane (y = localClipY)
-     * using Sutherland–Hodgman polygon clipping.
-     */
-    public static final class PlaneClipVertexConsumer implements VertexConsumer {
-        private static final int MAX_CLIP_VERTS = 8;
-
-        private final VertexConsumer delegate;
-        private final float localClipY;
-        private final boolean keepBelow;
-        private final ClipVert[] input = new ClipVert[4];
-        private final ClipVert[] clipA = new ClipVert[MAX_CLIP_VERTS];
-        private final ClipVert[] clipB = new ClipVert[MAX_CLIP_VERTS];
-
-        public PlaneClipVertexConsumer(VertexConsumer delegate, float localClipY, boolean keepBelow) {
-            this.delegate = delegate;
-            this.localClipY = localClipY;
-            this.keepBelow = keepBelow;
-            for (int i = 0; i < 4; i++) {
-                input[i] = new ClipVert();
-            }
-            for (int i = 0; i < MAX_CLIP_VERTS; i++) {
-                clipA[i] = new ClipVert();
-                clipB[i] = new ClipVert();
-            }
-        }
-
-        @Override
-        public void putBulkData(
-            PoseStack.Pose pose,
-            BakedQuad quad,
-            float red,
-            float green,
-            float blue,
-            float alpha,
-            int packedLight,
-            int packedOverlay
-        ) {
-            putBulkData(
-                pose,
-                quad,
-                new float[]{1.0F, 1.0F, 1.0F, 1.0F},
-                red,
-                green,
-                blue,
-                alpha,
-                new int[]{packedLight, packedLight, packedLight, packedLight},
-                packedOverlay,
-                false
-            );
-        }
-
-        @Override
-        public void putBulkData(
-            PoseStack.Pose pose,
-            BakedQuad quad,
-            float[] brightness,
-            float red,
-            float green,
-            float blue,
-            float alpha,
-            int[] lightmap,
-            int packedOverlay,
-            boolean colorize
-        ) {
-            int[] vertices = quad.getVertices();
-            Vec3i normal = quad.getDirection().getNormal();
-            Matrix4f matrix = pose.pose();
-            Vector3f transformedNormal = pose.transformNormal(normal.getX(), normal.getY(), normal.getZ(), new Vector3f());
-            int alphaByte = (int) (alpha * 255.0F);
-            int vertexCount = vertices.length / 8;
-            if (vertexCount != 4) {
-                VertexConsumer.super.putBulkData(pose, quad, brightness, red, green, blue, alpha, lightmap, packedOverlay, colorize);
-                return;
-            }
-
-            try (MemoryStack stack = MemoryStack.stackPush()) {
-                ByteBuffer byteBuffer = stack.malloc(DefaultVertexFormat.BLOCK.getVertexSize());
-                IntBuffer intBuffer = byteBuffer.asIntBuffer();
-                for (int i = 0; i < 4; i++) {
-                    intBuffer.clear();
-                    intBuffer.put(vertices, i * 8, 8);
-                    float x = byteBuffer.getFloat(0);
-                    float y = byteBuffer.getFloat(4);
-                    float z = byteBuffer.getFloat(8);
-                    float shade = brightness[i];
-                    int color;
-                    if (colorize) {
-                        float cr = (byteBuffer.get(12) & 0xFF) * shade * red;
-                        float cg = (byteBuffer.get(13) & 0xFF) * shade * green;
-                        float cb = (byteBuffer.get(14) & 0xFF) * shade * blue;
-                        color = FastColor.ARGB32.color(alphaByte, (int) cr, (int) cg, (int) cb);
-                    } else {
-                        color = FastColor.ARGB32.color(
-                            alphaByte,
-                            (int) (shade * red * 255.0F),
-                            (int) (shade * green * 255.0F),
-                            (int) (shade * blue * 255.0F)
-                        );
-                    }
-                    input[i].set(x, y, z, color, byteBuffer.getFloat(16), byteBuffer.getFloat(20), lightmap[i]);
-                }
-            }
-
-            int clippedCount = clipQuad(input, localClipY, keepBelow, clipA, clipB);
-            if (clippedCount < 3) {
-                return;
-            }
-
-            ClipVert v0 = clipA[0];
-            for (int i = 1; i < clippedCount - 1; i++) {
-                emitTransformed(matrix, v0, packedOverlay, transformedNormal);
-                emitTransformed(matrix, clipA[i], packedOverlay, transformedNormal);
-                emitTransformed(matrix, clipA[i + 1], packedOverlay, transformedNormal);
-                emitTransformed(matrix, clipA[i + 1], packedOverlay, transformedNormal);
-            }
-        }
-
-        private void emitTransformed(Matrix4f matrix, ClipVert vert, int packedOverlay, Vector3f normal) {
-            Vector3f pos = matrix.transformPosition(vert.x, vert.y, vert.z, new Vector3f());
-            delegate.addVertex(
-                pos.x,
-                pos.y,
-                pos.z,
-                vert.color,
-                vert.u,
-                vert.v,
-                packedOverlay,
-                vert.light,
-                normal.x,
-                normal.y,
-                normal.z
-            );
-        }
-
-        private static int clipQuad(ClipVert[] quad, float clipY, boolean keepBelow, ClipVert[] out, ClipVert[] scratch) {
-            for (int i = 0; i < 4; i++) {
-                out[i].copyFrom(quad[i]);
-            }
-            int clipped = clipAgainstPlane(out, 4, scratch, clipY, keepBelow);
-            if (clipped < 3) {
-                return clipped;
-            }
-            for (int i = 0; i < clipped; i++) {
-                out[i].copyFrom(scratch[i]);
-            }
-            return clipped;
-        }
-
-        private static int clipAgainstPlane(ClipVert[] in, int inCount, ClipVert[] out, float clipY, boolean keepBelow) {
-            int outCount = 0;
-            ClipVert prev = in[inCount - 1];
-            boolean prevInside = isInside(prev.y, clipY, keepBelow);
-            for (int i = 0; i < inCount; i++) {
-                ClipVert curr = in[i];
-                boolean currInside = isInside(curr.y, clipY, keepBelow);
-                if (currInside) {
-                    if (!prevInside) {
-                        out[outCount++].lerpToPlane(prev, curr, clipY);
-                    }
-                    out[outCount++].copyFrom(curr);
-                } else if (prevInside) {
-                    out[outCount++].lerpToPlane(prev, curr, clipY);
-                }
-                prev = curr;
-                prevInside = currInside;
-            }
-            return outCount;
-        }
-
-        private static boolean isInside(float y, float clipY, boolean keepBelow) {
-            return keepBelow ? y <= clipY + CLIP_EPSILON : y >= clipY - CLIP_EPSILON;
-        }
-
-        @Override
-        public VertexConsumer addVertex(float x, float y, float z) {
-            delegate.addVertex(x, y, z);
-            return this;
-        }
-
-        @Override
-        public VertexConsumer setColor(int red, int green, int blue, int alpha) {
-            delegate.setColor(red, green, blue, alpha);
-            return this;
-        }
-
-        @Override
-        public VertexConsumer setUv(float u, float v) {
-            delegate.setUv(u, v);
-            return this;
-        }
-
-        @Override
-        public VertexConsumer setUv1(int u, int v) {
-            delegate.setUv1(u, v);
-            return this;
-        }
-
-        @Override
-        public VertexConsumer setUv2(int u, int v) {
-            delegate.setUv2(u, v);
-            return this;
-        }
-
-        @Override
-        public VertexConsumer setNormal(float x, float y, float z) {
-            delegate.setNormal(x, y, z);
-            return this;
-        }
-
-        private static final class ClipVert {
-            float x;
-            float y;
-            float z;
-            int color;
-            float u;
-            float v;
-            int light;
-
-            void set(float x, float y, float z, int color, float u, float v, int light) {
-                this.x = x;
-                this.y = y;
-                this.z = z;
-                this.color = color;
-                this.u = u;
-                this.v = v;
-                this.light = light;
-            }
-
-            void copyFrom(ClipVert other) {
-                set(other.x, other.y, other.z, other.color, other.u, other.v, other.light);
-            }
-
-            void lerpToPlane(ClipVert from, ClipVert to, float clipY) {
-                float dy = to.y - from.y;
-                float t = Math.abs(dy) < 1.0E-6F ? 0.0F : (clipY - from.y) / dy;
-                t = Mth.clamp(t, 0.0F, 1.0F);
-                x = Mth.lerp(t, from.x, to.x);
-                y = clipY;
-                z = Mth.lerp(t, from.z, to.z);
-                u = Mth.lerp(t, from.u, to.u);
-                v = Mth.lerp(t, from.v, to.v);
-                color = lerpColor(from.color, to.color, t);
-                light = lerpLight(from.light, to.light, t);
-            }
-
-            private static int lerpColor(int a, int b, float t) {
-                return FastColor.ARGB32.color(
-                    (int) Mth.lerp(t, FastColor.ARGB32.alpha(a), FastColor.ARGB32.alpha(b)),
-                    (int) Mth.lerp(t, FastColor.ARGB32.red(a), FastColor.ARGB32.red(b)),
-                    (int) Mth.lerp(t, FastColor.ARGB32.green(a), FastColor.ARGB32.green(b)),
-                    (int) Mth.lerp(t, FastColor.ARGB32.blue(a), FastColor.ARGB32.blue(b))
-                );
-            }
-
-            private static int lerpLight(int a, int b, float t) {
-                int block = (int) Mth.lerp(t, a & 0xFFFF, b & 0xFFFF);
-                int sky = (int) Mth.lerp(t, a >> 16 & 0xFFFF, b >> 16 & 0xFFFF);
-                return block | sky << 16;
-            }
         }
     }
 }

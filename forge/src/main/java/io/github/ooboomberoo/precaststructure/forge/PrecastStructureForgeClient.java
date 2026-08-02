@@ -42,5 +42,13 @@ public final class PrecastStructureForgeClient {
             ),
             ModShaders::setScanHologram
         );
+        event.registerShader(
+            new ShaderInstance(
+                event.getResourceProvider(),
+                ResourceLocation.fromNamespaceAndPath(PrecastStructureMod.MOD_ID, ModShaders.SCAN_HOLOGRAM_ENTITY),
+                DefaultVertexFormat.NEW_ENTITY
+            ),
+            ModShaders::setScanHologramEntity
+        );
     }
 }

@@ -5,9 +5,12 @@ import org.jetbrains.annotations.Nullable;
 
 public final class ModShaders {
     public static final String SCAN_HOLOGRAM = "scan_hologram";
+    public static final String SCAN_HOLOGRAM_ENTITY = "scan_hologram_entity";
 
     @Nullable
     private static ShaderInstance scanHologram;
+    @Nullable
+    private static ShaderInstance scanHologramEntity;
 
     private ModShaders() {
     }
@@ -16,9 +19,18 @@ public final class ModShaders {
         scanHologram = shader;
     }
 
+    public static void setScanHologramEntity(@Nullable ShaderInstance shader) {
+        scanHologramEntity = shader;
+    }
+
     @Nullable
     public static ShaderInstance getScanHologram() {
         return scanHologram;
+    }
+
+    @Nullable
+    public static ShaderInstance getScanHologramEntity() {
+        return scanHologramEntity;
     }
 
     /**
@@ -28,5 +40,10 @@ public final class ModShaders {
      */
     public static boolean useCustomHologramShader() {
         return scanHologram != null && !ShaderCompat.isExternalShaderPackActive();
+    }
+
+    /** Entity-format BER hologram program (chest / shulker / skull). */
+    public static boolean useCustomEntityHologramShader() {
+        return scanHologramEntity != null && !ShaderCompat.isExternalShaderPackActive();
     }
 }
