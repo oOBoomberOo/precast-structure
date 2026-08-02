@@ -3,7 +3,7 @@
   "id": "precast_structure",
   "version": "${version}",
   "name": "Pre-cast Structure",
-  "description": "Scan framed builds into blueprints, print them into pre-cast structure items, and place the structure with a hologram deploy preview.",
+  "description": "Scan framed builds into blueprints, print them into pre-cast structure items, and place the structure with a hologram deploy preview. Optional Create and Sable soft compatibility.",
   "authors": ["oOBoomberOo"],
   "contact": {
     "homepage": "https://github.com/oOBoomberOo/precast-structure",
