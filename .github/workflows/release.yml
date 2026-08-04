@@ -175,27 +175,43 @@ jobs:
             echo "Pre-cast Structure ${{ steps.version.outputs.version }}" > release-notes.md
           fi
 
-      - name: Publish to Modrinth
+      - name: Publish Fabric to Modrinth
         uses: Kir-Antipov/mc-publish@v3.3
         with:
           # Base62 project id (required while the project is under review / slug is not public)
           modrinth-id: ynJKnqKN
           modrinth-token: ${{ secrets.MODRINTH_TOKEN }}
-          name: Pre-cast Structure ${{ steps.version.outputs.version }}
-          version: ${{ steps.version.outputs.version }}
+          name: Pre-cast Structure ${{ steps.version.outputs.version }} (Fabric)
+          version: ${{ steps.version.outputs.version }}+fabric
           version-type: ${{ steps.version.outputs.prerelease == 'true' && 'beta' || 'release' }}
           changelog-file: release-notes.md
-          files: |
-            release/precast-structure-*-fabric.jar
-            release/precast-structure-*-neoforge.jar
-          loaders: |
-            fabric
-            neoforge
+          files: release/precast-structure-*-fabric.jar
+          loaders: fabric
           game-versions: ${{ steps.version.outputs.minecraft_version }}
           java: "21"
           dependencies: |
             architectury-api(required){modrinth:lhGA9TYQ}
             cloth-config(required){modrinth:9s6osm5g}
             fabric-api(optional){modrinth:P7dR8mSH}
+            create(optional){modrinth:LNytGWDc}
+            sable(optional){modrinth:T9PomCSv}
+
+      - name: Publish NeoForge to Modrinth
+        uses: Kir-Antipov/mc-publish@v3.3
+        with:
+          # Base62 project id (required while the project is under review / slug is not public)
+          modrinth-id: ynJKnqKN
+          modrinth-token: ${{ secrets.MODRINTH_TOKEN }}
+          name: Pre-cast Structure ${{ steps.version.outputs.version }} (NeoForge)
+          version: ${{ steps.version.outputs.version }}+neoforge
+          version-type: ${{ steps.version.outputs.prerelease == 'true' && 'beta' || 'release' }}
+          changelog-file: release-notes.md
+          files: release/precast-structure-*-neoforge.jar
+          loaders: neoforge
+          game-versions: ${{ steps.version.outputs.minecraft_version }}
+          java: "21"
+          dependencies: |
+            architectury-api(required){modrinth:lhGA9TYQ}
+            cloth-config(required){modrinth:9s6osm5g}
             create(optional){modrinth:LNytGWDc}
             sable(optional){modrinth:T9PomCSv}
