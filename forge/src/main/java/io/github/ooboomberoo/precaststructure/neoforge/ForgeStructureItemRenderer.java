@@ -1,4 +1,4 @@
-package io.github.ooboomberoo.precaststructure.forge;
+package io.github.ooboomberoo.precaststructure.neoforge;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import io.github.ooboomberoo.precaststructure.client.StructureItemRenderer;
