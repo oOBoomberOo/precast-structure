@@ -1,4 +1,4 @@
-package io.github.ooboomberoo.precaststructure.forge;
+package io.github.ooboomberoo.precaststructure.neoforge;
 
 import io.github.ooboomberoo.precaststructure.item.PrecastStructureItem;
 import java.util.function.Consumer;

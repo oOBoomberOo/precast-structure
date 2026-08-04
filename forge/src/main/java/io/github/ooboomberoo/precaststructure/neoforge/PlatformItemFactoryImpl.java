@@ -1,4 +1,4 @@
-package io.github.ooboomberoo.precaststructure.forge;
+package io.github.ooboomberoo.precaststructure.neoforge;
 
 import net.minecraft.world.item.Item;
 
