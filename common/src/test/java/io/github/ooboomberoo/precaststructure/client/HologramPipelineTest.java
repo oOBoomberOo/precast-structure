@@ -17,56 +17,51 @@ import net.minecraft.world.level.block.Blocks;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
-/**
- * Locks hologram pipeline invariants that previously regressed to fully opaque solid ghosts.
- */
+/** Locks hologram pipeline invariants that previously regressed to fully opaque solid ghosts. */
 class HologramPipelineTest {
-    @BeforeAll
-    static void bootstrapMinecraft() {
-        SharedConstants.tryDetectVersion();
-        Bootstrap.bootStrap();
-        SpecialBlockHandlers.bootstrap();
-    }
+  @BeforeAll
+  static void bootstrapMinecraft() {
+    SharedConstants.tryDetectVersion();
+    Bootstrap.bootStrap();
+    SpecialBlockHandlers.bootstrap();
+  }
 
-    @Test
-    void blockModelModeAlwaysRemapsToHologramEvenIfEntityFormat() {
-        // Veil asks for entity_cutout / NEW_ENTITY for jungle_planks — must still hologram.
-        assertEquals(
-            HologramLayerPolicy.Target.HOLOGRAM_BLOCK,
-            HologramLayerPolicy.resolve(HologramLayerPolicy.Mode.BLOCK_MODEL, false)
-        );
-        assertEquals(
-            HologramLayerPolicy.Target.HOLOGRAM_BLOCK,
-            HologramLayerPolicy.resolve(HologramLayerPolicy.Mode.BLOCK_MODEL, true)
-        );
-    }
+  @Test
+  void blockModelModeAlwaysRemapsToHologramEvenIfEntityFormat() {
+    // Veil asks for entity_cutout / NEW_ENTITY for jungle_planks — must still hologram.
+    assertEquals(
+        HologramLayerPolicy.Target.HOLOGRAM_BLOCK,
+        HologramLayerPolicy.resolve(HologramLayerPolicy.Mode.BLOCK_MODEL, false));
+    assertEquals(
+        HologramLayerPolicy.Target.HOLOGRAM_BLOCK,
+        HologramLayerPolicy.resolve(HologramLayerPolicy.Mode.BLOCK_MODEL, true));
+  }
 
-    @Test
-    void entityBerModePreservesEntityLayers() {
-        assertEquals(
-            HologramLayerPolicy.Target.REQUESTED_ENTITY_COLOR,
-            HologramLayerPolicy.resolve(HologramLayerPolicy.Mode.ENTITY_BER, false)
-        );
-        assertEquals(
-            HologramLayerPolicy.Target.HOLOGRAM_ENTITY_DEPTH,
-            HologramLayerPolicy.resolve(HologramLayerPolicy.Mode.ENTITY_BER, true)
-        );
-    }
+  @Test
+  void entityBerModePreservesEntityLayers() {
+    assertEquals(
+        HologramLayerPolicy.Target.REQUESTED_ENTITY_COLOR,
+        HologramLayerPolicy.resolve(HologramLayerPolicy.Mode.ENTITY_BER, false));
+    assertEquals(
+        HologramLayerPolicy.Target.HOLOGRAM_ENTITY_DEPTH,
+        HologramLayerPolicy.resolve(HologramLayerPolicy.Mode.ENTITY_BER, true));
+  }
 
-    @Test
-    void blockFormatIsNeverTreatedAsEntity() {
-        assertFalse(HologramLayerPolicy.isEntityVertexFormat(DefaultVertexFormat.BLOCK));
-    }
+  @Test
+  void blockFormatIsNeverTreatedAsEntity() {
+    assertFalse(HologramLayerPolicy.isEntityVertexFormat(DefaultVertexFormat.BLOCK));
+  }
 
-    @Test
-    void entityFormatDetectionStillWorksForDiagnostics() {
-        assertTrue(HologramLayerPolicy.isEntityVertexFormat(DefaultVertexFormat.NEW_ENTITY));
-        assertFalse(HologramLayerPolicy.isEntityVertexFormat(null));
-    }
+  @Test
+  void entityFormatDetectionStillWorksForDiagnostics() {
+    assertTrue(HologramLayerPolicy.isEntityVertexFormat(DefaultVertexFormat.NEW_ENTITY));
+    assertFalse(HologramLayerPolicy.isEntityVertexFormat(null));
+  }
 
-    @Test
-    void architecturyStyleDuplicateBlockFormatStillMapsToHologram() {
-        VertexFormat duplicateBlock = VertexFormat.builder()
+  @Test
+  void architecturyStyleDuplicateBlockFormatStillMapsToHologram() {
+    VertexFormat duplicateBlock =
+        VertexFormat.builder()
             .add("Position", VertexFormatElement.POSITION)
             .add("Color", VertexFormatElement.COLOR)
             .add("UV0", VertexFormatElement.UV0)
@@ -75,34 +70,33 @@ class HologramPipelineTest {
             .padding(1)
             .build();
 
-        assertFalse(HologramLayerPolicy.isEntityVertexFormat(duplicateBlock));
-        assertEquals(
-            HologramLayerPolicy.Target.HOLOGRAM_BLOCK,
-            HologramLayerPolicy.resolve(HologramLayerPolicy.Mode.BLOCK_MODEL, false)
-        );
-    }
+    assertFalse(HologramLayerPolicy.isEntityVertexFormat(duplicateBlock));
+    assertEquals(
+        HologramLayerPolicy.Target.HOLOGRAM_BLOCK,
+        HologramLayerPolicy.resolve(HologramLayerPolicy.Mode.BLOCK_MODEL, false));
+  }
 
-    @Test
-    void depthAndColorHologramLayersAreDistinct() {
-        RenderType depth = ModRenderTypes.scanHologramDepth();
-        RenderType color = ModRenderTypes.scanHologram();
-        assertNotNull(depth);
-        assertNotNull(color);
-        assertNotEquals(depth, color);
-        assertNotEquals(RenderType.solid(), depth, "depth prepass must not be vanilla solid");
-        assertNotEquals(RenderType.solid(), color, "color pass must not be vanilla solid");
-        assertTrue(
-            depth.toString().contains("scan_hologram") || depth.toString().contains("precast_structure"),
-            () -> "unexpected depth layer: " + depth
-        );
-    }
+  @Test
+  void depthAndColorHologramLayersAreDistinct() {
+    RenderType depth = ModRenderTypes.scanHologramDepth();
+    RenderType color = ModRenderTypes.scanHologram();
+    assertNotNull(depth);
+    assertNotNull(color);
+    assertNotEquals(depth, color);
+    assertNotEquals(RenderType.solid(), depth, "depth prepass must not be vanilla solid");
+    assertNotEquals(RenderType.solid(), color, "color pass must not be vanilla solid");
+    assertTrue(
+        depth.toString().contains("scan_hologram")
+            || depth.toString().contains("precast_structure"),
+        () -> "unexpected depth layer: " + depth);
+  }
 
-    @Test
-    void normalBlocksAreNotStolenBySpecialHandlers() {
-        assertTrue(SpecialBlockHandlers.find(Blocks.JUNGLE_PLANKS.defaultBlockState()) == null);
-        assertTrue(SpecialBlockHandlers.find(Blocks.DARK_OAK_PLANKS.defaultBlockState()) == null);
-        // Chests/lecterns use ContainerCapture + generic BER — no SpecialBlockHandler.
-        assertTrue(SpecialBlockHandlers.find(Blocks.CHEST.defaultBlockState()) == null);
-        assertNotNull(SpecialBlockHandlers.find(Blocks.OAK_DOOR.defaultBlockState()));
-    }
+  @Test
+  void normalBlocksAreNotStolenBySpecialHandlers() {
+    assertTrue(SpecialBlockHandlers.find(Blocks.JUNGLE_PLANKS.defaultBlockState()) == null);
+    assertTrue(SpecialBlockHandlers.find(Blocks.DARK_OAK_PLANKS.defaultBlockState()) == null);
+    // Chests/lecterns use ContainerCapture + generic BER — no SpecialBlockHandler.
+    assertTrue(SpecialBlockHandlers.find(Blocks.CHEST.defaultBlockState()) == null);
+    assertNotNull(SpecialBlockHandlers.find(Blocks.OAK_DOOR.defaultBlockState()));
+  }
 }

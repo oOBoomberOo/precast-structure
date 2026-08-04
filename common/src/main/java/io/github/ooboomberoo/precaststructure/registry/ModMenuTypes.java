@@ -10,15 +10,17 @@ import net.minecraft.core.registries.Registries;
 import net.minecraft.world.inventory.MenuType;
 
 public final class ModMenuTypes {
-    public static final DeferredRegister<MenuType<?>> MENUS = DeferredRegister.create(PrecastStructureMod.MOD_ID, Registries.MENU);
+  public static final DeferredRegister<MenuType<?>> MENUS =
+      DeferredRegister.create(PrecastStructureMod.MOD_ID, Registries.MENU);
 
-    public static final RegistrySupplier<MenuType<StructureScannerMenu>> STRUCTURE_SCANNER = MENUS.register("structure_scanner", () -> MenuRegistry.ofExtended(StructureScannerMenu::new));
-    public static final RegistrySupplier<MenuType<StructurePrinterMenu>> STRUCTURE_PRINTER = MENUS.register("structure_printer", () -> MenuRegistry.ofExtended(StructurePrinterMenu::new));
+  public static final RegistrySupplier<MenuType<StructureScannerMenu>> STRUCTURE_SCANNER =
+      MENUS.register("structure_scanner", () -> MenuRegistry.ofExtended(StructureScannerMenu::new));
+  public static final RegistrySupplier<MenuType<StructurePrinterMenu>> STRUCTURE_PRINTER =
+      MENUS.register("structure_printer", () -> MenuRegistry.ofExtended(StructurePrinterMenu::new));
 
-    private ModMenuTypes() {
-    }
+  private ModMenuTypes() {}
 
-    public static void register() {
-        MENUS.register();
-    }
+  public static void register() {
+    MENUS.register();
+  }
 }

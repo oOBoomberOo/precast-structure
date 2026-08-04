@@ -9,17 +9,17 @@ import net.minecraft.world.item.crafting.RecipeSerializer;
 import net.minecraft.world.item.crafting.SimpleCraftingRecipeSerializer;
 
 public final class ModRecipeSerializers {
-    public static final DeferredRegister<RecipeSerializer<?>> RECIPE_SERIALIZERS = DeferredRegister.create(PrecastStructureMod.MOD_ID, Registries.RECIPE_SERIALIZER);
+  public static final DeferredRegister<RecipeSerializer<?>> RECIPE_SERIALIZERS =
+      DeferredRegister.create(PrecastStructureMod.MOD_ID, Registries.RECIPE_SERIALIZER);
 
-    public static final RegistrySupplier<RecipeSerializer<BlueprintCloningRecipe>> BLUEPRINT_CLONING = RECIPE_SERIALIZERS.register(
-        "blueprint_cloning",
-        () -> new SimpleCraftingRecipeSerializer<>(BlueprintCloningRecipe::new)
-    );
+  public static final RegistrySupplier<RecipeSerializer<BlueprintCloningRecipe>> BLUEPRINT_CLONING =
+      RECIPE_SERIALIZERS.register(
+          "blueprint_cloning",
+          () -> new SimpleCraftingRecipeSerializer<>(BlueprintCloningRecipe::new));
 
-    private ModRecipeSerializers() {
-    }
+  private ModRecipeSerializers() {}
 
-    public static void register() {
-        RECIPE_SERIALIZERS.register();
-    }
+  public static void register() {
+    RECIPE_SERIALIZERS.register();
+  }
 }

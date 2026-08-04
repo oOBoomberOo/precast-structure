@@ -1,6 +1,7 @@
 plugins {
     id "architectury-plugin" version "3.5-SNAPSHOT"
     id "dev.architectury.loom" version "1.17-SNAPSHOT" apply false
+    id "com.diffplug.spotless" version "7.2.1" apply false
 }
 
 architectury {
@@ -24,6 +25,7 @@ allprojects {
     apply plugin: "java"
     apply plugin: "architectury-plugin"
     apply plugin: "maven-publish"
+    apply plugin: "com.diffplug.spotless"
 
     base {
         archivesName = rootProject.archives_base_name
@@ -55,5 +57,21 @@ allprojects {
 
     tasks.withType(Test).configureEach {
         useJUnitPlatform()
+    }
+
+    spotless {
+        java {
+            target "src/*/java/**/*.java"
+            googleJavaFormat("1.27.0")
+            removeUnusedImports()
+            trimTrailingWhitespace()
+            endWithNewline()
+        }
+        format "misc", {
+            target "*.gradle", "*.md", ".gitignore", "*.properties", "*.json", "*.toml"
+            targetExclude ".gradle/**", "**/build/**", "**/.loom*/**"
+            trimTrailingWhitespace()
+            endWithNewline()
+        }
     }
 }

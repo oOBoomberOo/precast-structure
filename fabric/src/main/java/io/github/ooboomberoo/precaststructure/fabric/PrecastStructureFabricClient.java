@@ -20,44 +20,47 @@ import net.fabricmc.fabric.api.client.rendering.v1.WorldRenderEvents;
 import net.minecraft.resources.ResourceLocation;
 
 public final class PrecastStructureFabricClient implements ClientModInitializer {
-    @Override
-    public void onInitializeClient() {
-        PrecastStructureClient.init();
-        MenuRegistry.registerScreenFactory(ModMenuTypes.STRUCTURE_SCANNER.get(), StructureScannerScreen::new);
-        MenuRegistry.registerScreenFactory(ModMenuTypes.STRUCTURE_PRINTER.get(), StructurePrinterScreen::new);
-        CoreShaderRegistrationCallback.EVENT.register(context -> {
-            context.register(
-                ResourceLocation.fromNamespaceAndPath(PrecastStructureMod.MOD_ID, ModShaders.SCAN_HOLOGRAM),
-                DefaultVertexFormat.BLOCK,
-                ModShaders::setScanHologram
-            );
-            context.register(
-                ResourceLocation.fromNamespaceAndPath(PrecastStructureMod.MOD_ID, ModShaders.SCAN_HOLOGRAM_ENTITY),
-                DefaultVertexFormat.NEW_ENTITY,
-                ModShaders::setScanHologramEntity
-            );
+  @Override
+  public void onInitializeClient() {
+    PrecastStructureClient.init();
+    MenuRegistry.registerScreenFactory(
+        ModMenuTypes.STRUCTURE_SCANNER.get(), StructureScannerScreen::new);
+    MenuRegistry.registerScreenFactory(
+        ModMenuTypes.STRUCTURE_PRINTER.get(), StructurePrinterScreen::new);
+    CoreShaderRegistrationCallback.EVENT.register(
+        context -> {
+          context.register(
+              ResourceLocation.fromNamespaceAndPath(
+                  PrecastStructureMod.MOD_ID, ModShaders.SCAN_HOLOGRAM),
+              DefaultVertexFormat.BLOCK,
+              ModShaders::setScanHologram);
+          context.register(
+              ResourceLocation.fromNamespaceAndPath(
+                  PrecastStructureMod.MOD_ID, ModShaders.SCAN_HOLOGRAM_ENTITY),
+              DefaultVertexFormat.NEW_ENTITY,
+              ModShaders::setScanHologramEntity);
         });
-        BuiltinItemRendererRegistry.INSTANCE.register(ModItems.PRECAST_STRUCTURE.get(), StructureItemRenderer::render);
-        // Vanilla: after opaque/cutout so depth occludes holograms.
-        // Iris deferred packs: after translucent so composite does not wipe the draw.
-        WorldRenderEvents.AFTER_ENTITIES.register(context -> {
-            if (!ShaderCompat.shouldUseLateWorldOverlayPass()) {
-                renderOverlays(context);
-            }
+    BuiltinItemRendererRegistry.INSTANCE.register(
+        ModItems.PRECAST_STRUCTURE.get(), StructureItemRenderer::render);
+    // Vanilla: after opaque/cutout so depth occludes holograms.
+    // Iris deferred packs: after translucent so composite does not wipe the draw.
+    WorldRenderEvents.AFTER_ENTITIES.register(
+        context -> {
+          if (!ShaderCompat.shouldUseLateWorldOverlayPass()) {
+            renderOverlays(context);
+          }
         });
-        WorldRenderEvents.AFTER_TRANSLUCENT.register(context -> {
-            if (ShaderCompat.shouldUseLateWorldOverlayPass()) {
-                renderOverlays(context);
-            }
+    WorldRenderEvents.AFTER_TRANSLUCENT.register(
+        context -> {
+          if (ShaderCompat.shouldUseLateWorldOverlayPass()) {
+            renderOverlays(context);
+          }
         });
-    }
+  }
 
-    private static void renderOverlays(WorldRenderContext context) {
-        float partialTick = context.tickCounter().getGameTimeDeltaPartialTick(false);
-        WorldHologramRender.renderAll(
-            context.matrixStack(),
-            context.camera().getPosition(),
-            partialTick
-        );
-    }
+  private static void renderOverlays(WorldRenderContext context) {
+    float partialTick = context.tickCounter().getGameTimeDeltaPartialTick(false);
+    WorldHologramRender.renderAll(
+        context.matrixStack(), context.camera().getPosition(), partialTick);
+  }
 }

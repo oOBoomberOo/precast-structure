@@ -31,106 +31,135 @@ import net.minecraft.world.level.block.state.properties.DirectionProperty;
 import net.minecraft.world.phys.BlockHitResult;
 
 public class StructurePrinterBlock extends BaseEntityBlock {
-    public static final MapCodec<StructurePrinterBlock> CODEC = simpleCodec(StructurePrinterBlock::new);
-    public static final DirectionProperty FACING = BlockStateProperties.HORIZONTAL_FACING;
-    /** True while the printer is allowed to run. Cleared when a redstone signal is present. */
-    public static final BooleanProperty ENABLED = BlockStateProperties.ENABLED;
+  public static final MapCodec<StructurePrinterBlock> CODEC =
+      simpleCodec(StructurePrinterBlock::new);
+  public static final DirectionProperty FACING = BlockStateProperties.HORIZONTAL_FACING;
 
-    public StructurePrinterBlock(Properties properties) {
-        super(properties);
-        this.registerDefaultState(this.stateDefinition.any().setValue(FACING, Direction.NORTH).setValue(ENABLED, true));
-    }
+  /** True while the printer is allowed to run. Cleared when a redstone signal is present. */
+  public static final BooleanProperty ENABLED = BlockStateProperties.ENABLED;
 
-    @Override
-    protected MapCodec<? extends BaseEntityBlock> codec() {
-        return CODEC;
-    }
+  public StructurePrinterBlock(Properties properties) {
+    super(properties);
+    this.registerDefaultState(
+        this.stateDefinition.any().setValue(FACING, Direction.NORTH).setValue(ENABLED, true));
+  }
 
-    @Override
-    public BlockState getStateForPlacement(BlockPlaceContext context) {
-        return this.defaultBlockState()
-            .setValue(FACING, context.getHorizontalDirection().getOpposite())
-            .setValue(ENABLED, !context.getLevel().hasNeighborSignal(context.getClickedPos()));
-    }
+  @Override
+  protected MapCodec<? extends BaseEntityBlock> codec() {
+    return CODEC;
+  }
 
-    @Override
-    protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
-        builder.add(FACING, ENABLED);
-    }
+  @Override
+  public BlockState getStateForPlacement(BlockPlaceContext context) {
+    return this.defaultBlockState()
+        .setValue(FACING, context.getHorizontalDirection().getOpposite())
+        .setValue(ENABLED, !context.getLevel().hasNeighborSignal(context.getClickedPos()));
+  }
 
-    @Override
-    protected BlockState rotate(BlockState state, Rotation rotation) {
-        return state.setValue(FACING, rotation.rotate(state.getValue(FACING)));
-    }
+  @Override
+  protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
+    builder.add(FACING, ENABLED);
+  }
 
-    @Override
-    protected BlockState mirror(BlockState state, Mirror mirror) {
-        return state.rotate(mirror.getRotation(state.getValue(FACING)));
-    }
+  @Override
+  protected BlockState rotate(BlockState state, Rotation rotation) {
+    return state.setValue(FACING, rotation.rotate(state.getValue(FACING)));
+  }
 
-    @Override
-    protected void onPlace(BlockState state, Level level, BlockPos pos, BlockState oldState, boolean movedByPiston) {
-        super.onPlace(state, level, pos, oldState, movedByPiston);
-        if (!level.isClientSide()) {
-            checkPoweredState(level, pos, state);
-        }
-    }
+  @Override
+  protected BlockState mirror(BlockState state, Mirror mirror) {
+    return state.rotate(mirror.getRotation(state.getValue(FACING)));
+  }
 
-    @Override
-    protected void neighborChanged(BlockState state, Level level, BlockPos pos, Block neighborBlock, BlockPos neighborPos, boolean movedByPiston) {
-        if (!level.isClientSide()) {
-            checkPoweredState(level, pos, state);
-        }
+  @Override
+  protected void onPlace(
+      BlockState state, Level level, BlockPos pos, BlockState oldState, boolean movedByPiston) {
+    super.onPlace(state, level, pos, oldState, movedByPiston);
+    if (!level.isClientSide()) {
+      checkPoweredState(level, pos, state);
     }
+  }
 
-    private static void checkPoweredState(Level level, BlockPos pos, BlockState state) {
-        boolean shouldBeEnabled = !level.hasNeighborSignal(pos);
-        if (shouldBeEnabled != state.getValue(ENABLED)) {
-            level.setBlock(pos, state.setValue(ENABLED, shouldBeEnabled), Block.UPDATE_CLIENTS);
-        }
+  @Override
+  protected void neighborChanged(
+      BlockState state,
+      Level level,
+      BlockPos pos,
+      Block neighborBlock,
+      BlockPos neighborPos,
+      boolean movedByPiston) {
+    if (!level.isClientSide()) {
+      checkPoweredState(level, pos, state);
     }
+  }
 
-    @Override
-    protected InteractionResult useWithoutItem(BlockState state, Level level, BlockPos pos, Player player, BlockHitResult hitResult) {
-        return openMenu(level, pos, player);
+  private static void checkPoweredState(Level level, BlockPos pos, BlockState state) {
+    boolean shouldBeEnabled = !level.hasNeighborSignal(pos);
+    if (shouldBeEnabled != state.getValue(ENABLED)) {
+      level.setBlock(pos, state.setValue(ENABLED, shouldBeEnabled), Block.UPDATE_CLIENTS);
     }
+  }
 
-    @Override
-    protected ItemInteractionResult useItemOn(ItemStack stack, BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand, BlockHitResult hitResult) {
-        return openMenu(level, pos, player) == InteractionResult.SUCCESS ? ItemInteractionResult.SUCCESS : ItemInteractionResult.CONSUME;
-    }
+  @Override
+  protected InteractionResult useWithoutItem(
+      BlockState state, Level level, BlockPos pos, Player player, BlockHitResult hitResult) {
+    return openMenu(level, pos, player);
+  }
 
-    private static InteractionResult openMenu(Level level, BlockPos pos, Player player) {
-        if (level.isClientSide()) {
-            return InteractionResult.SUCCESS;
-        }
-        if (player instanceof ServerPlayer serverPlayer && level.getBlockEntity(pos) instanceof StructurePrinterBlockEntity printer) {
-            MenuRegistry.openExtendedMenu(serverPlayer, printer);
-        }
-        return InteractionResult.CONSUME;
-    }
+  @Override
+  protected ItemInteractionResult useItemOn(
+      ItemStack stack,
+      BlockState state,
+      Level level,
+      BlockPos pos,
+      Player player,
+      InteractionHand hand,
+      BlockHitResult hitResult) {
+    return openMenu(level, pos, player) == InteractionResult.SUCCESS
+        ? ItemInteractionResult.SUCCESS
+        : ItemInteractionResult.CONSUME;
+  }
 
-    @Override
-    public RenderShape getRenderShape(BlockState state) {
-        return RenderShape.MODEL;
+  private static InteractionResult openMenu(Level level, BlockPos pos, Player player) {
+    if (level.isClientSide()) {
+      return InteractionResult.SUCCESS;
     }
+    if (player instanceof ServerPlayer serverPlayer
+        && level.getBlockEntity(pos) instanceof StructurePrinterBlockEntity printer) {
+      MenuRegistry.openExtendedMenu(serverPlayer, printer);
+    }
+    return InteractionResult.CONSUME;
+  }
 
-    @Override
-    public BlockEntity newBlockEntity(BlockPos pos, BlockState state) {
-        return new StructurePrinterBlockEntity(pos, state);
-    }
+  @Override
+  public RenderShape getRenderShape(BlockState state) {
+    return RenderShape.MODEL;
+  }
 
-    @Override
-    public <T extends BlockEntity> BlockEntityTicker<T> getTicker(Level level, BlockState state, BlockEntityType<T> blockEntityType) {
-        return level.isClientSide() ? null : createTickerHelper(blockEntityType, ModBlockEntityTypes.STRUCTURE_PRINTER.get(), StructurePrinterBlockEntity::serverTick);
-    }
+  @Override
+  public BlockEntity newBlockEntity(BlockPos pos, BlockState state) {
+    return new StructurePrinterBlockEntity(pos, state);
+  }
 
-    @Override
-    protected void onRemove(BlockState state, Level level, BlockPos pos, BlockState newState, boolean movedByPiston) {
-        if (!state.is(newState.getBlock()) && level.getBlockEntity(pos) instanceof StructurePrinterBlockEntity printer) {
-            Containers.dropContents(level, pos, printer);
-            level.updateNeighbourForOutputSignal(pos, this);
-        }
-        super.onRemove(state, level, pos, newState, movedByPiston);
+  @Override
+  public <T extends BlockEntity> BlockEntityTicker<T> getTicker(
+      Level level, BlockState state, BlockEntityType<T> blockEntityType) {
+    return level.isClientSide()
+        ? null
+        : createTickerHelper(
+            blockEntityType,
+            ModBlockEntityTypes.STRUCTURE_PRINTER.get(),
+            StructurePrinterBlockEntity::serverTick);
+  }
+
+  @Override
+  protected void onRemove(
+      BlockState state, Level level, BlockPos pos, BlockState newState, boolean movedByPiston) {
+    if (!state.is(newState.getBlock())
+        && level.getBlockEntity(pos) instanceof StructurePrinterBlockEntity printer) {
+      Containers.dropContents(level, pos, printer);
+      level.updateNeighbourForOutputSignal(pos, this);
     }
+    super.onRemove(state, level, pos, newState, movedByPiston);
+  }
 }

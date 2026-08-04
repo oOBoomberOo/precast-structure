@@ -4,10 +4,9 @@ import io.github.ooboomberoo.precaststructure.item.PrecastStructureItem;
 import net.minecraft.world.item.Item;
 
 public final class PlatformItemFactoryImpl {
-    private PlatformItemFactoryImpl() {
-    }
+  private PlatformItemFactoryImpl() {}
 
-    public static Item createPrecastStructureItem(Item.Properties properties) {
-        return new PrecastStructureItem(properties);
-    }
+  public static Item createPrecastStructureItem(Item.Properties properties) {
+    return new PrecastStructureItem(properties);
+  }
 }
