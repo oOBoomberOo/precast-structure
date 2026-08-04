@@ -8,25 +8,32 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.sounds.SoundEvent;
 
 public final class ModSounds {
-    public static final DeferredRegister<SoundEvent> SOUNDS = DeferredRegister.create(PrecastStructureMod.MOD_ID, Registries.SOUND_EVENT);
+  public static final DeferredRegister<SoundEvent> SOUNDS =
+      DeferredRegister.create(PrecastStructureMod.MOD_ID, Registries.SOUND_EVENT);
 
-    public static final RegistrySupplier<SoundEvent> SCANNING = SOUNDS.register(
-        "scanning",
-        () -> SoundEvent.createVariableRangeEvent(ResourceLocation.fromNamespaceAndPath(PrecastStructureMod.MOD_ID, "scanning"))
-    );
-    public static final RegistrySupplier<SoundEvent> SCAN_COMPLETE = SOUNDS.register(
-        "scan_complete",
-        () -> SoundEvent.createVariableRangeEvent(ResourceLocation.fromNamespaceAndPath(PrecastStructureMod.MOD_ID, "scan_complete"))
-    );
-    public static final RegistrySupplier<SoundEvent> PRINTING = SOUNDS.register(
-        "printing",
-        () -> SoundEvent.createVariableRangeEvent(ResourceLocation.fromNamespaceAndPath(PrecastStructureMod.MOD_ID, "printing"))
-    );
+  public static final RegistrySupplier<SoundEvent> SCANNING =
+      SOUNDS.register(
+          "scanning",
+          () ->
+              SoundEvent.createVariableRangeEvent(
+                  ResourceLocation.fromNamespaceAndPath(PrecastStructureMod.MOD_ID, "scanning")));
+  public static final RegistrySupplier<SoundEvent> SCAN_COMPLETE =
+      SOUNDS.register(
+          "scan_complete",
+          () ->
+              SoundEvent.createVariableRangeEvent(
+                  ResourceLocation.fromNamespaceAndPath(
+                      PrecastStructureMod.MOD_ID, "scan_complete")));
+  public static final RegistrySupplier<SoundEvent> PRINTING =
+      SOUNDS.register(
+          "printing",
+          () ->
+              SoundEvent.createVariableRangeEvent(
+                  ResourceLocation.fromNamespaceAndPath(PrecastStructureMod.MOD_ID, "printing")));
 
-    private ModSounds() {
-    }
+  private ModSounds() {}
 
-    public static void register() {
-        SOUNDS.register();
-    }
+  public static void register() {
+    SOUNDS.register();
+  }
 }

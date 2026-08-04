@@ -4,11 +4,10 @@ import dev.architectury.injectables.annotations.ExpectPlatform;
 import net.minecraft.world.item.Item;
 
 public final class PlatformItemFactory {
-    private PlatformItemFactory() {
-    }
+  private PlatformItemFactory() {}
 
-    @ExpectPlatform
-    public static Item createPrecastStructureItem(Item.Properties properties) {
-        throw new AssertionError();
-    }
+  @ExpectPlatform
+  public static Item createPrecastStructureItem(Item.Properties properties) {
+    throw new AssertionError();
+  }
 }

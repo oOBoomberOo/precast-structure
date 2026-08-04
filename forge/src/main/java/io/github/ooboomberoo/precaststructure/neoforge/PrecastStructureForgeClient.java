@@ -16,39 +16,39 @@ import net.neoforged.fml.event.lifecycle.FMLClientSetupEvent;
 import net.neoforged.neoforge.client.event.RegisterMenuScreensEvent;
 import net.neoforged.neoforge.client.event.RegisterShadersEvent;
 
-@EventBusSubscriber(modid = PrecastStructureMod.MOD_ID, value = Dist.CLIENT, bus = EventBusSubscriber.Bus.MOD)
+@EventBusSubscriber(
+    modid = PrecastStructureMod.MOD_ID,
+    value = Dist.CLIENT,
+    bus = EventBusSubscriber.Bus.MOD)
 public final class PrecastStructureForgeClient {
-    private PrecastStructureForgeClient() {
-    }
+  private PrecastStructureForgeClient() {}
 
-    @SubscribeEvent
-    public static void onClientSetup(FMLClientSetupEvent event) {
-        event.enqueueWork(PrecastStructureClient::init);
-    }
+  @SubscribeEvent
+  public static void onClientSetup(FMLClientSetupEvent event) {
+    event.enqueueWork(PrecastStructureClient::init);
+  }
 
-    @SubscribeEvent
-    public static void onRegisterMenuScreens(RegisterMenuScreensEvent event) {
-        event.register(ModMenuTypes.STRUCTURE_SCANNER.get(), StructureScannerScreen::new);
-        event.register(ModMenuTypes.STRUCTURE_PRINTER.get(), StructurePrinterScreen::new);
-    }
+  @SubscribeEvent
+  public static void onRegisterMenuScreens(RegisterMenuScreensEvent event) {
+    event.register(ModMenuTypes.STRUCTURE_SCANNER.get(), StructureScannerScreen::new);
+    event.register(ModMenuTypes.STRUCTURE_PRINTER.get(), StructurePrinterScreen::new);
+  }
 
-    @SubscribeEvent
-    public static void onRegisterShaders(RegisterShadersEvent event) throws Exception {
-        event.registerShader(
-            new ShaderInstance(
-                event.getResourceProvider(),
-                ResourceLocation.fromNamespaceAndPath(PrecastStructureMod.MOD_ID, ModShaders.SCAN_HOLOGRAM),
-                DefaultVertexFormat.BLOCK
-            ),
-            ModShaders::setScanHologram
-        );
-        event.registerShader(
-            new ShaderInstance(
-                event.getResourceProvider(),
-                ResourceLocation.fromNamespaceAndPath(PrecastStructureMod.MOD_ID, ModShaders.SCAN_HOLOGRAM_ENTITY),
-                DefaultVertexFormat.NEW_ENTITY
-            ),
-            ModShaders::setScanHologramEntity
-        );
-    }
+  @SubscribeEvent
+  public static void onRegisterShaders(RegisterShadersEvent event) throws Exception {
+    event.registerShader(
+        new ShaderInstance(
+            event.getResourceProvider(),
+            ResourceLocation.fromNamespaceAndPath(
+                PrecastStructureMod.MOD_ID, ModShaders.SCAN_HOLOGRAM),
+            DefaultVertexFormat.BLOCK),
+        ModShaders::setScanHologram);
+    event.registerShader(
+        new ShaderInstance(
+            event.getResourceProvider(),
+            ResourceLocation.fromNamespaceAndPath(
+                PrecastStructureMod.MOD_ID, ModShaders.SCAN_HOLOGRAM_ENTITY),
+            DefaultVertexFormat.NEW_ENTITY),
+        ModShaders::setScanHologramEntity);
+  }
 }

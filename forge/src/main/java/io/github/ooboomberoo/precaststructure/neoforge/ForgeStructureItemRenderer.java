@@ -9,12 +9,20 @@ import net.minecraft.world.item.ItemDisplayContext;
 import net.minecraft.world.item.ItemStack;
 
 public final class ForgeStructureItemRenderer extends BlockEntityWithoutLevelRenderer {
-    public ForgeStructureItemRenderer() {
-        super(Minecraft.getInstance().getBlockEntityRenderDispatcher(), Minecraft.getInstance().getEntityModels());
-    }
+  public ForgeStructureItemRenderer() {
+    super(
+        Minecraft.getInstance().getBlockEntityRenderDispatcher(),
+        Minecraft.getInstance().getEntityModels());
+  }
 
-    @Override
-    public void renderByItem(ItemStack stack, ItemDisplayContext displayContext, PoseStack poseStack, MultiBufferSource bufferSource, int light, int overlay) {
-        StructureItemRenderer.render(stack, displayContext, poseStack, bufferSource, light, overlay);
-    }
+  @Override
+  public void renderByItem(
+      ItemStack stack,
+      ItemDisplayContext displayContext,
+      PoseStack poseStack,
+      MultiBufferSource bufferSource,
+      int light,
+      int overlay) {
+    StructureItemRenderer.render(stack, displayContext, poseStack, bufferSource, light, overlay);
+  }
 }

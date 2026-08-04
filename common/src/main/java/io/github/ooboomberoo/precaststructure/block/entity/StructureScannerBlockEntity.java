@@ -5,8 +5,8 @@ import io.github.ooboomberoo.precaststructure.block.StructureScannerBlock;
 import io.github.ooboomberoo.precaststructure.config.ModConfig;
 import io.github.ooboomberoo.precaststructure.menu.StructureScannerMenu;
 import io.github.ooboomberoo.precaststructure.registry.ModBlockEntityTypes;
-import io.github.ooboomberoo.precaststructure.registry.ModBlocks;
 import io.github.ooboomberoo.precaststructure.registry.ModBlockTags;
+import io.github.ooboomberoo.precaststructure.registry.ModBlocks;
 import io.github.ooboomberoo.precaststructure.registry.ModItems;
 import io.github.ooboomberoo.precaststructure.registry.ModSounds;
 import io.github.ooboomberoo.precaststructure.structure.BlueprintCapture;
@@ -15,7 +15,6 @@ import io.github.ooboomberoo.precaststructure.structure.HologramCollision;
 import io.github.ooboomberoo.precaststructure.structure.StructureBlueprint;
 import io.github.ooboomberoo.precaststructure.structure.StructureFrame;
 import io.github.ooboomberoo.precaststructure.structure.StructureFrameDetector;
-import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
@@ -37,476 +36,494 @@ import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
-import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import org.jetbrains.annotations.Nullable;
 
 public class StructureScannerBlockEntity extends BlockEntity implements ExtendedMenuProvider {
-    public static final int MAX_NAME_LENGTH = 48;
-    private static final int RECHECK_INTERVAL = 10;
-    private static final int CLEAR_FLAGS = Block.UPDATE_CLIENTS | Block.UPDATE_SUPPRESS_DROPS;
+  public static final int MAX_NAME_LENGTH = 48;
+  private static final int RECHECK_INTERVAL = 10;
+  private static final int CLEAR_FLAGS = Block.UPDATE_CLIENTS | Block.UPDATE_SUPPRESS_DROPS;
 
-    /** Client-tracked scanners that are currently animating ghost geometry. */
-    private static final Map<BlockPos, StructureScannerBlockEntity> CLIENT_ACTIVE_SCANS = new ConcurrentHashMap<>();
+  /** Client-tracked scanners that are currently animating ghost geometry. */
+  private static final Map<BlockPos, StructureScannerBlockEntity> CLIENT_ACTIVE_SCANS =
+      new ConcurrentHashMap<>();
 
-    private String structureName = "";
+  private String structureName = "";
 
-    private boolean scanning;
-    private int scanProgress;
-    private int scanDuration;
-    private long scanStartGameTime;
-    private BlockPos scanOrigin = BlockPos.ZERO;
-    private BlockPos scanSize = BlockPos.ZERO;
-    @Nullable
-    private UUID scanPlayerId;
-    @Nullable
-    private StructureBlueprint ghostBlueprint;
-    @Nullable
-    private StructureFrame pendingFrame;
-    private boolean needsScanClockAlign;
+  private boolean scanning;
+  private int scanProgress;
+  private int scanDuration;
+  private long scanStartGameTime;
+  private BlockPos scanOrigin = BlockPos.ZERO;
+  private BlockPos scanSize = BlockPos.ZERO;
+  @Nullable private UUID scanPlayerId;
+  @Nullable private StructureBlueprint ghostBlueprint;
+  @Nullable private StructureFrame pendingFrame;
+  private boolean needsScanClockAlign;
 
-    public StructureScannerBlockEntity(BlockPos pos, BlockState blockState) {
-        super(ModBlockEntityTypes.STRUCTURE_SCANNER.get(), pos, blockState);
+  public StructureScannerBlockEntity(BlockPos pos, BlockState blockState) {
+    super(ModBlockEntityTypes.STRUCTURE_SCANNER.get(), pos, blockState);
+  }
+
+  public static void serverTick(
+      Level level, BlockPos pos, BlockState state, StructureScannerBlockEntity scanner) {
+    if (scanner.scanning) {
+      scanner.tickScanning();
+      return;
+    }
+    if (level.getGameTime() % RECHECK_INTERVAL == 0) {
+      scanner.recheckReady();
+    }
+  }
+
+  public static Iterable<StructureScannerBlockEntity> clientActiveScans() {
+    return CLIENT_ACTIVE_SCANS.values();
+  }
+
+  public void recheckReady() {
+    if (level == null || level.isClientSide() || scanning) {
+      return;
     }
 
-    public static void serverTick(Level level, BlockPos pos, BlockState state, StructureScannerBlockEntity scanner) {
-        if (scanner.scanning) {
-            scanner.tickScanning();
-            return;
-        }
-        if (level.getGameTime() % RECHECK_INTERVAL == 0) {
-            scanner.recheckReady();
-        }
+    boolean ready = StructureFrameDetector.detect(level, worldPosition).successful();
+    BlockState state = level.getBlockState(worldPosition);
+    if (!state.is(ModBlocks.STRUCTURE_SCANNER.get())) {
+      return;
+    }
+    if (state.getValue(StructureScannerBlock.READY) == ready) {
+      return;
     }
 
-    public static Iterable<StructureScannerBlockEntity> clientActiveScans() {
-        return CLIENT_ACTIVE_SCANS.values();
+    level.setBlock(
+        worldPosition, state.setValue(StructureScannerBlock.READY, ready), Block.UPDATE_ALL);
+  }
+
+  public String getStructureName() {
+    return structureName;
+  }
+
+  public void setStructureName(String structureName) {
+    String normalized = normalizeStructureName(structureName);
+    if (!this.structureName.equals(normalized)) {
+      this.structureName = normalized;
+      setChanged();
+    }
+  }
+
+  public boolean isBusy() {
+    return scanning;
+  }
+
+  public boolean isScanning() {
+    return scanning;
+  }
+
+  @Nullable
+  public StructureBlueprint getGhostBlueprint() {
+    return ghostBlueprint;
+  }
+
+  public BlockPos getScanOrigin() {
+    return scanOrigin;
+  }
+
+  public BlockPos getScanSize() {
+    return scanSize;
+  }
+
+  public long getScanStartGameTime() {
+    return scanStartGameTime;
+  }
+
+  public int getScanDuration() {
+    return scanDuration;
+  }
+
+  /** World Y of the scan plane; progresses from the top of the volume down to the floor. */
+  public float getScanLineY(float partialTick) {
+    if (!scanning || scanDuration <= 0 || scanSize.getY() <= 0) {
+      return scanOrigin.getY() + scanSize.getY();
+    }
+    float top = scanOrigin.getY() + scanSize.getY();
+    float bottom = scanOrigin.getY();
+    return Mth.lerp(getScanProgress(partialTick), top, bottom);
+  }
+
+  public float getScanProgress(float partialTick) {
+    if (!scanning || scanDuration <= 0) {
+      return 0.0F;
+    }
+    if (level == null) {
+      return Mth.clamp(scanProgress / (float) scanDuration, 0.0F, 1.0F);
+    }
+    float elapsed = (float) (level.getGameTime() - scanStartGameTime) + partialTick;
+    return Mth.clamp(elapsed / scanDuration, 0.0F, 1.0F);
+  }
+
+  public void scanStructure(ServerPlayer player) {
+    if (level == null || level.isClientSide()) {
+      return;
+    }
+    if (scanning) {
+      player.displayClientMessage(
+          Component.translatable("message.precast_structure.scan_in_progress"), true);
+      return;
     }
 
-    public void recheckReady() {
-        if (level == null || level.isClientSide() || scanning) {
-            return;
-        }
-
-        boolean ready = StructureFrameDetector.detect(level, worldPosition).successful();
-        BlockState state = level.getBlockState(worldPosition);
-        if (!state.is(ModBlocks.STRUCTURE_SCANNER.get())) {
-            return;
-        }
-        if (state.getValue(StructureScannerBlock.READY) == ready) {
-            return;
-        }
-
-        level.setBlock(worldPosition, state.setValue(StructureScannerBlock.READY, ready), Block.UPDATE_ALL);
+    StructureFrameDetector.ScanResult result = StructureFrameDetector.detect(level, worldPosition);
+    if (!result.successful()) {
+      player.displayClientMessage(result.error(), true);
+      recheckReady();
+      return;
     }
 
-    public String getStructureName() {
-        return structureName;
+    StructureFrame frame = result.frameOptional().orElseThrow();
+    Direction scannerFacing = getBlockState().getValue(StructureScannerBlock.FACING);
+    StructureBlueprint blueprint = BlueprintCapture.capture(level, frame, scannerFacing);
+    if (blueprint.blocks().isEmpty()) {
+      player.displayClientMessage(
+          Component.translatable("message.precast_structure.empty_scan"), true);
+      return;
     }
 
-    public void setStructureName(String structureName) {
-        String normalized = normalizeStructureName(structureName);
-        if (!this.structureName.equals(normalized)) {
-            this.structureName = normalized;
-            setChanged();
-        }
+    if (!hasEmptyBlueprint(player)) {
+      player.displayClientMessage(
+          Component.translatable("message.precast_structure.needs_empty_blueprint"), true);
+      return;
+    }
+    if (!consumeEmptyBlueprint(player)) {
+      player.displayClientMessage(
+          Component.translatable("message.precast_structure.needs_empty_blueprint"), true);
+      return;
     }
 
-    public boolean isBusy() {
-        return scanning;
+    // Digitize immediately: real blocks become client-rendered ghosts for the scan pass.
+    clearInterior(level, frame);
+
+    ghostBlueprint = blueprint;
+    pendingFrame = frame;
+    scanPlayerId = player.getUUID();
+    scanOrigin = frame.interiorOrigin();
+    scanSize = frame.size();
+    scanDuration =
+        Math.max(
+            ModConfig.get().scanning.minTicks,
+            scanSize.getY() * ModConfig.get().scanning.ticksPerHeight);
+    scanProgress = 0;
+    scanStartGameTime = level.getGameTime();
+    scanning = true;
+    needsScanClockAlign = false;
+    setChanged();
+    syncToClient();
+
+    player.closeContainer();
+    player.displayClientMessage(
+        Component.translatable("message.precast_structure.scan_started"), true);
+  }
+
+  private void tickScanning() {
+    if (level == null || level.isClientSide()) {
+      return;
     }
 
-    public boolean isScanning() {
-        return scanning;
+    if (needsScanClockAlign) {
+      scanStartGameTime = level.getGameTime() - scanProgress;
+      needsScanClockAlign = false;
+      syncToClient();
     }
 
-    @Nullable
-    public StructureBlueprint getGhostBlueprint() {
-        return ghostBlueprint;
+    scanProgress++;
+    if (level.getGameTime() % ModConfig.get().scanning.soundIntervalTicks == 0) {
+      level.playSound(
+          null, worldPosition, ModSounds.SCANNING.get(), SoundSource.BLOCKS, 0.7F, 1.35F);
     }
 
-    public BlockPos getScanOrigin() {
-        return scanOrigin;
+    if (scanProgress >= scanDuration) {
+      finishScan();
+      return;
     }
 
-    public BlockPos getScanSize() {
-        return scanSize;
+    if (scanProgress % 10 == 0) {
+      syncToClient();
+    }
+    setChanged();
+  }
+
+  private void finishScan() {
+    if (!(level instanceof ServerLevel serverLevel)) {
+      clearScanColliders();
+      resetScanState();
+      syncToClient();
+      return;
     }
 
-    public long getScanStartGameTime() {
-        return scanStartGameTime;
+    StructureBlueprint blueprint = ghostBlueprint;
+    UUID playerId = scanPlayerId;
+    clearScanColliders();
+    resetScanState();
+    syncToClient();
+
+    if (blueprint == null) {
+      recheckReady();
+      return;
     }
 
-    public int getScanDuration() {
-        return scanDuration;
+    ServerPlayer player = serverLevel.getServer().getPlayerList().getPlayer(playerId);
+    if (player == null) {
+      Block.popResource(serverLevel, worldPosition.above(), createBlueprintStack(blueprint));
+      playCompleteSound();
+      recheckReady();
+      return;
     }
 
-    /** World Y of the scan plane; progresses from the top of the volume down to the floor. */
-    public float getScanLineY(float partialTick) {
-        if (!scanning || scanDuration <= 0 || scanSize.getY() <= 0) {
-            return scanOrigin.getY() + scanSize.getY();
-        }
-        float top = scanOrigin.getY() + scanSize.getY();
-        float bottom = scanOrigin.getY();
-        return Mth.lerp(getScanProgress(partialTick), top, bottom);
+    ItemStack blueprintStack = createBlueprintStack(blueprint);
+    if (!player.addItem(blueprintStack)) {
+      player.drop(blueprintStack, false);
     }
+    playCompleteSound();
+    player.displayClientMessage(
+        Component.translatable(
+            "message.precast_structure.scan_complete", blueprint.blocks().size()),
+        true);
+    recheckReady();
+  }
 
-    public float getScanProgress(float partialTick) {
-        if (!scanning || scanDuration <= 0) {
-            return 0.0F;
-        }
-        if (level == null) {
-            return Mth.clamp(scanProgress / (float) scanDuration, 0.0F, 1.0F);
-        }
-        float elapsed = (float) (level.getGameTime() - scanStartGameTime) + partialTick;
-        return Mth.clamp(elapsed / scanDuration, 0.0F, 1.0F);
+  private ItemStack createBlueprintStack(StructureBlueprint blueprint) {
+    ItemStack blueprintStack = new ItemStack(ModItems.BLUEPRINT.get());
+    BlueprintItemData.write(
+        blueprintStack,
+        blueprint,
+        structureName.isBlank() ? null : Component.literal(structureName));
+    return blueprintStack;
+  }
+
+  private void playCompleteSound() {
+    if (level != null) {
+      level.playSound(
+          null, worldPosition, ModSounds.SCAN_COMPLETE.get(), SoundSource.BLOCKS, 1.0F, 1.0F);
     }
+  }
 
-    public void scanStructure(ServerPlayer player) {
-        if (level == null || level.isClientSide()) {
-            return;
+  private static void clearInterior(Level level, StructureFrame frame) {
+    BlockPos origin = frame.interiorOrigin();
+    BlockPos size = frame.size();
+    BlockState replacement = HologramCollision.digitizedReplacement();
+    for (int y = size.getY() - 1; y >= 0; y--) {
+      for (int x = 0; x < size.getX(); x++) {
+        for (int z = 0; z < size.getZ(); z++) {
+          BlockPos pos = origin.offset(x, y, z);
+          BlockState state = level.getBlockState(pos);
+          if (HologramCollision.isCollider(state) || !ModBlockTags.isBlueprintExcluded(state)) {
+            // Omit UPDATE_KNOWN_SHAPE so perimeter fences/gates update connections.
+            level.setBlock(pos, replacement, CLEAR_FLAGS);
+          }
         }
-        if (scanning) {
-            player.displayClientMessage(Component.translatable("message.precast_structure.scan_in_progress"), true);
-            return;
-        }
-
-        StructureFrameDetector.ScanResult result = StructureFrameDetector.detect(level, worldPosition);
-        if (!result.successful()) {
-            player.displayClientMessage(result.error(), true);
-            recheckReady();
-            return;
-        }
-
-        StructureFrame frame = result.frameOptional().orElseThrow();
-        Direction scannerFacing = getBlockState().getValue(StructureScannerBlock.FACING);
-        StructureBlueprint blueprint = BlueprintCapture.capture(level, frame, scannerFacing);
-        if (blueprint.blocks().isEmpty()) {
-            player.displayClientMessage(Component.translatable("message.precast_structure.empty_scan"), true);
-            return;
-        }
-
-        if (!hasEmptyBlueprint(player)) {
-            player.displayClientMessage(Component.translatable("message.precast_structure.needs_empty_blueprint"), true);
-            return;
-        }
-        if (!consumeEmptyBlueprint(player)) {
-            player.displayClientMessage(Component.translatable("message.precast_structure.needs_empty_blueprint"), true);
-            return;
-        }
-
-        // Digitize immediately: real blocks become client-rendered ghosts for the scan pass.
-        clearInterior(level, frame);
-
-        ghostBlueprint = blueprint;
-        pendingFrame = frame;
-        scanPlayerId = player.getUUID();
-        scanOrigin = frame.interiorOrigin();
-        scanSize = frame.size();
-        scanDuration = Math.max(ModConfig.get().scanning.minTicks, scanSize.getY() * ModConfig.get().scanning.ticksPerHeight);
-        scanProgress = 0;
-        scanStartGameTime = level.getGameTime();
-        scanning = true;
-        needsScanClockAlign = false;
-        setChanged();
-        syncToClient();
-
-        player.closeContainer();
-        player.displayClientMessage(Component.translatable("message.precast_structure.scan_started"), true);
+      }
     }
+    // Do not discard ItemEntities: BlueprintCapture already emptied containers and dropped
+    // their contents into the world before digitize. UPDATE_SUPPRESS_DROPS prevents block
+    // item drops from setBlock.
+  }
 
-    private void tickScanning() {
-        if (level == null || level.isClientSide()) {
-            return;
-        }
-
-        if (needsScanClockAlign) {
-            scanStartGameTime = level.getGameTime() - scanProgress;
-            needsScanClockAlign = false;
-            syncToClient();
-        }
-
-        scanProgress++;
-        if (level.getGameTime() % ModConfig.get().scanning.soundIntervalTicks == 0) {
-            level.playSound(null, worldPosition, ModSounds.SCANNING.get(), SoundSource.BLOCKS, 0.7F, 1.35F);
-        }
-
-        if (scanProgress >= scanDuration) {
-            finishScan();
-            return;
-        }
-
-        if (scanProgress % 10 == 0) {
-            syncToClient();
-        }
-        setChanged();
+  private void clearScanColliders() {
+    if (level == null || level.isClientSide()) {
+      return;
     }
-
-    private void finishScan() {
-        if (!(level instanceof ServerLevel serverLevel)) {
-            clearScanColliders();
-            resetScanState();
-            syncToClient();
-            return;
-        }
-
-        StructureBlueprint blueprint = ghostBlueprint;
-        UUID playerId = scanPlayerId;
-        clearScanColliders();
-        resetScanState();
-        syncToClient();
-
-        if (blueprint == null) {
-            recheckReady();
-            return;
-        }
-
-        ServerPlayer player = serverLevel.getServer().getPlayerList().getPlayer(playerId);
-        if (player == null) {
-            Block.popResource(serverLevel, worldPosition.above(), createBlueprintStack(blueprint));
-            playCompleteSound();
-            recheckReady();
-            return;
-        }
-
-        ItemStack blueprintStack = createBlueprintStack(blueprint);
-        if (!player.addItem(blueprintStack)) {
-            player.drop(blueprintStack, false);
-        }
-        playCompleteSound();
-        player.displayClientMessage(Component.translatable("message.precast_structure.scan_complete", blueprint.blocks().size()), true);
-        recheckReady();
+    if (pendingFrame != null) {
+      HologramCollision.clearFrame(level, pendingFrame);
+    } else if (scanSize.getX() > 0 && scanSize.getY() > 0 && scanSize.getZ() > 0) {
+      HologramCollision.clearFrame(level, new StructureFrame(scanOrigin, scanSize));
     }
+  }
 
-    private ItemStack createBlueprintStack(StructureBlueprint blueprint) {
-        ItemStack blueprintStack = new ItemStack(ModItems.BLUEPRINT.get());
-        BlueprintItemData.write(blueprintStack, blueprint, structureName.isBlank() ? null : Component.literal(structureName));
-        return blueprintStack;
+  private void resetScanState() {
+    scanning = false;
+    scanProgress = 0;
+    scanDuration = 0;
+    scanStartGameTime = 0L;
+    scanOrigin = BlockPos.ZERO;
+    scanSize = BlockPos.ZERO;
+    scanPlayerId = null;
+    ghostBlueprint = null;
+    pendingFrame = null;
+    needsScanClockAlign = false;
+    setChanged();
+  }
+
+  private void syncToClient() {
+    if (level != null && !level.isClientSide()) {
+      BlockState state = getBlockState();
+      level.sendBlockUpdated(worldPosition, state, state, Block.UPDATE_CLIENTS);
     }
+  }
 
-    private void playCompleteSound() {
-        if (level != null) {
-            level.playSound(null, worldPosition, ModSounds.SCAN_COMPLETE.get(), SoundSource.BLOCKS, 1.0F, 1.0F);
-        }
+  private static boolean hasEmptyBlueprint(ServerPlayer player) {
+    if (player.getAbilities().instabuild) {
+      return true;
     }
-
-    private static void clearInterior(Level level, StructureFrame frame) {
-        BlockPos origin = frame.interiorOrigin();
-        BlockPos size = frame.size();
-        BlockState replacement = HologramCollision.digitizedReplacement();
-        for (int y = size.getY() - 1; y >= 0; y--) {
-            for (int x = 0; x < size.getX(); x++) {
-                for (int z = 0; z < size.getZ(); z++) {
-                    BlockPos pos = origin.offset(x, y, z);
-                    BlockState state = level.getBlockState(pos);
-                    if (HologramCollision.isCollider(state) || !ModBlockTags.isBlueprintExcluded(state)) {
-                        // Omit UPDATE_KNOWN_SHAPE so perimeter fences/gates update connections.
-                        level.setBlock(pos, replacement, CLEAR_FLAGS);
-                    }
-                }
-            }
-        }
-        // Do not discard ItemEntities: BlueprintCapture already emptied containers and dropped
-        // their contents into the world before digitize. UPDATE_SUPPRESS_DROPS prevents block
-        // item drops from setBlock.
+    Inventory inventory = player.getInventory();
+    for (int i = 0; i < inventory.getContainerSize(); i++) {
+      if (inventory.getItem(i).is(ModItems.EMPTY_BLUEPRINT.get())) {
+        return true;
+      }
     }
+    return false;
+  }
 
-    private void clearScanColliders() {
-        if (level == null || level.isClientSide()) {
-            return;
-        }
-        if (pendingFrame != null) {
-            HologramCollision.clearFrame(level, pendingFrame);
-        } else if (scanSize.getX() > 0 && scanSize.getY() > 0 && scanSize.getZ() > 0) {
-            HologramCollision.clearFrame(level, new StructureFrame(scanOrigin, scanSize));
-        }
+  private static boolean consumeEmptyBlueprint(ServerPlayer player) {
+    if (player.getAbilities().instabuild) {
+      return true;
     }
-
-    private void resetScanState() {
-        scanning = false;
-        scanProgress = 0;
-        scanDuration = 0;
-        scanStartGameTime = 0L;
-        scanOrigin = BlockPos.ZERO;
-        scanSize = BlockPos.ZERO;
-        scanPlayerId = null;
-        ghostBlueprint = null;
-        pendingFrame = null;
-        needsScanClockAlign = false;
-        setChanged();
+    Inventory inventory = player.getInventory();
+    for (int i = 0; i < inventory.getContainerSize(); i++) {
+      ItemStack stack = inventory.getItem(i);
+      if (!stack.is(ModItems.EMPTY_BLUEPRINT.get())) {
+        continue;
+      }
+      stack.shrink(1);
+      if (stack.isEmpty()) {
+        inventory.setItem(i, ItemStack.EMPTY);
+      }
+      return true;
     }
+    return false;
+  }
 
-    private void syncToClient() {
-        if (level != null && !level.isClientSide()) {
-            BlockState state = getBlockState();
-            level.sendBlockUpdated(worldPosition, state, state, Block.UPDATE_CLIENTS);
-        }
+  @Override
+  public void setRemoved() {
+    if (level != null && !level.isClientSide() && scanning) {
+      clearScanColliders();
     }
+    super.setRemoved();
+    CLIENT_ACTIVE_SCANS.remove(worldPosition);
+  }
 
-    private static boolean hasEmptyBlueprint(ServerPlayer player) {
-        if (player.getAbilities().instabuild) {
-            return true;
-        }
-        Inventory inventory = player.getInventory();
-        for (int i = 0; i < inventory.getContainerSize(); i++) {
-            if (inventory.getItem(i).is(ModItems.EMPTY_BLUEPRINT.get())) {
-                return true;
-            }
-        }
-        return false;
-    }
+  @Override
+  public void clearRemoved() {
+    super.clearRemoved();
+    updateClientActiveScan();
+  }
 
-    private static boolean consumeEmptyBlueprint(ServerPlayer player) {
-        if (player.getAbilities().instabuild) {
-            return true;
-        }
-        Inventory inventory = player.getInventory();
-        for (int i = 0; i < inventory.getContainerSize(); i++) {
-            ItemStack stack = inventory.getItem(i);
-            if (!stack.is(ModItems.EMPTY_BLUEPRINT.get())) {
-                continue;
-            }
-            stack.shrink(1);
-            if (stack.isEmpty()) {
-                inventory.setItem(i, ItemStack.EMPTY);
-            }
-            return true;
-        }
-        return false;
-    }
+  @Override
+  public void setLevel(Level level) {
+    super.setLevel(level);
+    updateClientActiveScan();
+  }
 
-    @Override
-    public void setRemoved() {
-        if (level != null && !level.isClientSide() && scanning) {
-            clearScanColliders();
-        }
-        super.setRemoved();
+  private void updateClientActiveScan() {
+    if (level != null && level.isClientSide()) {
+      if (scanning && ghostBlueprint != null) {
+        CLIENT_ACTIVE_SCANS.put(worldPosition.immutable(), this);
+      } else {
         CLIENT_ACTIVE_SCANS.remove(worldPosition);
+      }
     }
+  }
 
-    @Override
-    public void clearRemoved() {
-        super.clearRemoved();
-        updateClientActiveScan();
-    }
+  @Nullable
+  @Override
+  public Packet<ClientGamePacketListener> getUpdatePacket() {
+    return ClientboundBlockEntityDataPacket.create(this);
+  }
 
-    @Override
-    public void setLevel(Level level) {
-        super.setLevel(level);
-        updateClientActiveScan();
-    }
+  @Override
+  public CompoundTag getUpdateTag(HolderLookup.Provider registries) {
+    CompoundTag tag = new CompoundTag();
+    saveAdditional(tag, registries);
+    return tag;
+  }
 
-    private void updateClientActiveScan() {
-        if (level != null && level.isClientSide()) {
-            if (scanning && ghostBlueprint != null) {
-                CLIENT_ACTIVE_SCANS.put(worldPosition.immutable(), this);
-            } else {
-                CLIENT_ACTIVE_SCANS.remove(worldPosition);
-            }
-        }
-    }
+  @Override
+  public Component getDisplayName() {
+    return Component.translatable("block.precast_structure.structure_scanner");
+  }
 
-    @Nullable
-    @Override
-    public Packet<ClientGamePacketListener> getUpdatePacket() {
-        return ClientboundBlockEntityDataPacket.create(this);
-    }
+  @Override
+  public void saveExtraData(FriendlyByteBuf buf) {
+    buf.writeBlockPos(worldPosition);
+    buf.writeUtf(structureName, MAX_NAME_LENGTH);
+  }
 
-    @Override
-    public CompoundTag getUpdateTag(HolderLookup.Provider registries) {
-        CompoundTag tag = new CompoundTag();
-        saveAdditional(tag, registries);
-        return tag;
-    }
+  @Override
+  public AbstractContainerMenu createMenu(
+      int containerId, Inventory inventory, net.minecraft.world.entity.player.Player player) {
+    return new StructureScannerMenu(containerId, inventory, this);
+  }
 
-    @Override
-    public Component getDisplayName() {
-        return Component.translatable("block.precast_structure.structure_scanner");
+  @Override
+  protected void saveAdditional(CompoundTag tag, HolderLookup.Provider registries) {
+    super.saveAdditional(tag, registries);
+    if (!structureName.isBlank()) {
+      tag.putString("StructureName", structureName);
     }
+    tag.putBoolean("Scanning", scanning);
+    if (scanning) {
+      tag.putInt("ScanProgress", scanProgress);
+      tag.putInt("ScanDuration", scanDuration);
+      tag.putLong("ScanStart", scanStartGameTime);
+      tag.putInt("ScanOX", scanOrigin.getX());
+      tag.putInt("ScanOY", scanOrigin.getY());
+      tag.putInt("ScanOZ", scanOrigin.getZ());
+      tag.putInt("ScanSX", scanSize.getX());
+      tag.putInt("ScanSY", scanSize.getY());
+      tag.putInt("ScanSZ", scanSize.getZ());
+      if (scanPlayerId != null) {
+        tag.putUUID("ScanPlayer", scanPlayerId);
+      }
+      if (ghostBlueprint != null) {
+        tag.put("GhostBlueprint", ghostBlueprint.save());
+      }
+      if (pendingFrame != null) {
+        tag.putInt("FrameOX", pendingFrame.interiorOrigin().getX());
+        tag.putInt("FrameOY", pendingFrame.interiorOrigin().getY());
+        tag.putInt("FrameOZ", pendingFrame.interiorOrigin().getZ());
+        tag.putInt("FrameSX", pendingFrame.size().getX());
+        tag.putInt("FrameSY", pendingFrame.size().getY());
+        tag.putInt("FrameSZ", pendingFrame.size().getZ());
+      }
+    }
+  }
 
-    @Override
-    public void saveExtraData(FriendlyByteBuf buf) {
-        buf.writeBlockPos(worldPosition);
-        buf.writeUtf(structureName, MAX_NAME_LENGTH);
+  @Override
+  protected void loadAdditional(CompoundTag tag, HolderLookup.Provider registries) {
+    super.loadAdditional(tag, registries);
+    structureName = normalizeStructureName(tag.getString("StructureName"));
+    scanning = tag.getBoolean("Scanning");
+    if (scanning) {
+      scanProgress = tag.getInt("ScanProgress");
+      scanDuration = Math.max(1, tag.getInt("ScanDuration"));
+      scanStartGameTime = tag.getLong("ScanStart");
+      scanOrigin = new BlockPos(tag.getInt("ScanOX"), tag.getInt("ScanOY"), tag.getInt("ScanOZ"));
+      scanSize = new BlockPos(tag.getInt("ScanSX"), tag.getInt("ScanSY"), tag.getInt("ScanSZ"));
+      scanPlayerId = tag.hasUUID("ScanPlayer") ? tag.getUUID("ScanPlayer") : null;
+      if (tag.contains("GhostBlueprint", net.minecraft.nbt.Tag.TAG_COMPOUND)) {
+        ghostBlueprint =
+            StructureBlueprint.load(tag.getCompound("GhostBlueprint"), registries).orElse(null);
+      } else if (tag.contains("PendingBlueprint", net.minecraft.nbt.Tag.TAG_COMPOUND)) {
+        // Backward compatible with older in-progress scans.
+        ghostBlueprint =
+            StructureBlueprint.load(tag.getCompound("PendingBlueprint"), registries).orElse(null);
+      } else {
+        ghostBlueprint = null;
+      }
+      if (tag.contains("FrameOX")) {
+        pendingFrame =
+            new StructureFrame(
+                new BlockPos(tag.getInt("FrameOX"), tag.getInt("FrameOY"), tag.getInt("FrameOZ")),
+                new BlockPos(tag.getInt("FrameSX"), tag.getInt("FrameSY"), tag.getInt("FrameSZ")));
+      } else {
+        pendingFrame = null;
+      }
+      needsScanClockAlign = true;
+    } else {
+      resetScanState();
     }
+    updateClientActiveScan();
+  }
 
-    @Override
-    public AbstractContainerMenu createMenu(int containerId, Inventory inventory, net.minecraft.world.entity.player.Player player) {
-        return new StructureScannerMenu(containerId, inventory, this);
-    }
-
-    @Override
-    protected void saveAdditional(CompoundTag tag, HolderLookup.Provider registries) {
-        super.saveAdditional(tag, registries);
-        if (!structureName.isBlank()) {
-            tag.putString("StructureName", structureName);
-        }
-        tag.putBoolean("Scanning", scanning);
-        if (scanning) {
-            tag.putInt("ScanProgress", scanProgress);
-            tag.putInt("ScanDuration", scanDuration);
-            tag.putLong("ScanStart", scanStartGameTime);
-            tag.putInt("ScanOX", scanOrigin.getX());
-            tag.putInt("ScanOY", scanOrigin.getY());
-            tag.putInt("ScanOZ", scanOrigin.getZ());
-            tag.putInt("ScanSX", scanSize.getX());
-            tag.putInt("ScanSY", scanSize.getY());
-            tag.putInt("ScanSZ", scanSize.getZ());
-            if (scanPlayerId != null) {
-                tag.putUUID("ScanPlayer", scanPlayerId);
-            }
-            if (ghostBlueprint != null) {
-                tag.put("GhostBlueprint", ghostBlueprint.save());
-            }
-            if (pendingFrame != null) {
-                tag.putInt("FrameOX", pendingFrame.interiorOrigin().getX());
-                tag.putInt("FrameOY", pendingFrame.interiorOrigin().getY());
-                tag.putInt("FrameOZ", pendingFrame.interiorOrigin().getZ());
-                tag.putInt("FrameSX", pendingFrame.size().getX());
-                tag.putInt("FrameSY", pendingFrame.size().getY());
-                tag.putInt("FrameSZ", pendingFrame.size().getZ());
-            }
-        }
-    }
-
-    @Override
-    protected void loadAdditional(CompoundTag tag, HolderLookup.Provider registries) {
-        super.loadAdditional(tag, registries);
-        structureName = normalizeStructureName(tag.getString("StructureName"));
-        scanning = tag.getBoolean("Scanning");
-        if (scanning) {
-            scanProgress = tag.getInt("ScanProgress");
-            scanDuration = Math.max(1, tag.getInt("ScanDuration"));
-            scanStartGameTime = tag.getLong("ScanStart");
-            scanOrigin = new BlockPos(tag.getInt("ScanOX"), tag.getInt("ScanOY"), tag.getInt("ScanOZ"));
-            scanSize = new BlockPos(tag.getInt("ScanSX"), tag.getInt("ScanSY"), tag.getInt("ScanSZ"));
-            scanPlayerId = tag.hasUUID("ScanPlayer") ? tag.getUUID("ScanPlayer") : null;
-            if (tag.contains("GhostBlueprint", net.minecraft.nbt.Tag.TAG_COMPOUND)) {
-                ghostBlueprint = StructureBlueprint.load(tag.getCompound("GhostBlueprint"), registries).orElse(null);
-            } else if (tag.contains("PendingBlueprint", net.minecraft.nbt.Tag.TAG_COMPOUND)) {
-                // Backward compatible with older in-progress scans.
-                ghostBlueprint = StructureBlueprint.load(tag.getCompound("PendingBlueprint"), registries).orElse(null);
-            } else {
-                ghostBlueprint = null;
-            }
-            if (tag.contains("FrameOX")) {
-                pendingFrame = new StructureFrame(
-                    new BlockPos(tag.getInt("FrameOX"), tag.getInt("FrameOY"), tag.getInt("FrameOZ")),
-                    new BlockPos(tag.getInt("FrameSX"), tag.getInt("FrameSY"), tag.getInt("FrameSZ"))
-                );
-            } else {
-                pendingFrame = null;
-            }
-            needsScanClockAlign = true;
-        } else {
-            resetScanState();
-        }
-        updateClientActiveScan();
-    }
-
-    private static String normalizeStructureName(String structureName) {
-        String trimmed = structureName == null ? "" : structureName.trim();
-        return trimmed.length() > MAX_NAME_LENGTH ? trimmed.substring(0, MAX_NAME_LENGTH) : trimmed;
-    }
+  private static String normalizeStructureName(String structureName) {
+    String trimmed = structureName == null ? "" : structureName.trim();
+    return trimmed.length() > MAX_NAME_LENGTH ? trimmed.substring(0, MAX_NAME_LENGTH) : trimmed;
+  }
 }

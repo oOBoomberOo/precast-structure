@@ -12,20 +12,22 @@ import io.github.ooboomberoo.precaststructure.structure.StructureDeploymentManag
 import net.minecraft.client.renderer.RenderType;
 
 public final class PrecastStructureClient {
-    private PrecastStructureClient() {
-    }
+  private PrecastStructureClient() {}
 
-    public static void init() {
-        ModNetworking.registerClient();
-        ClientPlayerEvent.CLIENT_PLAYER_QUIT.register(player -> StructureDeploymentManager.clientClear());
-        ClientTickEvent.CLIENT_POST.register(minecraft -> StructureDeploymentManager.clientTick(minecraft.level));
-        RenderTypeRegistry.register(RenderType.cutout(), ModBlocks.METAL_SCAFFOLD.get());
-        registerConfigScreen();
-    }
+  public static void init() {
+    ModNetworking.registerClient();
+    ClientPlayerEvent.CLIENT_PLAYER_QUIT.register(
+        player -> StructureDeploymentManager.clientClear());
+    ClientTickEvent.CLIENT_POST.register(
+        minecraft -> StructureDeploymentManager.clientTick(minecraft.level));
+    RenderTypeRegistry.register(RenderType.cutout(), ModBlocks.METAL_SCAFFOLD.get());
+    registerConfigScreen();
+  }
 
-    private static void registerConfigScreen() {
-        if (Platform.isModLoaded("cloth-config") || Platform.isModLoaded("cloth_config")) {
-            Platform.getMod(PrecastStructureMod.MOD_ID).registerConfigurationScreen(ModConfigScreen::create);
-        }
+  private static void registerConfigScreen() {
+    if (Platform.isModLoaded("cloth-config") || Platform.isModLoaded("cloth_config")) {
+      Platform.getMod(PrecastStructureMod.MOD_ID)
+          .registerConfigurationScreen(ModConfigScreen::create);
     }
+  }
 }

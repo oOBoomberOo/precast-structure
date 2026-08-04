@@ -17,26 +17,25 @@ import io.github.ooboomberoo.precaststructure.structure.StructureDeploymentManag
 import io.github.ooboomberoo.precaststructure.structure.special.SpecialBlockHandlers;
 
 public final class PrecastStructureMod {
-    public static final String MOD_ID = "precast_structure";
+  public static final String MOD_ID = "precast_structure";
 
-    private PrecastStructureMod() {
-    }
+  private PrecastStructureMod() {}
 
-    public static void init() {
-        ModConfig.load();
-        ModGameRules.register();
-        ModSounds.register();
-        ModCreativeTabs.register();
-        ModDataComponents.register();
-        ModBlocks.register();
-        ModItems.register();
-        ModBlockEntityTypes.register();
-        ModMenuTypes.register();
-        ModRecipeSerializers.register();
-        ModNetworking.register();
-        StructureDeploymentManager.init();
-        BlueprintDataMigration.init();
-        SpecialBlockHandlers.bootstrap();
-        CreateCompat.registerSpecialHandlers();
-    }
+  public static void init() {
+    ModConfig.load();
+    ModGameRules.register();
+    ModSounds.register();
+    ModCreativeTabs.register();
+    ModDataComponents.register();
+    ModBlocks.register();
+    ModItems.register();
+    ModBlockEntityTypes.register();
+    ModMenuTypes.register();
+    ModRecipeSerializers.register();
+    ModNetworking.register();
+    StructureDeploymentManager.init();
+    BlueprintDataMigration.init();
+    SpecialBlockHandlers.bootstrap();
+    CreateCompat.registerSpecialHandlers();
+  }
 }

@@ -10,17 +10,20 @@ import net.minecraft.world.item.CreativeModeTab;
 import net.minecraft.world.item.ItemStack;
 
 public final class ModCreativeTabs {
-    public static final DeferredRegister<CreativeModeTab> TABS = DeferredRegister.create(PrecastStructureMod.MOD_ID, Registries.CREATIVE_MODE_TAB);
+  public static final DeferredRegister<CreativeModeTab> TABS =
+      DeferredRegister.create(PrecastStructureMod.MOD_ID, Registries.CREATIVE_MODE_TAB);
 
-    public static final RegistrySupplier<CreativeModeTab> MAIN = TABS.register("main", () -> CreativeTabRegistry.create(
-            Component.translatable("itemGroup.precast_structure.main"),
-            () -> new ItemStack(ModItems.STRUCTURE_SCANNER.get())
-    ));
+  public static final RegistrySupplier<CreativeModeTab> MAIN =
+      TABS.register(
+          "main",
+          () ->
+              CreativeTabRegistry.create(
+                  Component.translatable("itemGroup.precast_structure.main"),
+                  () -> new ItemStack(ModItems.STRUCTURE_SCANNER.get())));
 
-    private ModCreativeTabs() {
-    }
+  private ModCreativeTabs() {}
 
-    public static void register() {
-        TABS.register();
-    }
+  public static void register() {
+    TABS.register();
+  }
 }

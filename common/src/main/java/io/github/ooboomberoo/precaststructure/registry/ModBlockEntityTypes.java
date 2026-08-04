@@ -9,15 +9,29 @@ import net.minecraft.core.registries.Registries;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 
 public final class ModBlockEntityTypes {
-    public static final DeferredRegister<BlockEntityType<?>> BLOCK_ENTITY_TYPES = DeferredRegister.create(PrecastStructureMod.MOD_ID, Registries.BLOCK_ENTITY_TYPE);
+  public static final DeferredRegister<BlockEntityType<?>> BLOCK_ENTITY_TYPES =
+      DeferredRegister.create(PrecastStructureMod.MOD_ID, Registries.BLOCK_ENTITY_TYPE);
 
-    public static final RegistrySupplier<BlockEntityType<StructureScannerBlockEntity>> STRUCTURE_SCANNER = BLOCK_ENTITY_TYPES.register("structure_scanner", () -> BlockEntityType.Builder.of(StructureScannerBlockEntity::new, ModBlocks.STRUCTURE_SCANNER.get()).build(null));
-    public static final RegistrySupplier<BlockEntityType<StructurePrinterBlockEntity>> STRUCTURE_PRINTER = BLOCK_ENTITY_TYPES.register("structure_printer", () -> BlockEntityType.Builder.of(StructurePrinterBlockEntity::new, ModBlocks.STRUCTURE_PRINTER.get()).build(null));
+  public static final RegistrySupplier<BlockEntityType<StructureScannerBlockEntity>>
+      STRUCTURE_SCANNER =
+          BLOCK_ENTITY_TYPES.register(
+              "structure_scanner",
+              () ->
+                  BlockEntityType.Builder.of(
+                          StructureScannerBlockEntity::new, ModBlocks.STRUCTURE_SCANNER.get())
+                      .build(null));
+  public static final RegistrySupplier<BlockEntityType<StructurePrinterBlockEntity>>
+      STRUCTURE_PRINTER =
+          BLOCK_ENTITY_TYPES.register(
+              "structure_printer",
+              () ->
+                  BlockEntityType.Builder.of(
+                          StructurePrinterBlockEntity::new, ModBlocks.STRUCTURE_PRINTER.get())
+                      .build(null));
 
-    private ModBlockEntityTypes() {
-    }
+  private ModBlockEntityTypes() {}
 
-    public static void register() {
-        BLOCK_ENTITY_TYPES.register();
-    }
+  public static void register() {
+    BLOCK_ENTITY_TYPES.register();
+  }
 }
